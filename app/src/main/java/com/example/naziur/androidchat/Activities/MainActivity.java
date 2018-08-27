@@ -88,7 +88,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void moveToChattingScreen() {
-        Intent intent = new Intent(this, ChattingActivity.class);
+        Intent intent = new Intent(this, ChatActivity.class);
         startActivity(intent);
         finish();
     }
