@@ -1,5 +1,7 @@
 package com.example.naziur.androidchat.Services;
 
+import com.example.naziur.androidchat.Models.FirebaseUserModel;
+import com.example.naziur.androidchat.Models.User;
 import com.google.firebase.iid.FirebaseInstanceIdService;
 import android.util.Log;
 

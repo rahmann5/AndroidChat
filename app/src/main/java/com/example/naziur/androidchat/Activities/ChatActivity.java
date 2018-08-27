@@ -13,6 +13,11 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
 
+import com.example.naziur.androidchat.MessagesListAdapter;
+import com.example.naziur.androidchat.Models.FirebaseMessageModel;
+import com.example.naziur.androidchat.Models.FirebaseUserModel;
+import com.example.naziur.androidchat.Models.MessageCell;
+import com.example.naziur.androidchat.Models.User;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
@@ -51,14 +56,14 @@ public class ChatActivity extends AppCompatActivity {
     DatabaseReference messagesRef;
     DatabaseReference usersRef;
 
-    public static ChattingActivity chattingActivity;
+    public static ChatActivity chattingActivity;
 
     JSONArray registration_ids = new JSONArray();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_chatting);
+        setContentView(R.layout.activity_chat);
 
         database = FirebaseDatabase.getInstance();
         usersRef = database.getReference("users");
