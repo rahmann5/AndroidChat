@@ -1,4 +1,4 @@
-package com.example.naziur.androidchat;
+package com.example.naziur.androidchat.Activities;
 
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
@@ -22,6 +22,8 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.iid.FirebaseInstanceId;
 
+
+import com.example.naziur.androidchat.R;
 
 public class MainActivity extends AppCompatActivity {
 
