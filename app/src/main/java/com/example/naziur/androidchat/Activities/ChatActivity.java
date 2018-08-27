@@ -41,7 +41,7 @@ import cz.msebera.android.httpclient.entity.mime.Header;
 import com.example.naziur.androidchat.R;
 
 public class ChatActivity extends AppCompatActivity {
-    private static final String TAG = "ChattingActivity";
+    private static final String TAG = "ChatActivity";
 
     User user = User.getInstance();
 
@@ -69,7 +69,7 @@ public class ChatActivity extends AppCompatActivity {
         usersRef = database.getReference("users");
         messagesRef = database.getReference("messages");
 
-        setTitle("Chatting");
+        setTitle("Chat");
 
         chattingActivity = this;
 
@@ -213,7 +213,7 @@ public class ChatActivity extends AppCompatActivity {
                                     String url = "https://fcm.googleapis.com/fcm/send";
                                     AsyncHttpClient client = new AsyncHttpClient();
 
-                                    client.addHeader(HttpHeaders.AUTHORIZATION, "key=AIzaSyDhczg_GmSEe_yBiLCxLRxGtYI7mha7tVA");
+                                    client.addHeader(HttpHeaders.AUTHORIZATION, "key=AIzaSyCl-lEfl7Rx9ZcDEyXX4sSpXhJYMS6PHfk");
                                     client.addHeader(HttpHeaders.CONTENT_TYPE, RequestParams.APPLICATION_JSON);
 
                                     try {
