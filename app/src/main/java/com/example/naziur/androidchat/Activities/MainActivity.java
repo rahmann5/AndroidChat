@@ -1,7 +1,9 @@
-package com.example.naziur.androidchat;
+package com.example.naziur.androidchat.Activities;
 
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+
+import com.example.naziur.androidchat.R;
 
 public class MainActivity extends AppCompatActivity {
 
