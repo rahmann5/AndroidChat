@@ -17,9 +17,12 @@ import android.widget.EditText;
 import com.example.naziur.androidchat.models.FirebaseUserModel;
 import com.example.naziur.androidchat.models.User;
 
+import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
+import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.iid.FirebaseInstanceId;
 
 
@@ -35,7 +38,7 @@ public class MainActivity extends AppCompatActivity {
 
     User user = User.getInstance();
 
-    EditText editTextUsername;
+    EditText editTextUsername, editTextProfileName;
 
     FirebaseDatabase database;
     DatabaseReference usersRef;
@@ -62,7 +65,6 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onDataChange(com.google.firebase.database.DataSnapshot dataSnapshot) {
                 Dialog.dismiss();
-
                 for (com.google.firebase.database.DataSnapshot userSnapshot : dataSnapshot.getChildren()) {
                     //Getting the data from snapshot
                     FirebaseUserModel firebaseUserModel = userSnapshot.getValue(FirebaseUserModel.class);
@@ -71,7 +73,7 @@ public class MainActivity extends AppCompatActivity {
                         firebaseUserModel.setDeviceToken(FirebaseInstanceId.getInstance().getToken());
                         user.login(firebaseUserModel);
                         user.saveFirebaseKey(userSnapshot.getKey());
-                        moveToChattingScreen();
+                        moveToSessionScreen();
                     }
                 }
             }
@@ -84,11 +86,13 @@ public class MainActivity extends AppCompatActivity {
         });
 
         editTextUsername = (EditText) findViewById(R.id.editTextUsername);
+        editTextProfileName = (EditText) findViewById(R.id.editTextProfileName);
 
     }
 
-    public void moveToChattingScreen() {
+    public void moveToSessionScreen() {
         Intent intent = new Intent(this, ChatActivity.class);
+        //Intent intent = new Intent(this, SessionActivity.class);
         startActivity(intent);
         finish();
     }
@@ -111,30 +115,58 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void btnLoginTapped(View view) {
-        String strUsername = editTextUsername.getText().toString().trim();
+        final String strUsername = editTextUsername.getText().toString().trim();
+        final String strProfileName = editTextProfileName.getText().toString().trim();
         if (strUsername.isEmpty()) {
-            showMessage("Invalid", "Please enter name");
+            showMessage("Invalid", "Please enter a username");
+        } else if (strProfileName.isEmpty()){
+            showMessage("Invalid", "Please enter a profile name");
         } else {
-            final FirebaseUserModel firebaseUserModel = new FirebaseUserModel();
-            firebaseUserModel.setUsername(strUsername);
-            firebaseUserModel.setDeviceId(currentDeviceId);
-            firebaseUserModel.setDeviceToken(FirebaseInstanceId.getInstance().getToken());
 
             final ProgressDialog Dialog = new ProgressDialog(this);
             Dialog.setMessage("Please wait..");
             Dialog.setCancelable(false);
             Dialog.show();
-
-            final DatabaseReference newRef = usersRef.push();
-            newRef.setValue(firebaseUserModel, new DatabaseReference.CompletionListener() {
+            Query query = usersRef.orderByChild("username").equalTo(strUsername);
+            query.addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
-                public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
-                    Dialog.dismiss();
-                    if (user.login(firebaseUserModel)) {
-                        moveToChattingScreen();
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    if(!dataSnapshot.exists()){
+                        addUserToDatabase(strUsername, strProfileName, Dialog);
+                    } else {
+                        Dialog.dismiss();
+                        showMessage("Invalid", "Please provide a unique username");
                     }
                 }
+
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
+
+                }
             });
+            //
+
+
+
         }
+    }
+
+    private void addUserToDatabase(String strUsername, String strProfileName, final ProgressDialog dialog){
+        final FirebaseUserModel firebaseUserModel = new FirebaseUserModel();
+        firebaseUserModel.setUsername(strUsername);
+        firebaseUserModel.setProfileName(strProfileName);
+        firebaseUserModel.setDeviceId(currentDeviceId);
+        firebaseUserModel.setDeviceToken(FirebaseInstanceId.getInstance().getToken());
+
+        final DatabaseReference newRef = usersRef.push();
+        newRef.setValue(firebaseUserModel, new DatabaseReference.CompletionListener() {
+            @Override
+            public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
+                dialog.dismiss();
+                if (user.login(firebaseUserModel)) {
+                    moveToSessionScreen();
+                }
+            }
+        });
     }
 }
