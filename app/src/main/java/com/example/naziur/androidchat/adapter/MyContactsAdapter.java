@@ -26,8 +26,15 @@ public class MyContactsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
     private Context context;
     private List<Contact> allMyContacts;
 
-    public MyContactsAdapter (Context context, Cursor c) {
+    public OnItemClickListener listener;
+
+    public interface OnItemClickListener {
+        void onItemClick (Contact contact);
+    }
+
+    public MyContactsAdapter (Context context, Cursor c, OnItemClickListener listener) {
         this.context = context;
+        this.listener = listener;
         readCursorData(c);
     }
 
@@ -54,7 +61,7 @@ public class MyContactsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
 
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
-        ((MyContactViewHolder) holder).bind(allMyContacts.get(position));
+        ((MyContactViewHolder) holder).bind(allMyContacts.get(position), listener);
     }
 
     @Override
@@ -78,7 +85,13 @@ public class MyContactsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
             profPicIv = (ImageView) itemView.findViewById(R.id.prof_pic);
         }
 
-        public void bind (Contact contact) {
+        public void bind (final Contact contact, final OnItemClickListener listener) {
+            itemView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    listener.onItemClick(contact);
+                }
+            });
             usernameTv.setText(contact.getContact().getUsername());
             profileTv.setText(contact.getContact().getProfileName());
         }

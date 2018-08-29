@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string-array name="contact_dialog_actions">
+        <item>See Profile</item>
+        <item>Chat</item>
+    </string-array>
+
+</resources>
