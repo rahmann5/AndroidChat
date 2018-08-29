@@ -36,10 +36,10 @@ public class SessionActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle item selection
         switch (item.getItemId()) {
-            case R.id.chat:
+            case R.id.my_contacts:
                 startActivity(new Intent(SessionActivity.this, MyContactsActivity.class));
                 return true;
-            case R.id.my_contacts:
+            case R.id.chat:
                 startActivity(new Intent(SessionActivity.this, ChatActivity.class));
                 return true;
             default:

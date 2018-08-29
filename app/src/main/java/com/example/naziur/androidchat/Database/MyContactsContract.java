@@ -22,7 +22,7 @@ public class MyContactsContract {
                         _ID + " INTEGER PRIMARY KEY," +
                         COLUMN_USERNAME + " INTEGER," +
                         COLUMN_PROFILE + " TEXT," +
-                        COLUMN_PROFILE_PIC + " TEXT)"+
+                        COLUMN_PROFILE_PIC + " TEXT"+
                         COLUMN_DATE_ADDED + " DEFAULT CURRENT_DATE)";
 
         public static final String SQL_DELETE_ENTRIES =

@@ -64,8 +64,8 @@
             />
 
         <android.support.design.widget.FloatingActionButton
-            android:layout_width="25dp"
-            android:layout_height="25dp"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
             android:backgroundTint="#9bda5a"
             android:src="@drawable/ic_friend"
             android:scaleType="fitCenter"
