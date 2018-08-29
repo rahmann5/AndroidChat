@@ -1,4 +1,4 @@
-package com.example.naziur.androidchat.Models;
+package com.example.naziur.androidchat.models;
 
 import android.content.SharedPreferences;
 

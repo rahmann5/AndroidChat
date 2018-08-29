@@ -1,7 +1,7 @@
-package com.example.naziur.androidchat.Services;
+package com.example.naziur.androidchat.services;
 
-import com.example.naziur.androidchat.Models.FirebaseUserModel;
-import com.example.naziur.androidchat.Models.User;
+import com.example.naziur.androidchat.models.FirebaseUserModel;
+import com.example.naziur.androidchat.models.User;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.iid.FirebaseInstanceIdService;
@@ -25,7 +25,7 @@ public class MyFirebaseInstanceIdService extends FirebaseInstanceIdService {
 
     private static final String TAG = "MyFirebaseIIDService";
 
-    User user = User.getInstance();
+    User user = com.example.naziur.androidchat.models.User.getInstance();
 
     @Override
     public void onTokenRefresh() {

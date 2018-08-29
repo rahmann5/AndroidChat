@@ -1,4 +1,4 @@
-package com.example.naziur.androidchat.Models;
+package com.example.naziur.androidchat.models;
 
 import com.google.firebase.database.Exclude;
 import com.google.firebase.database.ServerValue;

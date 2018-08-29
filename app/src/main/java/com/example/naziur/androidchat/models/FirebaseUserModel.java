@@ -1,4 +1,4 @@
-package com.example.naziur.androidchat.Models;
+package com.example.naziur.androidchat.models;
 
 /**
  * Created by Hamidur on 27/08/2018.
