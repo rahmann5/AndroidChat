@@ -2,7 +2,11 @@ package com.example.naziur.androidchat.services;
 
 import com.example.naziur.androidchat.models.FirebaseUserModel;
 import com.example.naziur.androidchat.models.User;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.iid.FirebaseInstanceIdService;
+
+import android.support.annotation.NonNull;
 import android.util.Log;
 
 import com.firebase.client.Firebase;
@@ -21,7 +25,7 @@ public class MyFirebaseInstanceIdService extends FirebaseInstanceIdService {
 
     private static final String TAG = "MyFirebaseIIDService";
 
-    User user = User.getInstance();
+    User user = com.example.naziur.androidchat.models.User.getInstance();
 
     @Override
     public void onTokenRefresh() {
@@ -53,7 +57,17 @@ public class MyFirebaseInstanceIdService extends FirebaseInstanceIdService {
 
                     if (strToken != null && firebaseUserModel.getDeviceId().equals(user.deviceId) && !strToken.equals(firebaseUserModel.getDeviceToken())) {
                         user.deviceToken = strToken;
-                        usersRef.child(userSnapshot.getKey()).child("deviceToken").setValue(strToken);
+                        usersRef.child(userSnapshot.getKey()).child("deviceToken").setValue(strToken).addOnSuccessListener(new OnSuccessListener<Void>() {
+                            @Override
+                            public void onSuccess(Void aVoid) {
+                                System.out.println("Refreshed Token Updated");
+                            }
+                        }).addOnFailureListener(new OnFailureListener() {
+                            @Override
+                            public void onFailure(@NonNull Exception e) {
+                                Log.i(TAG, e.getMessage());
+                            }
+                        });
 
                     }
                 }
@@ -66,7 +80,6 @@ public class MyFirebaseInstanceIdService extends FirebaseInstanceIdService {
         });
 
     }
-
 
 
 }
