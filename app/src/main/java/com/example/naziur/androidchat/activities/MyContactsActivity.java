@@ -8,7 +8,7 @@ import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.widget.TextView;
 
-import com.example.naziur.androidchat.Database.ContactDBHelper;
+import com.example.naziur.androidchat.database.ContactDBHelper;
 import com.example.naziur.androidchat.R;
 import com.example.naziur.androidchat.adapter.MyContactsAdapter;
 

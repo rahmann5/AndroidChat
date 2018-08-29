@@ -1,4 +1,4 @@
-package com.example.naziur.androidchat.Database;
+package com.example.naziur.androidchat.database;
 
 import android.provider.BaseColumns;
 
