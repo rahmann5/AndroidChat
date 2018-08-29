@@ -53,17 +53,7 @@ public class MyFirebaseInstanceIdService extends FirebaseInstanceIdService {
 
                     if (strToken != null && firebaseUserModel.getDeviceId().equals(user.deviceId) && !strToken.equals(firebaseUserModel.getDeviceToken())) {
                         user.deviceToken = strToken;
-                        usersRef.child(userSnapshot.getKey()).child("deviceToken").setValue(strToken, new Firebase.CompletionListener() {
-
-                            @Override
-                            public void onComplete(FirebaseError firebaseError, Firebase firebase) {
-                                if (firebaseError != null) {
-                                    Log.i(TAG, firebaseError.toString());
-                                } else {
-                                    System.out.println("Refreshed Token Updated");
-                                }
-                            }
-                        });
+                        usersRef.child(userSnapshot.getKey()).child("deviceToken").setValue(strToken);
 
                     }
                 }
@@ -76,5 +66,7 @@ public class MyFirebaseInstanceIdService extends FirebaseInstanceIdService {
         });
 
     }
+
+
 
 }
