@@ -40,7 +40,7 @@ public class FirebaseUserModel {
     }
 
     public String getProfileName() {
-        return username;
+        return profileName;
     }
 
     public void setProfileName(String profileName) {

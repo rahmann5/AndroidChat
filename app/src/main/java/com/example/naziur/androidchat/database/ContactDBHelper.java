@@ -31,12 +31,13 @@ public class ContactDBHelper extends SQLiteOpenHelper {
         onCreate(sqLiteDatabase);
     }
 
-    public long insertContact (String username, String profile, String profilePic) {
+    public long insertContact (String username, String profile, String profilePic, String deviceToken) {
         SQLiteDatabase db = getWritableDatabase();
         ContentValues data = new ContentValues();
         data.put(MyContactsContract.MyContactsContractEntry.COLUMN_USERNAME, username);
         data.put(MyContactsContract.MyContactsContractEntry.COLUMN_PROFILE, profile);
         data.put(MyContactsContract.MyContactsContractEntry.COLUMN_PROFILE_PIC, profilePic);
+        data.put(MyContactsContract.MyContactsContractEntry.COLUMN_DEVICE_TOKEN, deviceToken);
         return db.insert(MyContactsContract.MyContactsContractEntry.TABLE_NAME, null, data);
     }
 
@@ -46,7 +47,8 @@ public class ContactDBHelper extends SQLiteOpenHelper {
                 BaseColumns._ID,
                 MyContactsContract.MyContactsContractEntry.COLUMN_USERNAME,
                 MyContactsContract.MyContactsContractEntry.COLUMN_PROFILE,
-                MyContactsContract.MyContactsContractEntry.COLUMN_PROFILE_PIC
+                MyContactsContract.MyContactsContractEntry.COLUMN_PROFILE_PIC,
+                MyContactsContract.MyContactsContractEntry.COLUMN_DEVICE_TOKEN
         };
 
         Cursor cursor = db.query(

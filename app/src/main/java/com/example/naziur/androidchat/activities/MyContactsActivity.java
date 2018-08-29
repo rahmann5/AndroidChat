@@ -1,6 +1,8 @@
 package com.example.naziur.androidchat.activities;
 
 import android.database.Cursor;
+import android.support.design.widget.FloatingActionButton;
+import android.support.v4.app.DialogFragment;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
@@ -11,8 +13,9 @@ import android.widget.TextView;
 import com.example.naziur.androidchat.database.ContactDBHelper;
 import com.example.naziur.androidchat.R;
 import com.example.naziur.androidchat.adapter.MyContactsAdapter;
+import com.example.naziur.androidchat.fragment.AddContactDialogFragment;
 
-public class MyContactsActivity extends AppCompatActivity {
+public class MyContactsActivity extends AppCompatActivity implements AddContactDialogFragment.ContactDialogListener{
 
     private ContactDBHelper db;
     private RecyclerView myContactsRecycler;
@@ -28,8 +31,18 @@ public class MyContactsActivity extends AppCompatActivity {
         myContactsRecycler = (RecyclerView) findViewById(R.id.contacts_recycler);
         myContactsRecycler = (RecyclerView) findViewById(R.id.contacts_recycler);
         emptyState = (TextView) findViewById(R.id.empty_contacts);
+        FloatingActionButton floatingActionButton  = (FloatingActionButton) findViewById(R.id.add_contact);
+        floatingActionButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+            }
+        });
+
         setUpList ();
     }
+
+
 
     private void setUpList () {
         Cursor c = db.getAllMyContacts(null);
@@ -47,5 +60,21 @@ public class MyContactsActivity extends AppCompatActivity {
     public void onDestroy() {
         db.close();
         super.onDestroy();
+    }
+
+    public void showNoticeDialog() {
+        // Create an instance of the dialog fragment and show it
+        DialogFragment dialog = new AddContactDialogFragment();
+        dialog.show(getSupportFragmentManager(), "AddContactDialogFragment");
+    }
+
+    @Override
+    public void onDialogPositiveClick(DialogFragment dialog) {
+
+    }
+
+    @Override
+    public void onDialogNegativeClick(DialogFragment dialog) {
+        dialog.dismiss();
     }
 }
