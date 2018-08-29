@@ -9,7 +9,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".Activities.MainActivity">
+        <activity android:name=".activities.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -17,18 +17,20 @@
             </intent-filter>
         </activity>
 
-        <service android:name=".Services.MyFirebaseInstanceIdService">
+        <service android:name=".services.MyFirebaseInstanceIdService">
             <intent-filter>
                 <action android:name="com.google.firebase.INSTANCE_ID_EVENT" />
             </intent-filter>
         </service>
-        <service android:name=".Services.MyFirebaseMessagingService">
+        <service android:name=".services.MyFirebaseMessagingService">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
 
-        <activity android:name=".Activities.ChatActivity"></activity>
+        <activity android:name=".activities.ChatActivity" />
+        <activity android:name=".activities.SessionActivity" />
+        <activity android:name=".activities.MyContactsActivity"></activity>
     </application>
 
 </manifest>

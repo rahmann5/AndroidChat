@@ -1,4 +1,4 @@
-package com.example.naziur.androidchat.Activities;
+package com.example.naziur.androidchat.activities;
 
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -14,10 +14,11 @@ import android.widget.ImageView;
 import android.widget.ListView;
 
 import com.example.naziur.androidchat.MessagesListAdapter;
-import com.example.naziur.androidchat.Models.FirebaseMessageModel;
-import com.example.naziur.androidchat.Models.FirebaseUserModel;
-import com.example.naziur.androidchat.Models.MessageCell;
-import com.example.naziur.androidchat.Models.User;
+import com.example.naziur.androidchat.R;
+import com.example.naziur.androidchat.models.FirebaseMessageModel;
+import com.example.naziur.androidchat.models.FirebaseUserModel;
+import com.example.naziur.androidchat.models.MessageCell;
+import com.example.naziur.androidchat.models.User;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
@@ -35,10 +36,8 @@ import java.util.List;
 
 import cz.msebera.android.httpclient.HttpHeaders;
 import cz.msebera.android.httpclient.entity.StringEntity;
-import cz.msebera.android.httpclient.entity.mime.Header;
 
 
-import com.example.naziur.androidchat.R;
 
 public class ChatActivity extends AppCompatActivity {
     private static final String TAG = "ChatActivity";
@@ -220,6 +219,7 @@ public class ChatActivity extends AppCompatActivity {
                                         JSONObject params = new JSONObject();
 
                                         params.put("registration_ids", registration_ids);
+                                        //params.put("to", "eRR2F6YXBVY:APA91bG-p63ipCaj6HMlun-sKH61Cm3YSVp9KofbvQq3pmdcneH6ZbAmlP4nnVJeEaI-JyirkhlVUErfWOmhoh8i0cskJOBwtyAL7BnMbTZV2RwZowIrYynm35v5XnL6LCzRNKy8Whi0");
 
                                         JSONObject notificationObject = new JSONObject();
                                         notificationObject.put("body", wishMessage);

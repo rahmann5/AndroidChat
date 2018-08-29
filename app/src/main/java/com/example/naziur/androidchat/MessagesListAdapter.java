@@ -8,7 +8,7 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
-import com.example.naziur.androidchat.Models.MessageCell;
+import com.example.naziur.androidchat.models.MessageCell;
 
 /**
  * Created by Hamidur on 27/08/2018.

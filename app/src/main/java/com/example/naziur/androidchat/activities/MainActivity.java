@@ -1,4 +1,4 @@
-package com.example.naziur.androidchat.Activities;
+package com.example.naziur.androidchat.activities;
 
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
@@ -14,8 +14,8 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 
-import com.example.naziur.androidchat.Models.FirebaseUserModel;
-import com.example.naziur.androidchat.Models.User;
+import com.example.naziur.androidchat.models.FirebaseUserModel;
+import com.example.naziur.androidchat.models.User;
 
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
