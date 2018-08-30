@@ -86,6 +86,7 @@ public class ChatActivity extends AppCompatActivity {
         usersRef = database.getReference("users");
         messagesRef = database.getReference("messages").child("single");
 
+
         chattingActivity = this;
 
         listView = (ListView) findViewById(R.id.chattingList);
@@ -123,6 +124,8 @@ public class ChatActivity extends AppCompatActivity {
         Dialog.setCancelable(false);
         Dialog.show();
 
+        //messagesRef.equalTo(user.name + "-" + friend.getUsername()).equalTo(friend.getUsername() + "-" + user.name);
+
         final com.google.firebase.database.ValueEventListener commentValueEventListener = new com.google.firebase.database.ValueEventListener() {
 
             @Override
@@ -134,8 +137,11 @@ public class ChatActivity extends AppCompatActivity {
                     //System.out.println("Child: " + postSnapshot);
                     //Getting the data from snapshot
                     FirebaseMessageModel firebaseMessageModel = postSnapshot.getValue(FirebaseMessageModel.class);
-                    firebaseMessageModel.setId(postSnapshot.getKey());
-                    messages.add(firebaseMessageModel);
+                   if (firebaseMessageModel.getMsgId().equals(user.name + "-" + friend.getUsername()) ||
+                           firebaseMessageModel.getMsgId().equals(friend.getUsername() + "-" + user.name)) {
+                       firebaseMessageModel.setId(postSnapshot.getKey());
+                       messages.add(firebaseMessageModel);
+                   }
                 }
 
                 updateListView();
