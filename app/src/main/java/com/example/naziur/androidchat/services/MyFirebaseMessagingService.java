@@ -28,11 +28,12 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         Log.d(TAG, "Notification Message Body: " + remoteMessage.getNotification().getBody());
 
         //Calling method to show notification
-        showNotification(remoteMessage.getNotification().getBody());
+        showNotification(remoteMessage.getNotification().getBody(), remoteMessage.getNotification().getTag());
     }
 
-    private void showNotification(String messageBody) {
+    private void showNotification(String messageBody, String to) {
         Intent intent = new Intent(this, MainActivity.class);
+        intent.putExtra("username", to);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent,
                 PendingIntent.FLAG_ONE_SHOT);

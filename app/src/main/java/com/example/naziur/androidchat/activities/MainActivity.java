@@ -90,7 +90,14 @@ public class MainActivity extends AppCompatActivity {
 
     public void moveToSessionScreen() {
         //Intent intent = new Intent(this, ChatActivity.class);
-        Intent intent = new Intent(this, SessionActivity.class);
+        Intent intent;
+        Bundle extra = getIntent().getExtras();
+        if (extra != null) {
+            intent = new Intent(this, ChatActivity.class);
+            intent.putExtra("username", extra.getString("username"));
+        } else {
+            intent = new Intent(this, SessionActivity.class);
+        }
         startActivity(intent);
         finish();
     }

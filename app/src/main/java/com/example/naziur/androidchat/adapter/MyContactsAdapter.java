@@ -38,9 +38,10 @@ public class MyContactsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
         readCursorData(c);
     }
 
-    public MyContactsAdapter (Context context){
+    public MyContactsAdapter (Context context, OnItemClickListener listener){
         allMyContacts = new ArrayList<>();
         this.context = context;;
+        this.listener = listener;
     }
 
     @Override

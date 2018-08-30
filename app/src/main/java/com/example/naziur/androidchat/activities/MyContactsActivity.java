@@ -64,21 +64,26 @@ public class MyContactsActivity extends AppCompatActivity implements AddContactD
     private void setUpList () {
         Cursor c = db.getAllMyContacts(null);
         if (c != null && c.getCount() > 0) {
-            myContactsAdapter = new MyContactsAdapter(this, c, new MyContactsAdapter.OnItemClickListener() {
-                @Override
-                public void onItemClick(Contact contact, int position) {
-                    createDialog(contact, position).show();
-                }
-            });
+            myContactsAdapter = new MyContactsAdapter(this, c, setUpListener ());
             emptyState.setVisibility(View.GONE);
         } else {
             Log.i(TAG, "Found no items");
             emptyState.setVisibility(View.VISIBLE);
-            myContactsAdapter = new MyContactsAdapter(this);
+            myContactsAdapter = new MyContactsAdapter(this, setUpListener());
         }
         LinearLayoutManager mLayoutManager = new LinearLayoutManager(this);
         myContactsRecycler.setLayoutManager(mLayoutManager);
         myContactsRecycler.setAdapter(myContactsAdapter);
+    }
+
+    private MyContactsAdapter.OnItemClickListener setUpListener () {
+        return new MyContactsAdapter.OnItemClickListener() {
+            @Override
+            public void onItemClick(Contact contact, int position) {
+                createDialog(contact, position).show();
+            }
+        };
+
     }
 
     private AlertDialog createDialog (final Contact contact, final int position) {
@@ -122,6 +127,7 @@ public class MyContactsActivity extends AppCompatActivity implements AddContactD
                                 Log.i(TAG, "Adding to contacts: " + firebaseUserModel.getUsername());
                                 db.insertContact(firebaseUserModel.getUsername(), firebaseUserModel.getProfileName(), firebaseUserModel.getProfilePic(), firebaseUserModel.getDeviceToken());
                                 myContactsAdapter.addNewItem(firebaseUserModel);
+                                emptyState.setVisibility(View.GONE);
                                 break;
                             }
                         }
