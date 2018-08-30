@@ -10,6 +10,7 @@ public class FirebaseUserModel {
     String deviceToken = "";
     String username = "";
     String profileName = "";
+    String profilePic = "";
 
     public FirebaseUserModel() {
       /*Blank default constructor essential for Firebase*/
@@ -45,5 +46,13 @@ public class FirebaseUserModel {
 
     public void setProfileName(String profileName) {
         this.profileName = profileName;
+    }
+
+    public String getProfilePic() {
+        return profilePic;
+    }
+
+    public void setProfilePic(String profilePic) {
+        this.profilePic = profilePic;
     }
 }

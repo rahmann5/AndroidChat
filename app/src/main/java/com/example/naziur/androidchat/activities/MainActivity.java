@@ -32,8 +32,6 @@ public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "MainActivity";
 
-    private Button btnLogin;
-
     String currentDeviceId;
 
     User user = User.getInstance();

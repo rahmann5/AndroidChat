@@ -31,6 +31,11 @@ public class MyContactsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
         readCursorData(c);
     }
 
+    public MyContactsAdapter (Context context){
+        allMyContacts = new ArrayList<>();
+        this.context = context;;
+    }
+
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.list_item_my_contact, parent, false);
@@ -64,6 +69,11 @@ public class MyContactsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
 
     public void updateState (int pos) {
 
+    }
+
+    public void addNewItem(FirebaseUserModel fbModel){
+        allMyContacts.add(new Contact(fbModel));
+        notifyDataSetChanged();
     }
 
     private static class MyContactViewHolder extends RecyclerView.ViewHolder {
