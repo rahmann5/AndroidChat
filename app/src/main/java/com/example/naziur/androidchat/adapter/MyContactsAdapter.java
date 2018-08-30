@@ -29,7 +29,7 @@ public class MyContactsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
     public OnItemClickListener listener;
 
     public interface OnItemClickListener {
-        void onItemClick (Contact contact);
+        void onItemClick (Contact contact, int pos);
     }
 
     public MyContactsAdapter (Context context, Cursor c, OnItemClickListener listener) {
@@ -61,7 +61,7 @@ public class MyContactsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
 
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
-        ((MyContactViewHolder) holder).bind(allMyContacts.get(position), listener);
+        ((MyContactViewHolder) holder).bind(allMyContacts.get(position), position ,listener);
     }
 
     @Override
@@ -70,7 +70,8 @@ public class MyContactsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
     }
 
     public void updateState (int pos) {
-
+        allMyContacts.remove(pos);
+        notifyItemRemoved(pos);
     }
 
     private static class MyContactViewHolder extends RecyclerView.ViewHolder {
@@ -85,11 +86,11 @@ public class MyContactsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
             profPicIv = (ImageView) itemView.findViewById(R.id.prof_pic);
         }
 
-        public void bind (final Contact contact, final OnItemClickListener listener) {
+        public void bind (final Contact contact, final int position, final OnItemClickListener listener) {
             itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    listener.onItemClick(contact);
+                    listener.onItemClick(contact, position);
                 }
             });
             usernameTv.setText(contact.getContact().getUsername());

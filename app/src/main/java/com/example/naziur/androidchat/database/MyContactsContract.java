@@ -16,14 +16,16 @@ public class MyContactsContract {
         public static final String COLUMN_PROFILE = "profile";
         public static final String COLUMN_PROFILE_PIC = "profile_pic";
         public static final String COLUMN_DATE_ADDED = "date_added";
+        public static final String COLUMN_DEVICE_TOKEN = "device_token";
 
         public static final String SQL_CREATE_ENTRIES =
                 "CREATE TABLE " + TABLE_NAME + " (" +
                         _ID + " INTEGER PRIMARY KEY," +
                         COLUMN_USERNAME + " INTEGER," +
                         COLUMN_PROFILE + " TEXT," +
-                        COLUMN_PROFILE_PIC + " TEXT"+
-                        COLUMN_DATE_ADDED + " DEFAULT CURRENT_DATE)";
+                        COLUMN_PROFILE_PIC + " TEXT,"+
+                        COLUMN_DATE_ADDED + " DEFAULT CURRENT_DATE,"+
+                        COLUMN_DEVICE_TOKEN + " TEXT)";
 
         public static final String SQL_DELETE_ENTRIES =
                 "DROP TABLE IF EXISTS " + TABLE_NAME;

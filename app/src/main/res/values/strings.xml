@@ -7,4 +7,11 @@
 
     <!-- My Contacts Class -->
     <string name="dialog_friend_select_action">Actions</string>
+    <string name="dialog_op1">See Profile</string>
+    <string name="dialog_op2">Chat</string>
+    <string name="dialog_op3">Delete Contact</string>
+
+    <string name="add_contact">Add</string>
+    <string name="cancel_contact">Cancel</string>
+    <string name="username">Username</string>
 </resources>

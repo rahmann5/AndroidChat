@@ -2,8 +2,9 @@
 <resources>
 
     <string-array name="contact_dialog_actions">
-        <item>See Profile</item>
-        <item>Chat</item>
+        <item>@string/dialog_op1</item>
+        <item>@string/dialog_op2</item>
+        <item>@string/dialog_op3</item>
     </string-array>
 
 </resources>

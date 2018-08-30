@@ -3,15 +3,20 @@ package com.example.naziur.androidchat.activities;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.os.Bundle;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.naziur.androidchat.MessagesListAdapter;
 import com.example.naziur.androidchat.R;
@@ -19,9 +24,12 @@ import com.example.naziur.androidchat.models.FirebaseMessageModel;
 import com.example.naziur.androidchat.models.FirebaseUserModel;
 import com.example.naziur.androidchat.models.MessageCell;
 import com.example.naziur.androidchat.models.User;
+import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
+import com.google.firebase.database.ValueEventListener;
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.RequestParams;
 import com.loopj.android.http.TextHttpResponseHandler;
@@ -55,20 +63,28 @@ public class ChatActivity extends AppCompatActivity {
     DatabaseReference messagesRef;
     DatabaseReference usersRef;
 
+    private ActionBar actionBar;
+    FirebaseUserModel friend;
+
     public static ChatActivity chattingActivity;
 
-    JSONArray registration_ids = new JSONArray();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chat);
-
+        Bundle extra = getIntent().getExtras();
+        if (extra != null) {
+            friend = new FirebaseUserModel();
+            friend.setUsername(extra.getString("username"));
+        } else {
+            Toast.makeText(this, "Error occured", Toast.LENGTH_LONG).show();
+            finish();
+        }
+        createCustomActionBar();
         database = FirebaseDatabase.getInstance();
         usersRef = database.getReference("users");
-        messagesRef = database.getReference("messages");
-
-        setTitle("Chat");
+        messagesRef = database.getReference("messages").child("single");
 
         chattingActivity = this;
 
@@ -115,7 +131,7 @@ public class ChatActivity extends AppCompatActivity {
                 messages.clear();
 
                 for (com.google.firebase.database.DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
-                    System.out.println("Child: " + postSnapshot);
+                    //System.out.println("Child: " + postSnapshot);
                     //Getting the data from snapshot
                     FirebaseMessageModel firebaseMessageModel = postSnapshot.getValue(FirebaseMessageModel.class);
                     firebaseMessageModel.setId(postSnapshot.getKey());
@@ -141,17 +157,17 @@ public class ChatActivity extends AppCompatActivity {
             }
         };
 
-        final com.google.firebase.database.ValueEventListener userValueEventListener = new com.google.firebase.database.ValueEventListener() {
+        usersRef.orderByChild("username").equalTo(friend.getUsername()).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(com.google.firebase.database.DataSnapshot dataSnapshot) {
-                registration_ids = new JSONArray();
 
                 for (com.google.firebase.database.DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
                     System.out.println("Child: " + postSnapshot);
                     //Getting the data from snapshot
                     FirebaseUserModel firebaseUserModel = postSnapshot.getValue(FirebaseUserModel.class);
-                    if (!firebaseUserModel.getDeviceId().equals(user.deviceId) && !firebaseUserModel.getDeviceToken().isEmpty()) {
-                        registration_ids.put(firebaseUserModel.getDeviceToken());
+                    if (firebaseUserModel.getUsername().equals(friend.getUsername()) && !firebaseUserModel.getDeviceToken().isEmpty()) {
+                        friend = firebaseUserModel;
+                        actionBar.setTitle("   " + friend.getUsername());
                     }
                 }
 
@@ -162,17 +178,12 @@ public class ChatActivity extends AppCompatActivity {
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
-
-                registration_ids = new JSONArray();
-
                 if (Dialog.isShowing()) {
                     Dialog.dismiss();
                 }
                 System.out.println("The read failed: " + databaseError.getMessage());
             }
-        };
-
-        usersRef.addValueEventListener(userValueEventListener);
+        });
 
         btnSend.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -190,6 +201,8 @@ public class ChatActivity extends AppCompatActivity {
                     firebaseMessageModel.setText(wishMessage);
                     firebaseMessageModel.setSenderDeviceId(user.deviceId);
                     firebaseMessageModel.setSenderName(user.name);
+                    firebaseMessageModel.setReceiverName(friend.getUsername());
+                    firebaseMessageModel.setMsgId(user.name + "-" +friend.getUsername());
 
                     final ProgressDialog Dialog = new ProgressDialog(chattingActivity);
                     Dialog.setMessage("Please wait..");
@@ -207,7 +220,7 @@ public class ChatActivity extends AppCompatActivity {
                             } else {
                                 textComment.setText("");
 
-                                if (registration_ids.length() > 0) {
+                                if (friend != null) {
 
                                     String url = "https://fcm.googleapis.com/fcm/send";
                                     AsyncHttpClient client = new AsyncHttpClient();
@@ -218,8 +231,8 @@ public class ChatActivity extends AppCompatActivity {
                                     try {
                                         JSONObject params = new JSONObject();
 
-                                        params.put("registration_ids", registration_ids);
-                                        //params.put("to", "eRR2F6YXBVY:APA91bG-p63ipCaj6HMlun-sKH61Cm3YSVp9KofbvQq3pmdcneH6ZbAmlP4nnVJeEaI-JyirkhlVUErfWOmhoh8i0cskJOBwtyAL7BnMbTZV2RwZowIrYynm35v5XnL6LCzRNKy8Whi0");
+                                        //params.put("registration_ids", registration_ids);
+                                        params.put("to", friend.getDeviceToken());
 
                                         JSONObject notificationObject = new JSONObject();
                                         notificationObject.put("body", wishMessage);
@@ -260,6 +273,13 @@ public class ChatActivity extends AppCompatActivity {
 
         //Value event listener for realtime data update
         messagesRef.addValueEventListener(commentValueEventListener);
+    }
+
+    private void createCustomActionBar () {
+        actionBar = getSupportActionBar();
+        actionBar.setDisplayOptions(ActionBar.DISPLAY_SHOW_HOME |
+                ActionBar.DISPLAY_SHOW_TITLE |  ActionBar.DISPLAY_USE_LOGO);
+        actionBar.setIcon(R.mipmap.ic_launcher_round);
     }
 
     public void hideKeyboard() {

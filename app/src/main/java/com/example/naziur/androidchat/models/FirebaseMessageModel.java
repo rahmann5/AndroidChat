@@ -9,10 +9,12 @@ import com.google.firebase.database.ServerValue;
 
 public class FirebaseMessageModel {
 
+    private String msgId;
     private String senderDeviceId;
     private String text;
     private Long createdDate;
     private String senderName;
+    private String receiverName;
     private String Id;
 
     public FirebaseMessageModel() {
@@ -39,6 +41,22 @@ public class FirebaseMessageModel {
         return ServerValue.TIMESTAMP;
     }
 
+    public String getReceiverName() {
+        return receiverName;
+    }
+
+    public void setReceiverName(String receiverName) {
+        this.receiverName = receiverName;
+    }
+
+    public String getMsgId() {
+        return msgId;
+    }
+
+    public void setMsgId(String msgId) {
+        this.msgId = msgId;
+    }
+
     @Exclude
     public Long getCreatedDateLong() {
         return createdDate;
@@ -63,4 +81,5 @@ public class FirebaseMessageModel {
     public void setId(String id) {
         Id = id;
     }
+
 }
