@@ -4,7 +4,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 
-import com.example.naziur.androidchat.fragment.ContactsFragment;
+import com.example.naziur.androidchat.fragment.SessionFragment;
 
 /**
  * Created by Hamidur on 28/08/2018.
@@ -18,7 +18,7 @@ public class SessionFragmentPagerAdapter extends FragmentPagerAdapter {
 
     @Override
     public Fragment getItem(int position) {
-        return new ContactsFragment();
+        return new SessionFragment();
     }
 
     @Override

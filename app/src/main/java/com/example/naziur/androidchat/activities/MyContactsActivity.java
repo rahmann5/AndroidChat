@@ -10,6 +10,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 
@@ -19,13 +20,24 @@ import com.example.naziur.androidchat.adapter.MyContactsAdapter;
 import com.example.naziur.androidchat.models.Contact;
 
 import com.example.naziur.androidchat.fragment.AddContactDialogFragment;
+import com.example.naziur.androidchat.models.FirebaseUserModel;
+import com.example.naziur.androidchat.models.User;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
+import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.iid.FirebaseInstanceId;
 
 public class MyContactsActivity extends AppCompatActivity implements AddContactDialogFragment.ContactDialogListener{
-
+    private static final String TAG = "MyContactsActivity";
     private ContactDBHelper db;
     private RecyclerView myContactsRecycler;
     private MyContactsAdapter myContactsAdapter;
     private TextView emptyState;
+    private User user = User.getInstance();
+    private DatabaseReference userRef;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -34,16 +46,16 @@ public class MyContactsActivity extends AppCompatActivity implements AddContactD
         setTitle("My Contacts");
         db = new ContactDBHelper(getApplicationContext());
         myContactsRecycler = (RecyclerView) findViewById(R.id.contacts_recycler);
-        myContactsRecycler = (RecyclerView) findViewById(R.id.contacts_recycler);
         emptyState = (TextView) findViewById(R.id.empty_contacts);
+        userRef = FirebaseDatabase.getInstance().getReference("users");
         FloatingActionButton floatingActionButton  = (FloatingActionButton) findViewById(R.id.add_contact);
         floatingActionButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-
+                showContctsDialog();
             }
         });
-        //db.insertContact("bob", "bob", "", "daaeb0_jNOg:APA91bFsiK-Oh7DjJOrybGluNlzST9eBy9Ag639MYXdkeub4DHzGzQ1ISzpxL4U82EKOIr4NIsvrUbbJ0wZx4LxV4puJK5yHW02EEshfl4KZJhmYFkZyIZu5Jks4Pyb1Zw8CzhxWtpC1");
+
         setUpList ();
     }
 
@@ -52,20 +64,21 @@ public class MyContactsActivity extends AppCompatActivity implements AddContactD
     private void setUpList () {
         Cursor c = db.getAllMyContacts(null);
         if (c != null && c.getCount() > 0) {
-            LinearLayoutManager mLayoutManager = new LinearLayoutManager(this);
             myContactsAdapter = new MyContactsAdapter(this, c, new MyContactsAdapter.OnItemClickListener() {
                 @Override
                 public void onItemClick(Contact contact, int position) {
                     createDialog(contact, position).show();
                 }
             });
-            myContactsRecycler.setLayoutManager(mLayoutManager);
-            myContactsRecycler.setAdapter(myContactsAdapter);
-
             emptyState.setVisibility(View.GONE);
         } else {
+            Log.i(TAG, "Found no items");
             emptyState.setVisibility(View.VISIBLE);
+            myContactsAdapter = new MyContactsAdapter(this);
         }
+        LinearLayoutManager mLayoutManager = new LinearLayoutManager(this);
+        myContactsRecycler.setLayoutManager(mLayoutManager);
+        myContactsRecycler.setAdapter(myContactsAdapter);
     }
 
     private AlertDialog createDialog (final Contact contact, final int position) {
@@ -87,15 +100,45 @@ public class MyContactsActivity extends AppCompatActivity implements AddContactD
         super.onDestroy();
     }
 
-    public void showNoticeDialog() {
+    public void showContctsDialog() {
         // Create an instance of the dialog fragment and show it
         DialogFragment dialog = new AddContactDialogFragment();
         dialog.show(getSupportFragmentManager(), "AddContactDialogFragment");
     }
 
     @Override
-    public void onDialogPositiveClick(DialogFragment dialog) {
+    public void onDialogPositiveClick(DialogFragment dialog, final String username) {
+        if(!db.isUserAlreadyInContacts(username) && !username.equals(user.name)){
+            Query query = userRef.orderByChild("username").equalTo(username);
+            query.addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    if(dataSnapshot.exists()){
+                        for (com.google.firebase.database.DataSnapshot userSnapshot : dataSnapshot.getChildren()) {
+                            //Getting the data from snapshot
+                            FirebaseUserModel firebaseUserModel = userSnapshot.getValue(FirebaseUserModel.class);
 
+                            if (firebaseUserModel.getUsername().equals(username)) {
+                                Log.i(TAG, "Adding to contacts: " + firebaseUserModel.getUsername());
+                                db.insertContact(firebaseUserModel.getUsername(), firebaseUserModel.getProfileName(), firebaseUserModel.getProfilePic(), firebaseUserModel.getDeviceToken());
+                                myContactsAdapter.addNewItem(firebaseUserModel);
+                                break;
+                            }
+                        }
+
+                    } else {
+                        Log.i(TAG, "Contact doesn't exist");
+                    }
+                }
+
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
+                    Log.i(TAG, "Failed to add contact");
+                }
+            });
+        } else {
+            Log.i(TAG, "User cannot be added as they may already exist or it is your username");
+        }
     }
 
     @Override

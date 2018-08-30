@@ -65,6 +65,30 @@ public class ContactDBHelper extends SQLiteOpenHelper {
         return cursor;
     }
 
+    public boolean isUserAlreadyInContacts(String username){
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        String[] projection = {
+                BaseColumns._ID
+        };
+
+        String selection = MyContactsContract.MyContactsContractEntry.COLUMN_USERNAME + " = ?";
+        String[] selectionArgs = { username };
+
+        Cursor cursor = db.query(
+                MyContactsContract.MyContactsContractEntry.TABLE_NAME,   // The table to query
+                projection,             // The array of columns to return (pass null to get all)
+                selection,              // The columns for the WHERE clause
+                selectionArgs,          // The values for the WHERE clause
+                null,                   // don't group the rows
+                null,                   // don't filter by row groups
+                null                    // The sort order
+        );
+
+        return (cursor.getCount() > 0);
+
+    }
+
     public int removeContact (String username){
         SQLiteDatabase db = getWritableDatabase();
         String where = MyContactsContract.MyContactsContractEntry.COLUMN_USERNAME  + " = ?";

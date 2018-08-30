@@ -12,6 +12,7 @@ import android.support.v7.app.AlertDialog;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
 import com.example.naziur.androidchat.R;
 
@@ -22,7 +23,7 @@ public class AddContactDialogFragment extends DialogFragment {
 
 
     public interface ContactDialogListener {
-        public void onDialogPositiveClick(DialogFragment dialog);
+        public void onDialogPositiveClick(DialogFragment dialog, String username);
         public void onDialogNegativeClick(DialogFragment dialog);
     }
 
@@ -39,15 +40,18 @@ public class AddContactDialogFragment extends DialogFragment {
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         // Get the layout inflater
         LayoutInflater inflater = getActivity().getLayoutInflater();
-
+        View v = inflater.inflate(R.layout.fragment_add_contact_dialog, null);
+        final TextView usernameTv = v.findViewById(R.id.username);
         // Inflate and set the layout for the dialog
         // Pass null as the parent view because its going in the dialog layout
-        builder.setView(inflater.inflate(R.layout.fragment_add_contact_dialog, null))
+        builder.setView(v)
                 // Add action buttons
                 .setPositiveButton(R.string.add_contact, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int id) {
-                        mListener.onDialogPositiveClick(AddContactDialogFragment.this);
+                        String username = usernameTv.getText().toString().trim();
+                        if(!username.equals(""))
+                            mListener.onDialogPositiveClick(AddContactDialogFragment.this, username);
                     }
                 })
                 .setNegativeButton(R.string.cancel_contact, new DialogInterface.OnClickListener() {

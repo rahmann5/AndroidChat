@@ -3,18 +3,12 @@ package com.example.naziur.androidchat.fragment;
 
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Toast;
 
 import com.example.naziur.androidchat.R;
-import com.example.naziur.androidchat.activities.SessionActivity;
 import com.example.naziur.androidchat.models.Contact;
-import com.example.naziur.androidchat.models.FirebaseUserModel;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
@@ -25,9 +19,9 @@ import java.util.List;
 /**
  * A simple {@link Fragment} subclass.
  */
-public class ContactsFragment extends Fragment {
+public class SessionFragment extends Fragment {
 
-    private static final String TAG = ContactsFragment.class.getSimpleName();
+    private static final String TAG = SessionFragment.class.getSimpleName();
 
     private FirebaseDatabase database;
     private DatabaseReference messagesRef;
@@ -36,7 +30,7 @@ public class ContactsFragment extends Fragment {
 
     private List<Contact> allContacts;
 
-    public ContactsFragment() {
+    public SessionFragment() {
         // Required empty public constructor
     }
 
@@ -52,7 +46,7 @@ public class ContactsFragment extends Fragment {
         messagesRef = database.getReference("messages");
 
 
-        return inflater.inflate(R.layout.fragment_contacts, container, false);
+        return inflater.inflate(R.layout.fragment_session, container, false);
     }
 
     @Override
