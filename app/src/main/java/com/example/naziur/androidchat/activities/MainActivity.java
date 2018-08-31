@@ -92,7 +92,7 @@ public class MainActivity extends AppCompatActivity {
         //Intent intent = new Intent(this, ChatActivity.class);
         Intent intent;
         Bundle extra = getIntent().getExtras();
-        if (extra != null) {
+        if (extra != null && extra.getString("username") != null) {
             intent = new Intent(this, ChatActivity.class);
             intent.putExtra("username", extra.getString("username"));
         } else {
