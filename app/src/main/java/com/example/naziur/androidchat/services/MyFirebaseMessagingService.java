@@ -26,10 +26,15 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
     public void onMessageReceived(RemoteMessage remoteMessage) {
         Log.d(TAG, "From: " + remoteMessage.getFrom());
         Log.d(TAG, "Notification Message Body: " + remoteMessage.getNotification().getBody());
-
+        Log.d(TAG, "Notification Message Title: " + remoteMessage.getNotification().getTitle());
+        if (remoteMessage.getData().size() > 0) {
+            Log.d(TAG, "Message data payload: " + remoteMessage.getData());
+        }
         //Calling method to show notification
-        showNotification(remoteMessage.getNotification().getBody(), remoteMessage.getNotification().getTitle());
+        showNotification(remoteMessage.getNotification().getBody(),remoteMessage.getData().get("sender"));
     }
+
+
 
     private void showNotification(String messageBody, String to) {
         Intent intent = new Intent(this, MainActivity.class);
