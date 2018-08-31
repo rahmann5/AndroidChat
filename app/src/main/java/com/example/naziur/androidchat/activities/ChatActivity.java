@@ -246,7 +246,7 @@ public class ChatActivity extends AppCompatActivity {
                                         notificationObject.put("click_action", ".MainActivity");
                                         notificationObject.put("body", wishMessage);
                                         notificationObject.put("title", user.name);
-                                        notificationObject.put("data", payload);
+                                        params.put("data", payload);
 
                                         params.put("notification", notificationObject);
 

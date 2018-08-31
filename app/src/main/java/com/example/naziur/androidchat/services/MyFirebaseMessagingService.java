@@ -25,17 +25,15 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
     @Override
     public void onMessageReceived(RemoteMessage remoteMessage) {
         Log.d(TAG, "From: " + remoteMessage.getFrom());
-        //Log.d(TAG, "Notification Message Body: " + remoteMessage.getNotification().getBody());
-        //Log.d(TAG, "Notification Message Title: " + remoteMessage.getNotification().getTitle());
-        if (remoteMessage.getData().size() > 0) {
-            Log.d(TAG, "Message data payload: " + remoteMessage.getData());
-        }
+        Log.d(TAG, "Notification Message Body: " + remoteMessage.getNotification().getBody());
+
         //Calling method to show notification
-        showNotification(remoteMessage.getData().get("body"));
+        showNotification(remoteMessage.getNotification().getBody(), remoteMessage.getNotification().getTitle());
     }
 
-    private void showNotification(String messageBody) {
+    private void showNotification(String messageBody, String to) {
         Intent intent = new Intent(this, MainActivity.class);
+        intent.putExtra("username", to);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent,
                 PendingIntent.FLAG_ONE_SHOT);
