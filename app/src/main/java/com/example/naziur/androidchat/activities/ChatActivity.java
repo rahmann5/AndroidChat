@@ -231,7 +231,8 @@ public class ChatActivity extends AppCompatActivity {
                                     String url = "https://fcm.googleapis.com/fcm/send";
                                     AsyncHttpClient client = new AsyncHttpClient();
 
-                                    client.addHeader(HttpHeaders.AUTHORIZATION, "key=AIzaSyCl-lEfl7Rx9ZcDEyXX4sSpXhJYMS6PHfk");
+                                    //client.addHeader(HttpHeaders.AUTHORIZATION, "key=AIzaSyCl-lEfl7Rx9ZcDEyXX4sSpXhJYMS6PHfk");
+                                    client.addHeader(HttpHeaders.AUTHORIZATION, "key=AAAAQmgvFoU:APA91bF8shJboV6QDRVUvy-8ZKhZ6c1eri8a6zlkSPLDosvPZ-MegfsPEOGeKUhoxmtMq3d11bzeOEWWIupjCuKW3rgbwmqZ8LqumrK_ldWYT_ipDExdy4J2OWnhYwvb9Y6pIx8vOWD8");
                                     client.addHeader(HttpHeaders.CONTENT_TYPE, RequestParams.APPLICATION_JSON);
 
                                     try {
@@ -241,13 +242,11 @@ public class ChatActivity extends AppCompatActivity {
                                         params.put("to", friend.getDeviceToken());
 
                                         JSONObject notificationObject = new JSONObject();
-                                        JSONObject payload = new JSONObject();
-                                        payload.put("sender", user.name);
                                         notificationObject.put("body", wishMessage);
                                         notificationObject.put("title", user.name);
-                                        notificationObject.put("data", payload);
+                                        notificationObject.put("data", notificationObject);
 
-                                        params.put("notification", notificationObject);
+                                        //params.put("notification", notificationObject);
 
                                         StringEntity entity = new StringEntity(params.toString());
 
