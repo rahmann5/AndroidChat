@@ -243,7 +243,6 @@ public class ChatActivity extends AppCompatActivity {
                                         JSONObject notificationObject = new JSONObject();
                                         notificationObject.put("body", wishMessage);
                                         notificationObject.put("title", user.name);
-                                        notificationObject.put("tag", friend.getUsername());
 
                                         params.put("notification", notificationObject);
 
