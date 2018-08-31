@@ -231,7 +231,7 @@ public class ChatActivity extends AppCompatActivity {
                                     String url = "https://fcm.googleapis.com/fcm/send";
                                     AsyncHttpClient client = new AsyncHttpClient();
 
-                                    //client.addHeader(HttpHeaders.AUTHORIZATION, "key=AIzaSyCl-lEfl7Rx9ZcDEyXX4sSpXhJYMS6PHfk");
+                                   //client.addHeader(HttpHeaders.AUTHORIZATION, "key=AIzaSyCl-lEfl7Rx9ZcDEyXX4sSpXhJYMS6PHfk");
                                     client.addHeader(HttpHeaders.AUTHORIZATION, "key=AAAAQmgvFoU:APA91bF8shJboV6QDRVUvy-8ZKhZ6c1eri8a6zlkSPLDosvPZ-MegfsPEOGeKUhoxmtMq3d11bzeOEWWIupjCuKW3rgbwmqZ8LqumrK_ldWYT_ipDExdy4J2OWnhYwvb9Y6pIx8vOWD8");
                                     client.addHeader(HttpHeaders.CONTENT_TYPE, RequestParams.APPLICATION_JSON);
 
@@ -240,13 +240,15 @@ public class ChatActivity extends AppCompatActivity {
 
                                         //params.put("registration_ids", registration_ids);
                                         params.put("to", friend.getDeviceToken());
-
+                                        JSONObject payload = new JSONObject();
+                                        payload.put("sender", user.name);
                                         JSONObject notificationObject = new JSONObject();
+                                        notificationObject.put("click_action", ".MainActivity");
                                         notificationObject.put("body", wishMessage);
                                         notificationObject.put("title", user.name);
-                                        notificationObject.put("data", notificationObject);
+                                        notificationObject.put("data", payload);
 
-                                        //params.put("notification", notificationObject);
+                                        params.put("notification", notificationObject);
 
                                         StringEntity entity = new StringEntity(params.toString());
 
