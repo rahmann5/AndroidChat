@@ -94,7 +94,7 @@ public class MainActivity extends AppCompatActivity {
         Bundle extra = getIntent().getExtras();
         if (extra != null && extra.getString("sender") != null) {
             intent = new Intent(this, ChatActivity.class);
-            intent.putExtra("sender", extra.getString("sender"));
+            intent.putExtra("username", extra.getString("sender"));
         } else {
             intent = new Intent(this, SessionActivity.class);
             System.out.println("No Extra");
