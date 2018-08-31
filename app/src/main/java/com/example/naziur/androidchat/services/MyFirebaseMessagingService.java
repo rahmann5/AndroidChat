@@ -34,8 +34,6 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         showNotification(remoteMessage.getNotification().getBody(),remoteMessage.getData().get("sender"));
     }
 
-
-
     private void showNotification(String messageBody, String to) {
         Intent intent = new Intent(this, MainActivity.class);
         intent.putExtra("username", to);
