@@ -1,5 +1,8 @@
 package com.example.naziur.androidchat.models;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Created by Hamidur on 27/08/2018.
  */
@@ -11,9 +14,18 @@ public class FirebaseUserModel {
     String username = "";
     String profileName = "";
     String profilePic = "";
+    String chatKeys = "";
 
     public FirebaseUserModel() {
       /*Blank default constructor essential for Firebase*/
+    }
+
+    public String getChatKeys() {
+        return chatKeys;
+    }
+
+    public void setChatKeys(String chatKeys) {
+        this.chatKeys = chatKeys;
     }
 
     public String getDeviceId() {
@@ -55,4 +67,5 @@ public class FirebaseUserModel {
     public void setProfilePic(String profilePic) {
         this.profilePic = profilePic;
     }
+
 }
