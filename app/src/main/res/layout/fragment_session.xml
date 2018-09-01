@@ -5,15 +5,15 @@
     tools:context="com.example.naziur.androidchat.fragment.SessionFragment">
 
     <android.support.v7.widget.RecyclerView
-        android:id="@+id/all_contacts_list"
+        android:id="@+id/all_chats_list"
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
 
     <TextView
-        android:id="@+id/no_contacts"
+        android:id="@+id/no_chats"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="No Contacts"
+        android:text="No chats"
         android:layout_centerHorizontal="true"
         android:layout_centerVertical="true"
         android:textSize="25sp"
