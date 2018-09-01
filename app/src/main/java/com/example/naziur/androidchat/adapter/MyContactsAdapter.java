@@ -28,6 +28,8 @@ public class MyContactsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
 
     public OnItemClickListener listener;
 
+    private boolean isChat = false;
+
     public interface OnItemClickListener {
         void onItemClick (Contact contact, int pos);
     }
@@ -42,6 +44,10 @@ public class MyContactsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
         allMyContacts = new ArrayList<>();
         this.context = context;;
         this.listener = listener;
+    }
+
+    public void setIsChat(boolean isChat){
+        this.isChat = isChat;
     }
 
     @Override
