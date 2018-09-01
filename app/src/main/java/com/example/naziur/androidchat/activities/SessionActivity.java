@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.widget.Toast;
 
 import com.example.naziur.androidchat.R;
 import com.example.naziur.androidchat.adapter.SessionFragmentPagerAdapter;
@@ -28,7 +29,7 @@ public class SessionActivity extends AppCompatActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.settings, menu);
+        inflater.inflate(R.menu.sessions_menu, menu);
         return true;
     }
 
@@ -39,8 +40,11 @@ public class SessionActivity extends AppCompatActivity {
             case R.id.my_contacts:
                 startActivity(new Intent(SessionActivity.this, MyContactsActivity.class));
                 return true;
-            case R.id.chat:
-                startActivity(new Intent(SessionActivity.this, ChatActivity.class));
+            case R.id.my_profile:
+                startActivity(new Intent(SessionActivity.this, ProfileActivity.class));
+                return true;
+            case R.id.settings:
+                Toast.makeText(this, "Settings", Toast.LENGTH_SHORT).show();
                 return true;
             default:
                 return super.onOptionsItemSelected(item);

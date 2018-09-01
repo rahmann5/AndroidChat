@@ -1,4 +1,4 @@
-package com.example.naziur.androidchat;
+package com.example.naziur.androidchat.adapter;
 
 import android.app.Activity;
 import android.content.Context;
@@ -8,6 +8,7 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
+import com.example.naziur.androidchat.R;
 import com.example.naziur.androidchat.models.MessageCell;
 
 /**

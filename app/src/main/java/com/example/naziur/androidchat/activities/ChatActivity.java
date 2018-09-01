@@ -3,12 +3,13 @@ package com.example.naziur.androidchat.activities;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
@@ -16,14 +17,12 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.Toast;
 
-import com.example.naziur.androidchat.MessagesListAdapter;
+import com.example.naziur.androidchat.adapter.MessagesListAdapter;
 import com.example.naziur.androidchat.R;
 import com.example.naziur.androidchat.models.FirebaseMessageModel;
 import com.example.naziur.androidchat.models.FirebaseUserModel;
 import com.example.naziur.androidchat.models.MessageCell;
 import com.example.naziur.androidchat.models.User;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -64,7 +63,6 @@ public class ChatActivity extends AppCompatActivity {
 
     private ActionBar actionBar;
     private FirebaseUserModel friend, me;
-    private String chatKey;
 
     public static ChatActivity chattingActivity;
 
@@ -157,14 +155,15 @@ public class ChatActivity extends AppCompatActivity {
             }
         };
 
-        usersRef.orderByChild("username").startAt(friend.getUsername()).endAt(user.name).addListenerForSingleValueEvent(new ValueEventListener() {
+        // improve for future search of users (need only the sender and receiver - currently looping through al users)
+        usersRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(com.google.firebase.database.DataSnapshot dataSnapshot) {
                 for (com.google.firebase.database.DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
                     System.out.println("Child: " + postSnapshot);
                     //Getting the data from snapshot
                     FirebaseUserModel firebaseUserModel = postSnapshot.getValue(FirebaseUserModel.class);
-                    if (firebaseUserModel.getUsername().equals(friend.getUsername()) && !firebaseUserModel.getDeviceToken().isEmpty()) {
+                    if (firebaseUserModel.getUsername().equals(friend.getUsername())) {
                         friend = firebaseUserModel;
                         actionBar.setTitle("   " + friend.getUsername());
                     }
@@ -173,35 +172,49 @@ public class ChatActivity extends AppCompatActivity {
                         me = firebaseUserModel;
                     }
 
-                    if (me != null && friend != null) {
+                    if (me != null && !friend.getDeviceToken().equals("")) {
                         break;
                     }
                 }
 
-                if (me.getChatKeys().equals("") || friend.getChatKeys().equals("")) {
-                    messagesRef = database.getReference("messages")
-                            .child("single")
-                            .child(makeChatKey(me, friend));
-                } else {
-                    String[] allMyKeys  = me.getChatKeys().split(",");
-                    List<String> allFriendKeys  = Arrays.asList(friend.getChatKeys().split(","));
-                    for(String key : allMyKeys) {
-                        if (allFriendKeys.contains(key)) {
-                            messagesRef = database.getReference("messages")
-                                    .child("single")
-                                    .child(key);
-                            break;
+                if (me != null) {
+                    if (!me.getChatKeys().equals("") && !friend.getChatKeys().equals("")) { // both with keys but maybe not same keys
+                        System.out.println("BOTH HAVE DATA");
+                        String[] allMyKeys  = me.getChatKeys().split(",");
+                        List<String> allFriendKeys  = Arrays.asList(friend.getChatKeys().split(","));
+                        for(String key : allMyKeys) {
+                            if (allFriendKeys.contains(key)) { // both make existing keys
+                                messagesRef = database.getReference("messages")
+                                        .child("single")
+                                        .child(key);
+                                break;
+                            }
                         }
-                    }
-                    if (messagesRef == null) {
-                        messagesRef = database.getReference("messages")
-                                .child("single")
-                                .child(makeChatKey(me, friend));
-                    }
-                }
 
-                //Value event listener for realtime data update
-                messagesRef.addValueEventListener(commentValueEventListener);
+                    } else if (me.getChatKeys().equals("") && !friend.getChatKeys().equals("")) { // me without key but friend with key but not sure same key
+                        System.out.println("FRIEND HAS DATA");
+                        verifyUserChatKeys(friend, me);
+
+                    }  else if (!me.getChatKeys().equals("") && friend.getChatKeys().equals("")) { // friend without key but me with key but not sure same key
+                        System.out.println("ME HAS DATA");
+                        verifyUserChatKeys(me, friend);
+
+                    } else { // no chat keys created yet for both
+                        System.out.println("NONE HAS DATA");
+                        createMessageRefWithNewKey ();
+                    }
+
+                    if (messagesRef == null) {
+                        createMessageRefWithNewKey ();
+                    }
+
+                    //Value event listener for realtime data update
+                    messagesRef.addValueEventListener(commentValueEventListener);
+
+                } else {
+                    System.out.println("ME is null");
+                    finish();
+                }
 
                 if (Dialog.isShowing()) {
                     Dialog.dismiss();
@@ -308,6 +321,48 @@ public class ChatActivity extends AppCompatActivity {
 
     }
 
+    private void createMessageRefWithNewKey () {
+        messagesRef = database.getReference("messages")
+                .child("single")
+                .child(makeChatKey(me, friend));
+    }
+
+    private void verifyUserChatKeys (FirebaseUserModel withKeys, FirebaseUserModel withoutKeys) {
+        String[] allKeys  = withKeys.getChatKeys().split(",");
+        for(String key : allKeys) {
+            String username1 = key.split("-")[0];
+            String username2 = key.split("-")[1];
+            if (username1.equals(withoutKeys.getUsername()) || username2.equals(withoutKeys.getUsername())) {
+                messagesRef = database.getReference("messages")
+                        .child("single")
+                        .child(addChatKey(withoutKeys, key));
+                break;
+            }
+        }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.chat_menu, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.view_details :
+                Toast.makeText(this, "View contact details for " + friend.getUsername(), Toast.LENGTH_SHORT).show();
+                return true;
+
+            default: return super.onOptionsItemSelected(item);
+        }
+    }
+
+    private String addChatKey (FirebaseUserModel user, String key) {
+        stringVerification(user, key);
+        return key;
+    }
+
     private String makeChatKey (FirebaseUserModel sender, FirebaseUserModel receiver) {
         String key = sender.getUsername() + "-" + receiver.getUsername();
         stringVerification(sender, key);
@@ -315,16 +370,16 @@ public class ChatActivity extends AppCompatActivity {
         return key;
     }
 
-    private void stringVerification(final FirebaseUserModel model, final String key) {
+    private void stringVerification(final FirebaseUserModel addKeyTo, final String key) {
         try {
-            usersRef.orderByChild("username").equalTo(model.getUsername()).addListenerForSingleValueEvent(new ValueEventListener() {
+            usersRef.orderByChild("username").equalTo(addKeyTo.getUsername()).addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
                 public void onDataChange(DataSnapshot dataSnapshot) {
                     for (DataSnapshot snapshot: dataSnapshot.getChildren()) {
-                        if (model.getChatKeys().equals("")) {
+                        if (addKeyTo.getChatKeys().equals("")) {
                             snapshot.getRef().child("chatKeys").setValue(key);
                         } else {
-                            snapshot.getRef().child("chatKeys").setValue(model.getChatKeys() + "," + key);
+                            snapshot.getRef().child("chatKeys").setValue(addKeyTo.getChatKeys() + "," + key);
                         }
                     }
                 }
@@ -336,7 +391,7 @@ public class ChatActivity extends AppCompatActivity {
             });
 
         } catch (Exception e) {
-            System.out.println("FAILED " + model.getUsername());
+            System.out.println("FAILED " + addKeyTo.getUsername());
             e.printStackTrace();
         }
 
