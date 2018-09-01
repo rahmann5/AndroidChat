@@ -3,19 +3,17 @@ package com.example.naziur.androidchat.activities;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
-import android.view.Gravity;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.naziur.androidchat.MessagesListAdapter;
@@ -24,21 +22,22 @@ import com.example.naziur.androidchat.models.FirebaseMessageModel;
 import com.example.naziur.androidchat.models.FirebaseUserModel;
 import com.example.naziur.androidchat.models.MessageCell;
 import com.example.naziur.androidchat.models.User;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.RequestParams;
 import com.loopj.android.http.TextHttpResponseHandler;
 
-import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
 
@@ -64,7 +63,8 @@ public class ChatActivity extends AppCompatActivity {
     DatabaseReference usersRef;
 
     private ActionBar actionBar;
-    FirebaseUserModel friend;
+    private FirebaseUserModel friend, me;
+    private String chatKey;
 
     public static ChatActivity chattingActivity;
 
@@ -84,8 +84,6 @@ public class ChatActivity extends AppCompatActivity {
         createCustomActionBar();
         database = FirebaseDatabase.getInstance();
         usersRef = database.getReference("users");
-        messagesRef = database.getReference("messages").child("single");
-
 
         chattingActivity = this;
 
@@ -137,11 +135,7 @@ public class ChatActivity extends AppCompatActivity {
                     //System.out.println("Child: " + postSnapshot);
                     //Getting the data from snapshot
                     FirebaseMessageModel firebaseMessageModel = postSnapshot.getValue(FirebaseMessageModel.class);
-                   if (firebaseMessageModel.getMsgId().equals(user.name + "-" + friend.getUsername()) ||
-                           firebaseMessageModel.getMsgId().equals(friend.getUsername() + "-" + user.name)) {
-                       firebaseMessageModel.setId(postSnapshot.getKey());
-                       messages.add(firebaseMessageModel);
-                   }
+                    messages.add(firebaseMessageModel);
                 }
 
                 updateListView();
@@ -163,10 +157,9 @@ public class ChatActivity extends AppCompatActivity {
             }
         };
 
-        usersRef.orderByChild("username").equalTo(friend.getUsername()).addListenerForSingleValueEvent(new ValueEventListener() {
+        usersRef.orderByChild("username").startAt(friend.getUsername()).endAt(user.name).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(com.google.firebase.database.DataSnapshot dataSnapshot) {
-
                 for (com.google.firebase.database.DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
                     System.out.println("Child: " + postSnapshot);
                     //Getting the data from snapshot
@@ -175,7 +168,40 @@ public class ChatActivity extends AppCompatActivity {
                         friend = firebaseUserModel;
                         actionBar.setTitle("   " + friend.getUsername());
                     }
+
+                    if (firebaseUserModel.getUsername().equals(user.name)) {
+                        me = firebaseUserModel;
+                    }
+
+                    if (me != null && friend != null) {
+                        break;
+                    }
                 }
+
+                if (me.getChatKeys().equals("") || friend.getChatKeys().equals("")) {
+                    messagesRef = database.getReference("messages")
+                            .child("single")
+                            .child(makeChatKey(me, friend));
+                } else {
+                    String[] allMyKeys  = me.getChatKeys().split(",");
+                    List<String> allFriendKeys  = Arrays.asList(friend.getChatKeys().split(","));
+                    for(String key : allMyKeys) {
+                        if (allFriendKeys.contains(key)) {
+                            messagesRef = database.getReference("messages")
+                                    .child("single")
+                                    .child(key);
+                            break;
+                        }
+                    }
+                    if (messagesRef == null) {
+                        messagesRef = database.getReference("messages")
+                                .child("single")
+                                .child(makeChatKey(me, friend));
+                    }
+                }
+
+                //Value event listener for realtime data update
+                messagesRef.addValueEventListener(commentValueEventListener);
 
                 if (Dialog.isShowing()) {
                     Dialog.dismiss();
@@ -208,7 +234,6 @@ public class ChatActivity extends AppCompatActivity {
                     firebaseMessageModel.setSenderDeviceId(user.deviceId);
                     firebaseMessageModel.setSenderName(user.name);
                     firebaseMessageModel.setReceiverName(friend.getUsername());
-                    firebaseMessageModel.setMsgId(user.name + "-" +friend.getUsername());
 
                     final ProgressDialog Dialog = new ProgressDialog(chattingActivity);
                     Dialog.setMessage("Please wait..");
@@ -281,8 +306,40 @@ public class ChatActivity extends AppCompatActivity {
             }
         });
 
-        //Value event listener for realtime data update
-        messagesRef.addValueEventListener(commentValueEventListener);
+    }
+
+    private String makeChatKey (FirebaseUserModel sender, FirebaseUserModel receiver) {
+        String key = sender.getUsername() + "-" + receiver.getUsername();
+        stringVerification(sender, key);
+        stringVerification(receiver, key);
+        return key;
+    }
+
+    private void stringVerification(final FirebaseUserModel model, final String key) {
+        try {
+            usersRef.orderByChild("username").equalTo(model.getUsername()).addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    for (DataSnapshot snapshot: dataSnapshot.getChildren()) {
+                        if (model.getChatKeys().equals("")) {
+                            snapshot.getRef().child("chatKeys").setValue(key);
+                        } else {
+                            snapshot.getRef().child("chatKeys").setValue(model.getChatKeys() + "," + key);
+                        }
+                    }
+                }
+
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
+                    System.out.println("The read failed: " + databaseError.getMessage());
+                }
+            });
+
+        } catch (Exception e) {
+            System.out.println("FAILED " + model.getUsername());
+            e.printStackTrace();
+        }
+
     }
 
     private void createCustomActionBar () {

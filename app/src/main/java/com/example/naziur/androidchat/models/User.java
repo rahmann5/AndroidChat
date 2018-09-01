@@ -2,6 +2,9 @@ package com.example.naziur.androidchat.models;
 
 import android.content.SharedPreferences;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Created by Hamidur on 27/08/2018.
  */
@@ -20,7 +23,6 @@ public class User {
     public String deviceToken = "";
 
     public static final String appPreferences = "ChattingAppPreferences" ;
-
     public static final String Key  = "keyKey";
     public static final String Name = "nameKey";
     public static final String ProfileName = "profileNameKey";

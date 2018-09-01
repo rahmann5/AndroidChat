@@ -9,7 +9,6 @@ import com.google.firebase.database.ServerValue;
 
 public class FirebaseMessageModel {
 
-    private String msgId;
     private String senderDeviceId;
     private String text;
     private Long createdDate;
@@ -47,14 +46,6 @@ public class FirebaseMessageModel {
 
     public void setReceiverName(String receiverName) {
         this.receiverName = receiverName;
-    }
-
-    public String getMsgId() {
-        return msgId;
-    }
-
-    public void setMsgId(String msgId) {
-        this.msgId = msgId;
     }
 
     @Exclude
