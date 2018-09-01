@@ -157,7 +157,7 @@ public class ChatActivity extends AppCompatActivity {
             }
         };
 
-        usersRef.orderByChild("username").startAt(friend.getUsername()).endAt(user.name).addListenerForSingleValueEvent(new ValueEventListener() {
+        usersRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(com.google.firebase.database.DataSnapshot dataSnapshot) {
                 for (com.google.firebase.database.DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
@@ -173,7 +173,7 @@ public class ChatActivity extends AppCompatActivity {
                         me = firebaseUserModel;
                     }
 
-                    if (me != null && friend != null) {
+                    if (me != null && !friend.getDeviceToken().equals("")) {
                         break;
                     }
                 }
