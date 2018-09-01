@@ -102,21 +102,23 @@ public class SessionFragment extends Fragment {
             valueEventListeners.add(i, new ValueEventListener() {
                 @Override
                 public void onDataChange(DataSnapshot dataSnapshot) {
-                    for(com.google.firebase.database.DataSnapshot msgSnapshot : dataSnapshot.getChildren()) {
-                        FirebaseMessageModel firebaseMessageModel = msgSnapshot.getValue(FirebaseMessageModel.class);
-                        System.out.println("Sender: " + firebaseMessageModel.getSenderName() +" sent " + firebaseMessageModel.getText());
+                    if(dataSnapshot.exists()) {
+                        for (com.google.firebase.database.DataSnapshot msgSnapshot : dataSnapshot.getChildren()) {
+                            FirebaseMessageModel firebaseMessageModel = msgSnapshot.getValue(FirebaseMessageModel.class);
+                            System.out.println("Sender: " + firebaseMessageModel.getSenderName() + " sent " + firebaseMessageModel.getText());
 
-                        String isChattingTo = (firebaseMessageModel.getSenderName().equals(user.name)) ? firebaseMessageModel.getReceiverName() : firebaseMessageModel.getSenderName();
+                            String isChattingTo = (firebaseMessageModel.getSenderName().equals(user.name)) ? firebaseMessageModel.getReceiverName() : firebaseMessageModel.getSenderName();
 
-                        Chat chat = new Chat(isChattingTo, new MessageCell(
-                                firebaseMessageModel.getSenderName(),
-                                firebaseMessageModel.getText(),
-                                ChatActivity.getDate(firebaseMessageModel.getCreatedDateLong()),
-                                false
-                        ));
-                        allChats.add(chat);
+                            Chat chat = new Chat(isChattingTo, new MessageCell(
+                                    firebaseMessageModel.getSenderName(),
+                                    firebaseMessageModel.getText(),
+                                    ChatActivity.getDate(firebaseMessageModel.getCreatedDateLong()),
+                                    false
+                            ));
+                            allChats.add(chat);
+                        }
+                        myChatsdapter.setAllMyChats(allChats);
                     }
-                    myChatsdapter.setAllMyChats(allChats);
                 }
 
                 @Override
