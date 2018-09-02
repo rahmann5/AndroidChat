@@ -127,7 +127,7 @@ public class SessionFragment extends Fragment {
                 }
             });
 
-            messagesRef.child("single").child(allChatKeys.get(i)).limitToLast(1).addValueEventListener(valueEventListeners.get(i));
+            messagesRef.child("single").child(allChatKeys.get(i)).limitToLast(1).addListenerForSingleValueEvent(valueEventListeners.get(i));
         }
     }
 
@@ -151,8 +151,8 @@ public class SessionFragment extends Fragment {
     }
 
     @Override
-    public void onStop() {
-        super.onStop();
+    public void onDestroy() {
+        super.onDestroy();
 
         if (userListener != null) {
             usersRef.removeEventListener(userListener);
