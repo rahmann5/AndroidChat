@@ -1,6 +1,7 @@
 package com.example.naziur.androidchat.fragment;
 
 
+import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
@@ -66,6 +67,13 @@ public class SessionFragment extends Fragment {
         messagesRef = database.getReference("messages");
         recyclerView = rootView.findViewById(R.id.all_chats_list);
 
+        setUpRecyclerView();
+        return rootView;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
         userListener = new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -74,7 +82,6 @@ public class SessionFragment extends Fragment {
                     if(firebaseUserModel.getUsername().equals(user.name)){
                         String[] allKeys = firebaseUserModel.getChatKeys().split(",");
                         allChatKeys.clear();
-                        allChats.clear();
                         for(String key: allKeys){
                             System.out.println("Adding key " + key);
                             allChatKeys.add(key);
@@ -92,43 +99,42 @@ public class SessionFragment extends Fragment {
         };
 
         usersRef.addValueEventListener(userListener);
-
-        setUpRecyclerView();
-        return rootView;
     }
 
     private void setUpMsgEventListeners(){
-        for(int i= 0; i < allChatKeys.size(); i++){
-            valueEventListeners.add(i, new ValueEventListener() {
-                @Override
-                public void onDataChange(DataSnapshot dataSnapshot) {
-                    if(dataSnapshot.exists()) {
-                        for (com.google.firebase.database.DataSnapshot msgSnapshot : dataSnapshot.getChildren()) {
-                            FirebaseMessageModel firebaseMessageModel = msgSnapshot.getValue(FirebaseMessageModel.class);
-                            System.out.println("Sender: " + firebaseMessageModel.getSenderName() + " sent " + firebaseMessageModel.getText());
+            for (int i = 0; i < allChatKeys.size(); i++) {
+                valueEventListeners.clear();
+                valueEventListeners.add(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        if (dataSnapshot.exists()) {
+                            allChats.clear();
+                            for (com.google.firebase.database.DataSnapshot msgSnapshot : dataSnapshot.getChildren()) {
+                                FirebaseMessageModel firebaseMessageModel = msgSnapshot.getValue(FirebaseMessageModel.class);
+                                System.out.println("Sender: " + firebaseMessageModel.getSenderName() + " sent " + firebaseMessageModel.getText());
 
-                            String isChattingTo = (firebaseMessageModel.getSenderName().equals(user.name)) ? firebaseMessageModel.getReceiverName() : firebaseMessageModel.getSenderName();
+                                String isChattingTo = (firebaseMessageModel.getSenderName().equals(user.name)) ? firebaseMessageModel.getReceiverName() : firebaseMessageModel.getSenderName();
 
-                            Chat chat = new Chat(isChattingTo, new MessageCell(
-                                    firebaseMessageModel.getSenderName(),
-                                    firebaseMessageModel.getText(),
-                                    ChatActivity.getDate(firebaseMessageModel.getCreatedDateLong()),
-                                    false
-                            ));
-                            allChats.add(chat);
+                                Chat chat = new Chat(isChattingTo, new MessageCell(
+                                        firebaseMessageModel.getSenderName(),
+                                        firebaseMessageModel.getText(),
+                                        ChatActivity.getDate(firebaseMessageModel.getCreatedDateLong()),
+                                        false
+                                ));
+                                allChats.add(chat);
+                            }
+                            myChatsdapter.setAllMyChats(allChats);
                         }
-                        myChatsdapter.setAllMyChats(allChats);
                     }
-                }
 
-                @Override
-                public void onCancelled(DatabaseError databaseError) {
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
 
-                }
-            });
+                    }
+                });
 
-            messagesRef.child("single").child(allChatKeys.get(i)).limitToLast(1).addListenerForSingleValueEvent(valueEventListeners.get(i));
-        }
+                messagesRef.child("single").child(allChatKeys.get(i)).limitToLast(1).addValueEventListener(valueEventListeners.get(i));
+            }
     }
 
     private void setUpRecyclerView(){
@@ -151,16 +157,17 @@ public class SessionFragment extends Fragment {
     }
 
     @Override
-    public void onDestroy() {
-        super.onDestroy();
+    public void onStop() {
 
+        System.out.println("Destroying listeners");
         if (userListener != null) {
             usersRef.removeEventListener(userListener);
         }
-
-        for(ValueEventListener valueEventListener : valueEventListeners){
-            messagesRef.removeEventListener(valueEventListener);
+        System.out.println("All chat keys: " + allChatKeys.size() + " value event listeners: " + valueEventListeners.size());
+        for(int i = 0; i < valueEventListeners.size(); i++){
+            messagesRef.child("single").child(allChatKeys.get(i)).limitToLast(1).removeEventListener(valueEventListeners.get(i));
         }
+        super.onStop();
 
     }
 
