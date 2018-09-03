@@ -165,7 +165,7 @@ public class ChatActivity extends AppCompatActivity {
                     FirebaseUserModel firebaseUserModel = postSnapshot.getValue(FirebaseUserModel.class);
                     if (firebaseUserModel.getUsername().equals(friend.getUsername())) {
                         friend = firebaseUserModel;
-                        actionBar.setTitle("   " + friend.getUsername());
+                        actionBar.setTitle("   " + friend.getProfileName());
                     }
 
                     if (firebaseUserModel.getUsername().equals(user.name)) {

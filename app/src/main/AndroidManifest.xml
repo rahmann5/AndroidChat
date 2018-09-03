@@ -36,7 +36,8 @@
         <activity android:name=".activities.ChatActivity" />
         <activity android:name=".activities.SessionActivity" />
         <activity android:name=".activities.MyContactsActivity" />
-        <activity android:name=".activities.ProfileActivity"></activity>
+        <activity android:name=".activities.ProfileActivity"
+            android:theme="@style/AppTheme.Transparent"/>
     </application>
 
 </manifest>
