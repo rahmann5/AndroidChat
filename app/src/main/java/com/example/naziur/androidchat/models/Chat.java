@@ -6,30 +6,54 @@ package com.example.naziur.androidchat.models;
 
 public class Chat {
 
-    private MessageCell messageCell;
+    //profile name of the person the device owner is speaking to
+    private String chatKey;
+
     private String speakingTo;
+    private String usernameOfTheOneBeingSpokenTo;
+    private String lastMsgInThisChat;
+    private String timeOfMsg;
 
-    public Chat(String speakingTo, MessageCell messageCell){
+    private String profilePic;
+
+    public Chat(String speakingTo, String username, String lastMsg, String pic, String time, String chatKey){
         this.speakingTo = speakingTo;
-        this.messageCell = messageCell;
+        usernameOfTheOneBeingSpokenTo = username;
+        lastMsgInThisChat = lastMsg;
+        profilePic = pic;
+        timeOfMsg = time;
+        this.chatKey = chatKey;
+
     }
 
-    public MessageCell getMessageCell() {
-        return messageCell;
+    public String getChatKey() {
+        return chatKey;
     }
 
-    public void setMessageCell(MessageCell messageCell) {
-        this.messageCell = messageCell;
+
+    public String getTimeOfMsg() {
+        return timeOfMsg;
     }
 
     public String getSpeakingTo() {
         return speakingTo;
     }
 
+    public String getUsernameOfTheOneBeingSpokenTo() {
+        return usernameOfTheOneBeingSpokenTo;
+    }
+
+    public String getLastMsgInThisChat() {
+        return lastMsgInThisChat;
+    }
+
+    public String getProfilePic() {
+        return profilePic;
+    }
+
     public void setSpeakingTo(String speakingTo) {
         this.speakingTo = speakingTo;
     }
-
 
 
 

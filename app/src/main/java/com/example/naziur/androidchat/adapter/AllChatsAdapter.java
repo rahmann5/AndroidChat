@@ -4,12 +4,12 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.example.naziur.androidchat.R;
 import com.example.naziur.androidchat.models.Chat;
-import com.example.naziur.androidchat.models.MessageCell;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,7 +31,7 @@ public class AllChatsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
 
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.list_item_contact, parent, false);
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.list_item_chat, parent, false);
         return new MyChatsViewHolder(view);
     }
 
@@ -45,6 +45,10 @@ public class AllChatsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         return allMyChats.size();
     }
 
+    public List<Chat> getAllMyChats(){
+        return allMyChats;
+    }
+
     public void setAllMyChats(List<Chat> allMyChats){
         this.allMyChats = allMyChats;
         notifyDataSetChanged();
@@ -52,18 +56,23 @@ public class AllChatsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
 
     public interface OnItemClickListener {
         void onItemClick (Chat chat, int pos);
+        void onItemLongClicked(Chat chat, int pos);
+        void onButtonClicked(Chat chat, int pos);
     }
 
     private static class MyChatsViewHolder extends RecyclerView.ViewHolder {
 
-        private TextView usernameTv, profileTv, lastMsgTv;
+        private TextView dateTimeTv, profileTv, lastMsgTv;
         private ImageView profPicIv;
+        private Button addContactBtn;
 
         public MyChatsViewHolder(View itemView) {
             super(itemView);
             profileTv = (TextView) itemView.findViewById(R.id.prof_name);
             lastMsgTv = (TextView) itemView.findViewById(R.id.last_msg);
             profPicIv = (ImageView) itemView.findViewById(R.id.prof_pic);
+            dateTimeTv = (TextView) itemView.findViewById(R.id.dateTime);
+            addContactBtn = (Button) itemView.findViewById(R.id.add_contact_btn);
         }
 
         public void bind (final Chat chat, final int position, final OnItemClickListener listener) {
@@ -73,9 +82,30 @@ public class AllChatsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                     listener.onItemClick(chat, position);
                 }
             });
-            profileTv.setText("@"+chat.getSpeakingTo());
-            //profileTv.setVisibility(View.GONE);
-            lastMsgTv.setText(chat.getMessageCell().getMessageText());
+
+            itemView.setOnLongClickListener(new View.OnLongClickListener() {
+                @Override
+                public boolean onLongClick(View view) {
+                    listener.onItemLongClicked(chat, position);
+                    return true;
+                }
+            });
+
+            if(chat.getUsernameOfTheOneBeingSpokenTo().equals(chat.getSpeakingTo())) {
+                addContactBtn.setVisibility(View.VISIBLE);
+                addContactBtn.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        listener.onButtonClicked(chat, position);
+                    }
+                });
+            } else {
+                addContactBtn.setVisibility(View.GONE);
+            }
+
+            profileTv.setText(chat.getSpeakingTo());
+            dateTimeTv.setText(chat.getTimeOfMsg());
+            lastMsgTv.setText(chat.getLastMsgInThisChat());
         }
     }
 

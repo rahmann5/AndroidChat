@@ -7,13 +7,12 @@
 
     <ImageView
         android:id="@+id/prof_pic"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
         android:layout_centerVertical="true"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
         android:src="@mipmap/ic_launcher"
-        android:visibility="gone"
         />
 
     <LinearLayout
@@ -47,29 +46,34 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:layout_centerVertical="true"
         android:layout_alignParentRight="true"
         android:layout_alignParentEnd="true"
         android:layout_marginRight="5dp"
         android:layout_marginEnd="5dp"
-
+        android:padding="5dp"
         android:gravity="center">
 
         <TextView
-            android:id="@+id/textView2"
+            android:id="@+id/dateTime"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Today"
             android:textAllCaps="true"
             />
 
-        <android.support.design.widget.FloatingActionButton
-            android:layout_width="30dp"
+        <Button
+            android:id="@+id/add_contact_btn"
+            android:layout_width="wrap_content"
             android:layout_height="30dp"
-            app:backgroundTint="#9bda5a"
-            android:src="@drawable/ic_friend"
-            android:scaleType="fitCenter"
-            />
+            android:layout_gravity="center"
+            android:background="@drawable/button_shape"
+            android:drawableStart="@drawable/ic_friend"
+            android:paddingLeft="25dp"
+            android:paddingRight="25dp"
+            android:textColor="#FFFFFF"
+            android:textSize="15sp"
+            android:drawableLeft="@drawable/ic_friend"
+            android:layout_margin="3dp"/>
 
 
     </LinearLayout>

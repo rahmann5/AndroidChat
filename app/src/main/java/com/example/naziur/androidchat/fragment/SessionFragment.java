@@ -1,32 +1,38 @@
 package com.example.naziur.androidchat.fragment;
 
 
-import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import com.example.naziur.androidchat.R;
 import com.example.naziur.androidchat.activities.ChatActivity;
+import com.example.naziur.androidchat.activities.ProfileActivity;
 import com.example.naziur.androidchat.adapter.AllChatsAdapter;
-import com.example.naziur.androidchat.adapter.MyContactsAdapter;
+import com.example.naziur.androidchat.database.ContactDBHelper;
 import com.example.naziur.androidchat.models.Chat;
-import com.example.naziur.androidchat.models.Contact;
 import com.example.naziur.androidchat.models.FirebaseMessageModel;
 import com.example.naziur.androidchat.models.FirebaseUserModel;
-import com.example.naziur.androidchat.models.MessageCell;
 import com.example.naziur.androidchat.models.User;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -45,6 +51,7 @@ public class SessionFragment extends Fragment {
     private User user = User.getInstance();
     private List<String> allChatKeys;
     private List<Chat> allChats;
+    private ContactDBHelper db;
     private List<ValueEventListener> valueEventListeners;
 
     public SessionFragment() {
@@ -66,7 +73,7 @@ public class SessionFragment extends Fragment {
         usersRef = database.getReference("users");
         messagesRef = database.getReference("messages");
         recyclerView = rootView.findViewById(R.id.all_chats_list);
-
+        db = new ContactDBHelper(getContext());
         setUpRecyclerView();
         return rootView;
     }
@@ -83,8 +90,8 @@ public class SessionFragment extends Fragment {
                         String[] allKeys = firebaseUserModel.getChatKeys().split(",");
                         allChatKeys.clear();
                         for(String key: allKeys){
-                            System.out.println("Adding key " + key);
-                            allChatKeys.add(key);
+                            if(!key.equals(""))
+                                allChatKeys.add(key);
                         }
                         setUpMsgEventListeners();
                         break;
@@ -102,25 +109,21 @@ public class SessionFragment extends Fragment {
     }
 
     private void setUpMsgEventListeners(){
+        allChats.clear();
             for (int i = 0; i < allChatKeys.size(); i++) {
+                final String chatKey = allChatKeys.get(i);
                 valueEventListeners.clear();
                 valueEventListeners.add(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
                         if (dataSnapshot.exists()) {
-                            allChats.clear();
                             for (com.google.firebase.database.DataSnapshot msgSnapshot : dataSnapshot.getChildren()) {
                                 FirebaseMessageModel firebaseMessageModel = msgSnapshot.getValue(FirebaseMessageModel.class);
-                                System.out.println("Sender: " + firebaseMessageModel.getSenderName() + " sent " + firebaseMessageModel.getText());
-
-                                String isChattingTo = (firebaseMessageModel.getSenderName().equals(user.name)) ? firebaseMessageModel.getReceiverName() : firebaseMessageModel.getSenderName();
-
-                                Chat chat = new Chat(isChattingTo, new MessageCell(
-                                        firebaseMessageModel.getSenderName(),
-                                        firebaseMessageModel.getText(),
-                                        ChatActivity.getDate(firebaseMessageModel.getCreatedDateLong()),
-                                        false
-                                ));
+                                String isChattingTo = (firebaseMessageModel.getSenderName().equals(user.name)) ? db.getProfileNameAndPic(firebaseMessageModel.getReceiverName())[0] : db.getProfileNameAndPic(firebaseMessageModel.getSenderName())[0];
+                                String username = (firebaseMessageModel.getSenderName().equals(user.name)) ? firebaseMessageModel.getReceiverName() : firebaseMessageModel.getSenderName();
+                                SimpleDateFormat formatter = new SimpleDateFormat(getString(R.string.simple_date));
+                                String dateString = formatter.format(new Date(firebaseMessageModel.getCreatedDateLong()));
+                                Chat chat = new Chat(isChattingTo, username, firebaseMessageModel.getText(), db.getProfileNameAndPic(username)[1], dateString, chatKey);
                                 allChats.add(chat);
                             }
                             myChatsdapter.setAllMyChats(allChats);
@@ -141,7 +144,20 @@ public class SessionFragment extends Fragment {
         myChatsdapter = new AllChatsAdapter(new AllChatsAdapter.OnItemClickListener() {
             @Override
             public void onItemClick(Chat chat, int pos) {
+                Intent chatActivity = new Intent(getActivity(), ChatActivity.class);
+                String username = chat.getUsernameOfTheOneBeingSpokenTo();
+                chatActivity.putExtra("username", username);
+                startActivity(chatActivity);
+            }
 
+            @Override
+            public void onItemLongClicked(Chat chat, int pos) {
+                createDialog(chat,pos).show();
+            }
+
+            @Override
+            public void onButtonClicked(Chat chat, int position) {
+                addUserToContacts(chat, position);
             }
         });
         LinearLayoutManager mLayoutManager = new LinearLayoutManager(getContext());
@@ -149,6 +165,108 @@ public class SessionFragment extends Fragment {
 
         recyclerView.setAdapter(myChatsdapter);
     }
+
+    private AlertDialog createDialog (final Chat chat, final int position) {
+        final AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        builder.setTitle(R.string.dialog_chat_select_action)
+                .setItems(R.array.chat_dialog_actions, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        // String[] actions = getResources().getStringArray(R.array.contact_dialog_actions);
+                        onActionSelected(which, chat, position);
+                        dialog.dismiss();
+                    }
+
+                    private void onActionSelected(int which, Chat chat, int position) {
+                        switch (which) {
+                            case 0 : // see profile info
+                                startActivity(new Intent(getActivity(), ProfileActivity.class));
+                                break;
+
+                            case 1 : // chat with contact
+                                Intent chatActivity = new Intent(getActivity(), ChatActivity.class);
+                                String username = chat.getUsernameOfTheOneBeingSpokenTo();
+                                chatActivity.putExtra("username", username);
+                                startActivity(chatActivity);
+                                break;
+
+                            case 2 : // delete Chat
+                                deleteChat(chat);
+                                break;
+                        }
+                    }
+                });
+        return builder.create();
+    }
+
+    private void deleteChat(Chat chat){
+        allChatKeys.remove(chat.getChatKey());
+        final String updatedKeys = getChatKeysAsString();
+        Query pendingTasks = usersRef.orderByChild("username").equalTo(user.name);
+        pendingTasks.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                for (DataSnapshot snapshot: dataSnapshot.getChildren()) {
+                    if(updatedKeys.equals(""))
+                        snapshot.getRef().child("chatKeys").removeValue();
+                    else
+                        snapshot.getRef().child("chatKeys").setValue(updatedKeys);
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+    }
+
+    private void addUserToContacts(final Chat chat, final int position){
+
+        if(!db.isUserAlreadyInContacts(chat.getUsernameOfTheOneBeingSpokenTo())){
+            Query query = usersRef.orderByChild("username").equalTo(chat.getUsernameOfTheOneBeingSpokenTo());
+            query.addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    if(dataSnapshot.exists()){
+                        for (com.google.firebase.database.DataSnapshot userSnapshot : dataSnapshot.getChildren()) {
+                            //Getting the data from snapshot
+                            FirebaseUserModel firebaseUserModel = userSnapshot.getValue(FirebaseUserModel.class);
+
+                            if (firebaseUserModel.getUsername().equals(chat.getUsernameOfTheOneBeingSpokenTo())) {
+                                Log.i(TAG, "Adding to contacts: " + firebaseUserModel.getUsername());
+                                db.insertContact(firebaseUserModel.getUsername(), firebaseUserModel.getProfileName(), firebaseUserModel.getProfilePic(), firebaseUserModel.getDeviceToken());
+                                myChatsdapter.getAllMyChats().get(position).setSpeakingTo(firebaseUserModel.getProfileName() );
+                                myChatsdapter.notifyDataSetChanged();
+                                break;
+                            }
+                        }
+
+                    } else {
+                        Log.i(TAG, "Contact doesn't exist");
+                    }
+                }
+
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
+                    Log.i(TAG, "Failed to add contact");
+                }
+            });
+        } else {
+            Log.i(TAG, "User cannot be added as they may already exist");
+        }
+
+    }
+
+    private String getChatKeysAsString(){
+        String keys = "";
+        for(int i = 0; i < allChatKeys.size(); i++){
+            keys += allChatKeys.get(i);
+            if(i < allChatKeys.size()-1)
+                keys += ",";
+        }
+        return keys;
+    }
+
 
     @Override
     public void onStart() {
@@ -159,11 +277,9 @@ public class SessionFragment extends Fragment {
     @Override
     public void onStop() {
 
-        System.out.println("Destroying listeners");
         if (userListener != null) {
             usersRef.removeEventListener(userListener);
         }
-        System.out.println("All chat keys: " + allChatKeys.size() + " value event listeners: " + valueEventListeners.size());
         for(int i = 0; i < valueEventListeners.size(); i++){
             messagesRef.child("single").child(allChatKeys.get(i)).limitToLast(1).removeEventListener(valueEventListeners.get(i));
         }

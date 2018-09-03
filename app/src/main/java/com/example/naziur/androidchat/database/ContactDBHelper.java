@@ -89,6 +89,42 @@ public class ContactDBHelper extends SQLiteOpenHelper {
 
     }
 
+    public String[] getProfileNameAndPic(String username){
+        String profileName = username;
+        String profilePic = "";
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        String[] projection = {
+                MyContactsContract.MyContactsContractEntry.COLUMN_PROFILE,
+                MyContactsContract.MyContactsContractEntry.COLUMN_PROFILE_PIC
+        };
+
+        String selection = MyContactsContract.MyContactsContractEntry.COLUMN_USERNAME + " = ?";
+        String[] selectionArgs = { username };
+
+        Cursor cursor = db.query(
+                MyContactsContract.MyContactsContractEntry.TABLE_NAME,   // The table to query
+                projection,             // The array of columns to return (pass null to get all)
+                selection,              // The columns for the WHERE clause
+                selectionArgs,          // The values for the WHERE clause
+                null,                   // don't group the rows
+                null,                   // don't filter by row groups
+                null                    // The sort order
+        );
+
+        if(cursor.getCount() > 0){
+            try{
+                while (cursor.moveToNext()) {
+                    profileName = cursor.getString(cursor.getColumnIndex(MyContactsContract.MyContactsContractEntry.COLUMN_PROFILE));
+                    profilePic = cursor.getString(cursor.getColumnIndex(MyContactsContract.MyContactsContractEntry.COLUMN_PROFILE_PIC));
+                }
+            } finally {
+                cursor.close();
+            }
+        }
+        return new String[]{profileName, profilePic};
+    }
+
     public int removeContact (String username){
         SQLiteDatabase db = getWritableDatabase();
         String where = MyContactsContract.MyContactsContractEntry.COLUMN_USERNAME  + " = ?";

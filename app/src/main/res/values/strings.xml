@@ -7,9 +7,15 @@
 
     <!-- My Contacts Class -->
     <string name="dialog_friend_select_action">Actions</string>
+    <string name="dialog_chat_select_action">Chat Actions</string>
     <string name="dialog_op1">See Profile</string>
     <string name="dialog_op2">Chat</string>
     <string name="dialog_op3">Delete Contact</string>
+
+    <!-- Session fragment -->
+    <string name="dialog_op4">Delete Chat</string>
+    <string name="simple_date">dd/MM/yyyy</string>
+
 
     <string name="add_contact">Add</string>
     <string name="cancel_contact">Cancel</string>
