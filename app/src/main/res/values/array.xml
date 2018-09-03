@@ -7,4 +7,11 @@
         <item>@string/dialog_op3</item>
     </string-array>
 
+    <string-array name="profile_status">
+        <item>Available</item>
+        <item>Busy</item>
+        <item>Sad</item>
+        <item>Happy</item>
+    </string-array>
+
 </resources>
