@@ -16,6 +16,7 @@ import android.widget.Toast;
 
 import com.example.naziur.androidchat.R;
 import com.example.naziur.androidchat.activities.ChatActivity;
+import com.example.naziur.androidchat.activities.ChatDetailActivity;
 import com.example.naziur.androidchat.activities.ProfileActivity;
 import com.example.naziur.androidchat.adapter.AllChatsAdapter;
 import com.example.naziur.androidchat.database.ContactDBHelper;
@@ -179,7 +180,9 @@ public class SessionFragment extends Fragment {
                     private void onActionSelected(int which, Chat chat, int position) {
                         switch (which) {
                             case 0 : // see profile info
-                                startActivity(new Intent(getActivity(), ProfileActivity.class));
+                                Intent chatDetailActivity = new Intent(getContext(), ChatDetailActivity.class);
+                                chatDetailActivity.putExtra("username", chat.getUsernameOfTheOneBeingSpokenTo());
+                                startActivity(chatDetailActivity);
                                 break;
 
                             case 1 : // chat with contact

@@ -19,7 +19,7 @@ public class MessagesListAdapter extends ArrayAdapter<MessageCell> {
     MessageCell[] cellItem = null;
     Context context;
     public MessagesListAdapter(Context context, MessageCell[] resource) {
-        super(context, R.layout.message_cell, resource);
+        super(context, R.layout.receiving_message_cell, resource);
         // TODO Auto-generated constructor stub
         this.context = context;
         this.cellItem = resource;
@@ -31,13 +31,10 @@ public class MessagesListAdapter extends ArrayAdapter<MessageCell> {
         LayoutInflater inflater = ((Activity)context).getLayoutInflater();
 
         if (cellItem[position].getSender()) {
-            convertView = inflater.inflate(R.layout.sender_message_cell, parent, false);
+            convertView = inflater.inflate(R.layout.my_message_cell, parent, false);
         } else {
-            convertView = inflater.inflate(R.layout.message_cell, parent, false);
+            convertView = inflater.inflate(R.layout.receiving_message_cell, parent, false);
         }
-
-        TextView sender = (TextView) convertView.findViewById(R.id.photoName);
-        sender.setText(cellItem[position].getMessageSender());
 
         TextView wish = (TextView) convertView.findViewById(R.id.wishMessage);
         wish.setText(cellItem[position].getMessageText());

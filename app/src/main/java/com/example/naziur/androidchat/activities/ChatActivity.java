@@ -6,6 +6,7 @@ import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.ScaleDrawable;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.ActionBar;
@@ -337,22 +338,6 @@ public class ChatActivity extends AppCompatActivity {
 
     }
 
-    public Bitmap getResizedBitmap(Bitmap image, int maxSize) {
-        int width = image.getWidth();
-        int height = image.getHeight();
-
-        float bitmapRatio = (float) width / (float) height;
-        if (bitmapRatio > 1) {
-            width = maxSize;
-            height = (int) (width / bitmapRatio);
-        } else {
-            height = maxSize;
-            width = (int) (height * bitmapRatio);
-        }
-
-        return Bitmap.createScaledBitmap(image, width, height, true);
-    }
-
     private void createMessageRefWithNewKey () {
         messagesRef = database.getReference("messages")
                 .child("single")
@@ -383,7 +368,9 @@ public class ChatActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.view_details :
-                Toast.makeText(this, "View contact details for " + friend.getUsername(), Toast.LENGTH_SHORT).show();
+                Intent chatDetailActivity = new Intent(this, ChatDetailActivity.class);
+                chatDetailActivity.putExtra("username", friend.getUsername());
+                startActivity(chatDetailActivity);
                 return true;
 
             default: return super.onOptionsItemSelected(item);
