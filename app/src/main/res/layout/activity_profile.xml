@@ -1,143 +1,188 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="?android:attr/windowBackground" >
+    xmlns:card_view="http://schemas.android.com/apk/res-auto"
+    android:background="?android:attr/windowBackground">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="15dp"
+        android:padding="5dp"
         >
 
-        <TextView
+        <android.support.v7.widget.CardView
             android:layout_marginTop="10dp"
-            android:id="@+id/my_username"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Username: "
-            android:textAppearance="@android:style/TextAppearance.Medium" />
+            card_view:cardElevation="4sp"
+            card_view:cardUseCompatPadding="true">
 
-       <LinearLayout
-           android:layout_marginTop="15dp"
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="10dp">
+
+                <TextView
+                    android:layout_marginTop="10dp"
+                    android:id="@+id/my_username"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Username: "
+                    android:textAppearance="@android:style/TextAppearance.Medium" />
+
+                <LinearLayout
+                    android:layout_marginTop="15dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Profile Name:"
+                        android:textAppearance="@android:style/TextAppearance.Medium"
+                        />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <android.support.v7.widget.AppCompatEditText
+                            android:id="@+id/edit_prof_name"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_gravity="center_vertical"
+                            android:enabled="false"/>
+
+                        <ImageView
+                            android:id="@+id/edit_button_prof_name"
+                            android:layout_width="48dp"
+                            android:layout_height="48dp"
+                            android:layout_gravity="center_vertical"
+                            android:scaleType="center"
+                            android:src="@android:drawable/ic_menu_edit"
+                            />
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="15dp"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Profile Status:"
+                        android:textAppearance="@android:style/TextAppearance.Medium" />
+
+                    <Spinner
+                        android:id="@+id/prof_status"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_vertical"
+                        android:entries="@array/profile_status"
+                        android:padding="10dp"/>
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </android.support.v7.widget.CardView>
+
+       <android.support.v7.widget.CardView
+           android:layout_marginTop="10dp"
            android:layout_width="match_parent"
            android:layout_height="wrap_content"
-           android:orientation="vertical">
+           card_view:cardElevation="4sp"
+           card_view:cardUseCompatPadding="true"
+           >
 
-           <TextView
+           <RelativeLayout
                android:layout_width="match_parent"
                android:layout_height="wrap_content"
-               android:text="Profile Name:"
-               android:textAppearance="@android:style/TextAppearance.Medium"
-               />
+               android:padding="10dp">
 
-           <LinearLayout
-               android:layout_width="match_parent"
-               android:layout_height="wrap_content"
-               android:orientation="horizontal">
-
-               <android.support.v7.widget.AppCompatEditText
-                   android:id="@+id/edit_prof_name"
-                   android:layout_width="0dp"
+               <TextView
+                   android:id="@+id/title_group_list"
+                   android:layout_marginTop="15sp"
+                   android:layout_width="match_parent"
                    android:layout_height="wrap_content"
-                   android:layout_weight="1"
-                   android:layout_gravity="center_vertical"
-                   android:enabled="false"/>
-
-               <ImageView
-                   android:id="@+id/edit_button_prof_name"
-                   android:layout_width="48dp"
-                   android:layout_height="48dp"
-                   android:layout_gravity="center_vertical"
-                   android:scaleType="center"
-                   android:src="@android:drawable/ic_menu_edit"
+                   android:text="My Groups:"
+                   android:textAppearance="@android:style/TextAppearance.Medium"
                    />
 
-           </LinearLayout>
+               <ListView
+                   android:layout_below="@+id/title_group_list"
+                   android:id="@+id/profile_groups_list"
+                   android:layout_width="wrap_content"
+                   android:layout_height="wrap_content"
+                   />
 
-       </LinearLayout>
+               <TextView
+                   android:id="@+id/no_groups"
+                   android:layout_width="wrap_content"
+                   android:layout_height="wrap_content"
+                   android:text="No Groups"
+                   android:layout_below="@+id/title_group_list"
+                   android:layout_centerInParent="true"
+                   android:padding="10dp"
+                   android:visibility="gone"/>
 
-        <LinearLayout
+           </RelativeLayout>
+
+       </android.support.v7.widget.CardView>
+
+
+        <android.support.v7.widget.CardView
+            android:layout_marginTop="10dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="15dp"
-            android:orientation="vertical">
+            card_view:cardElevation="4sp"
+            card_view:cardUseCompatPadding="true">
 
-            <TextView
+            <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Profile Status:"
-                android:textAppearance="@android:style/TextAppearance.Medium" />
+                android:padding="10dp">
 
-            <Spinner
-                android:id="@+id/prof_status"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_vertical"
-                android:entries="@array/profile_status"
-                android:padding="10dp"/>
+                <TextView
+                    android:id="@+id/title_contact_list"
+                    android:layout_marginTop="15sp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="My Contacts:"
+                    android:textAppearance="@android:style/TextAppearance.Medium"
+                    />
 
-        </LinearLayout>
+                <ListView
+                    android:layout_below="@+id/title_contact_list"
+                    android:id="@+id/profile_contacts_list"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    />
 
-        <TextView
-            android:layout_marginTop="15sp"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="My Groups:"
-            android:textAppearance="@android:style/TextAppearance.Medium"
-            />
+                <TextView
+                    android:id="@+id/no_contacts"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="No Contacts"
+                    android:layout_below="@+id/title_contact_list"
+                    android:layout_centerInParent="true"
+                    android:padding="10dp"
+                    android:visibility="gone"/>
 
-       <RelativeLayout
-           android:layout_width="match_parent"
-           android:layout_height="wrap_content">
+            </RelativeLayout>
 
-           <ListView
-               android:id="@+id/profile_groups_list"
-               android:layout_width="wrap_content"
-               android:layout_height="wrap_content"
-               />
-
-           <TextView
-               android:id="@+id/no_groups"
-               android:layout_width="wrap_content"
-               android:layout_height="wrap_content"
-               android:text="No Groups"
-               android:layout_centerInParent="true"
-               android:padding="10dp"
-               android:visibility="gone"/>
-
-       </RelativeLayout>
-
-        <TextView
-            android:layout_marginTop="15sp"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="My Contacts:"
-            android:textAppearance="@android:style/TextAppearance.Medium"
-            />
-
-        <RelativeLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-
-            <ListView
-                android:id="@+id/profile_contacts_list"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                />
-
-            <TextView
-                android:id="@+id/no_contacts"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="No Contacts"
-                android:layout_centerInParent="true"
-                android:padding="10dp"
-                android:visibility="gone"/>
-
-        </RelativeLayout>
+        </android.support.v7.widget.CardView>
 
         <android.support.v7.widget.AppCompatButton
             android:layout_marginTop="15dp"
