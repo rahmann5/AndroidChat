@@ -18,6 +18,7 @@ import android.widget.TextView;
 import com.example.naziur.androidchat.database.ContactDBHelper;
 import com.example.naziur.androidchat.R;
 import com.example.naziur.androidchat.adapter.MyContactsAdapter;
+import com.example.naziur.androidchat.database.MyContactsContract;
 import com.example.naziur.androidchat.models.Contact;
 
 import com.example.naziur.androidchat.fragment.AddContactDialogFragment;
@@ -30,6 +31,9 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.iid.FirebaseInstanceId;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class MyContactsActivity extends AppCompatActivity implements AddContactDialogFragment.ContactDialogListener{
     private static final String TAG = "MyContactsActivity";
@@ -78,7 +82,7 @@ public class MyContactsActivity extends AppCompatActivity implements AddContactD
     private void setUpList () {
         Cursor c = db.getAllMyContacts(null);
         if (c != null && c.getCount() > 0) {
-            myContactsAdapter = new MyContactsAdapter(this, c, setUpListener ());
+            myContactsAdapter = new MyContactsAdapter(this, updateExistingContacts(c), setUpListener ());
             emptyState.setVisibility(View.GONE);
         } else {
             Log.i(TAG, "Found no items");
@@ -88,6 +92,43 @@ public class MyContactsActivity extends AppCompatActivity implements AddContactD
         LinearLayoutManager mLayoutManager = new LinearLayoutManager(this);
         myContactsRecycler.setLayoutManager(mLayoutManager);
         myContactsRecycler.setAdapter(myContactsAdapter);
+    }
+
+    private List<Contact> updateExistingContacts (Cursor c) {
+        final List<Contact> contacts = new ArrayList<>();
+        try{
+            while (c.moveToNext()) {
+                final FirebaseUserModel fbModel = new FirebaseUserModel();
+                fbModel.setUsername(c.getString(c.getColumnIndex(MyContactsContract.MyContactsContractEntry.COLUMN_USERNAME)));
+                fbModel.setProfileName(c.getString(c.getColumnIndex(MyContactsContract.MyContactsContractEntry.COLUMN_PROFILE)));
+                // need one for profile picture
+                Query query = userRef.orderByChild("username").equalTo(fbModel.getUsername());
+                query.addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        if(dataSnapshot.exists()){
+                            for (com.google.firebase.database.DataSnapshot userSnapshot : dataSnapshot.getChildren()) {
+                                FirebaseUserModel firebaseUserModel = userSnapshot.getValue(FirebaseUserModel.class);
+                                if(firebaseUserModel.getUsername().equals(fbModel.getUsername())) {
+                                    db.updateProfile(firebaseUserModel.getUsername(), firebaseUserModel.getProfileName(), firebaseUserModel.getProfilePic());
+                                    contacts.add(new Contact(firebaseUserModel));
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+
+                    }
+                });
+
+            }
+        } finally {
+            c.close();
+        }
+        return contacts;
     }
 
     private MyContactsAdapter.OnItemClickListener setUpListener () {

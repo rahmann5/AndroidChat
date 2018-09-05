@@ -9,9 +9,12 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.RequestOptions;
 import com.example.naziur.androidchat.R;
 import com.example.naziur.androidchat.database.ContactDBHelper;
 import com.example.naziur.androidchat.models.FirebaseUserModel;
@@ -47,11 +50,10 @@ public class ChatDetailActivity extends AppCompatActivity {
             Toast.makeText(this, "Error occured", Toast.LENGTH_LONG).show();
             finish();
         }
-        String usernameOrProfileName = db.getProfileNameAndPic(user.getUsername())[0];
         isInContacts = db.isUserAlreadyInContacts(user.getUsername());
 
         mToolbar = (Toolbar) findViewById(R.id.toolbar);
-        mToolbar.setTitle(usernameOrProfileName);
+
         setSupportActionBar(mToolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
@@ -154,10 +156,13 @@ public class ChatDetailActivity extends AppCompatActivity {
                         TextView usernameTv = (TextView) findViewById(R.id.username_tv);
                         TextView profileTv = (TextView) findViewById(R.id.profile_tv);
                         TextView statusTv = (TextView) findViewById(R.id.status_tv);
-
+                        ImageView profilePicIv = (ImageView) findViewById(R.id.expandedImage);
                         usernameTv.setText("Username: " + user.getUsername());
                         profileTv.setText("Profile Name: " + user.getProfileName());
                         statusTv.setText("Status: " + user.getStatus());
+                        getSupportActionBar().setTitle(user.getProfileName());
+                        Glide.with(ChatDetailActivity.this).load(user.getProfilePic()).apply(new RequestOptions().placeholder(R.drawable.unknown).error(R.drawable.unknown)).into(profilePicIv);
+
                     }
                 }
             }

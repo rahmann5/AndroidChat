@@ -3,6 +3,7 @@ package com.example.naziur.androidchat.fragment;
 
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AlertDialog;
@@ -20,7 +21,9 @@ import com.example.naziur.androidchat.activities.ChatDetailActivity;
 import com.example.naziur.androidchat.activities.ProfileActivity;
 import com.example.naziur.androidchat.adapter.AllChatsAdapter;
 import com.example.naziur.androidchat.database.ContactDBHelper;
+import com.example.naziur.androidchat.database.MyContactsContract;
 import com.example.naziur.androidchat.models.Chat;
+import com.example.naziur.androidchat.models.Contact;
 import com.example.naziur.androidchat.models.FirebaseMessageModel;
 import com.example.naziur.androidchat.models.FirebaseUserModel;
 import com.example.naziur.androidchat.models.User;
@@ -75,6 +78,10 @@ public class SessionFragment extends Fragment {
         messagesRef = database.getReference("messages");
         recyclerView = rootView.findViewById(R.id.all_chats_list);
         db = new ContactDBHelper(getContext());
+        Cursor c = db.getAllMyContacts(null);
+        if (c != null && c.getCount() > 0) {
+            updateExistingContacts (c);
+        }
         setUpRecyclerView();
         return rootView;
     }
@@ -107,6 +114,41 @@ public class SessionFragment extends Fragment {
         };
 
         usersRef.addValueEventListener(userListener);
+    }
+
+    private void updateExistingContacts (Cursor c) {
+        try{
+            while (c.moveToNext()) {
+                final FirebaseUserModel fbModel = new FirebaseUserModel();
+                fbModel.setUsername(c.getString(c.getColumnIndex(MyContactsContract.MyContactsContractEntry.COLUMN_USERNAME)));
+                fbModel.setProfileName(c.getString(c.getColumnIndex(MyContactsContract.MyContactsContractEntry.COLUMN_PROFILE)));
+                // need one for profile picture
+                Query query = usersRef.orderByChild("username").equalTo(fbModel.getUsername());
+                query.addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        if(dataSnapshot.exists()){
+                            for (com.google.firebase.database.DataSnapshot userSnapshot : dataSnapshot.getChildren()) {
+                                FirebaseUserModel firebaseUserModel = userSnapshot.getValue(FirebaseUserModel.class);
+                                if(firebaseUserModel.getUsername().equals(fbModel.getUsername())) {
+                                    db.updateProfile(firebaseUserModel.getUsername(), firebaseUserModel.getProfileName(), firebaseUserModel.getProfilePic());
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+
+                    }
+                });
+
+            }
+        } finally {
+            c.close();
+        }
+
     }
 
     private void setUpMsgEventListeners(){
