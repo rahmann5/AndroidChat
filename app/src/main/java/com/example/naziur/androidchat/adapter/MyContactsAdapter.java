@@ -9,6 +9,8 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.RequestOptions;
 import com.example.naziur.androidchat.database.MyContactsContract;
 import com.example.naziur.androidchat.R;
 import com.example.naziur.androidchat.models.Contact;
@@ -17,13 +19,15 @@ import com.example.naziur.androidchat.models.FirebaseUserModel;
 import java.util.ArrayList;
 import java.util.List;
 
+import de.hdodenhof.circleimageview.CircleImageView;
+
 /**
  * Created by Hamidur on 29/08/2018.
  */
 
 public class MyContactsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
-    private Context context;
+    public Context context;
     private List<Contact> allMyContacts;
 
     public OnItemClickListener listener;
@@ -32,10 +36,11 @@ public class MyContactsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
         void onItemClick (Contact contact, int pos);
     }
 
-    public MyContactsAdapter (Context context, Cursor c, OnItemClickListener listener) {
+    public MyContactsAdapter (Context context, List<Contact> contacts, OnItemClickListener listener) {
         this.context = context;
         this.listener = listener;
-        readCursorData(c);
+        //readCursorData(c);
+        setAllMyContacts(contacts);
     }
 
     public MyContactsAdapter (Context context, OnItemClickListener listener){
@@ -65,9 +70,13 @@ public class MyContactsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
         }
     }
 
+    private void setAllMyContacts(List<Contact> contacts){
+        allMyContacts = contacts;
+    }
+
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
-        ((MyContactViewHolder) holder).bind(allMyContacts.get(position), position ,listener);
+        ((MyContactViewHolder) holder).bind(allMyContacts.get(position), position ,listener, context);
     }
 
     @Override
@@ -88,16 +97,16 @@ public class MyContactsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
     private static class MyContactViewHolder extends RecyclerView.ViewHolder {
 
         private TextView usernameTv, profileTv;
-        private ImageView profPicIv;
+        private CircleImageView profPicIv;
 
         public MyContactViewHolder(View itemView) {
             super(itemView);
             usernameTv = (TextView) itemView.findViewById(R.id.username);
             profileTv = (TextView) itemView.findViewById(R.id.prof_name);
-            profPicIv = (ImageView) itemView.findViewById(R.id.prof_pic);
+            profPicIv = (CircleImageView) itemView.findViewById(R.id.prof_pic);
         }
 
-        public void bind (final Contact contact, final int position, final OnItemClickListener listener) {
+        public void bind (final Contact contact, final int position, final OnItemClickListener listener, Context context) {
             itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
@@ -106,6 +115,7 @@ public class MyContactsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
             });
             usernameTv.setText(contact.getContact().getUsername());
             profileTv.setText(contact.getContact().getProfileName());
+            Glide.with(context).load(contact.getContact().getProfilePic()).apply(new RequestOptions().placeholder(R.drawable.unknown).error(R.drawable.unknown)).into(profPicIv);
         }
     }
 }
