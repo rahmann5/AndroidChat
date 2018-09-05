@@ -161,6 +161,7 @@ public class MainActivity extends AppCompatActivity {
         final FirebaseUserModel firebaseUserModel = new FirebaseUserModel();
         firebaseUserModel.setUsername(strUsername);
         firebaseUserModel.setProfileName(strProfileName);
+        firebaseUserModel.setStatus(getResources().getString(R.string.status_available));
         firebaseUserModel.setDeviceId(currentDeviceId);
         firebaseUserModel.setDeviceToken(FirebaseInstanceId.getInstance().getToken());
 

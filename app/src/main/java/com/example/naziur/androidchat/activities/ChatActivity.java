@@ -2,12 +2,19 @@ package com.example.naziur.androidchat.activities;
 
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.ScaleDrawable;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.util.TypedValue;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -15,8 +22,13 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.RequestOptions;
+import com.bumptech.glide.request.target.SimpleTarget;
+import com.bumptech.glide.request.transition.Transition;
 import com.example.naziur.androidchat.adapter.MessagesListAdapter;
 import com.example.naziur.androidchat.R;
 import com.example.naziur.androidchat.models.FirebaseMessageModel;
@@ -42,7 +54,7 @@ import java.util.List;
 
 import cz.msebera.android.httpclient.HttpHeaders;
 import cz.msebera.android.httpclient.entity.StringEntity;
-
+import de.hdodenhof.circleimageview.CircleImageView;
 
 
 public class ChatActivity extends AppCompatActivity {
@@ -165,7 +177,11 @@ public class ChatActivity extends AppCompatActivity {
                     FirebaseUserModel firebaseUserModel = postSnapshot.getValue(FirebaseUserModel.class);
                     if (firebaseUserModel.getUsername().equals(friend.getUsername())) {
                         friend = firebaseUserModel;
-                        actionBar.setTitle("   " + friend.getProfileName());
+                        ((TextView) actionBar.getCustomView().findViewById(R.id.profile_name)).setText(friend.getProfileName());
+                        Glide.with(getApplicationContext())
+                                .load(friend.getProfilePic())
+                                .apply(new RequestOptions().placeholder(R.drawable.unknown).error(R.drawable.unknown))
+                                .into(((CircleImageView) actionBar.getCustomView().findViewById(R.id.profile_icon)));
                     }
 
                     if (firebaseUserModel.getUsername().equals(user.name)) {
@@ -321,6 +337,22 @@ public class ChatActivity extends AppCompatActivity {
 
     }
 
+    public Bitmap getResizedBitmap(Bitmap image, int maxSize) {
+        int width = image.getWidth();
+        int height = image.getHeight();
+
+        float bitmapRatio = (float) width / (float) height;
+        if (bitmapRatio > 1) {
+            width = maxSize;
+            height = (int) (width / bitmapRatio);
+        } else {
+            height = maxSize;
+            width = (int) (height * bitmapRatio);
+        }
+
+        return Bitmap.createScaledBitmap(image, width, height, true);
+    }
+
     private void createMessageRefWithNewKey () {
         messagesRef = database.getReference("messages")
                 .child("single")
@@ -399,9 +431,14 @@ public class ChatActivity extends AppCompatActivity {
 
     private void createCustomActionBar () {
         actionBar = getSupportActionBar();
-        actionBar.setDisplayOptions(ActionBar.DISPLAY_SHOW_HOME |
-                ActionBar.DISPLAY_SHOW_TITLE |  ActionBar.DISPLAY_USE_LOGO);
-        actionBar.setIcon(R.mipmap.ic_launcher_round);
+        actionBar.setDisplayOptions(ActionBar.DISPLAY_SHOW_CUSTOM);
+        actionBar.setCustomView(R.layout.toolbar);
+        actionBar.getCustomView().findViewById(R.id.back).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                finish();
+            }
+        });
     }
 
     public void hideKeyboard() {

@@ -36,6 +36,9 @@ dependencies {
     androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
+    compile 'com.github.jkwiecien:EasyImage:2.0.2'
+    compile 'de.hdodenhof:circleimageview:2.2.0'
+    compile 'com.github.bumptech.glide:glide:4.0.0'
     compile 'com.github.manuelpeinado.fadingactionbar:fadingactionbar:3.1.2'
     compile 'com.github.manuelpeinado.fadingactionbar:fadingactionbar-abc:3.1.2'
     compile 'com.android.support:appcompat-v7:26.+'
@@ -44,6 +47,7 @@ dependencies {
     compile 'com.firebase:firebase-client-android:2.4.0'
     compile 'com.google.firebase:firebase-messaging:10.0.1'
     compile 'com.google.firebase:firebase-database:10.0.1'
+    compile 'com.google.firebase:firebase-storage:10.0.1'
     compile 'com.loopj.android:android-async-http:1.4.9'
     compile 'com.android.support:design:26.+'
     compile 'com.android.support:support-v4:26.+'

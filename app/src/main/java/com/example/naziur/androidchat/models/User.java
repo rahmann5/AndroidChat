@@ -21,6 +21,8 @@ public class User {
     public String profileName = "Profile";
     public String deviceId = "";
     public String deviceToken = "";
+    public String status = "";
+    public String profilePic = "";
 
     public static final String appPreferences = "ChattingAppPreferences" ;
     public static final String Key  = "keyKey";
@@ -39,6 +41,8 @@ public class User {
         profileName = firebaseUserModel.getProfileName();
         deviceId = firebaseUserModel.getDeviceId();
         deviceToken = firebaseUserModel.getDeviceToken();
+        status = firebaseUserModel.getStatus();
+        profilePic = firebaseUserModel.getProfilePic();
 
         SharedPreferences.Editor editor = sharedpreferences.edit();
         editor.putString(Key, firebaseKey);

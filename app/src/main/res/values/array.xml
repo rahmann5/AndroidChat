@@ -8,10 +8,11 @@
     </string-array>
 
     <string-array name="profile_status">
-        <item>Available</item>
-        <item>Busy</item>
-        <item>Sad</item>
-        <item>Happy</item>
+        <item>@string/status_available</item>
+        <item>@string/status_busy</item>
+        <item>@string/status_happy</item>
+        <item>@string/status_sad</item>
+        <item>@string/status_dead</item>
     </string-array>
 
     <string-array name="chat_dialog_actions">

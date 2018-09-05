@@ -11,6 +11,7 @@ import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
 
@@ -56,10 +57,23 @@ public class MyContactsActivity extends AppCompatActivity implements AddContactD
             }
         });
 
+        getSupportActionBar().setDisplayShowHomeEnabled(true);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
         setUpList ();
     }
 
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
 
+        switch (item.getItemId()) {
+            case android.R.id.home :
+                finish();
+                return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
 
     private void setUpList () {
         Cursor c = db.getAllMyContacts(null);

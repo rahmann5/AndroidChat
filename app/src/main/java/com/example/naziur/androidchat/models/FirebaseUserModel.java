@@ -14,10 +14,19 @@ public class FirebaseUserModel {
     String username = "";
     String profileName = "";
     String profilePic = "";
+    String status = "";
     String chatKeys = "";
 
     public FirebaseUserModel() {
       /*Blank default constructor essential for Firebase*/
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 
     public String getChatKeys() {

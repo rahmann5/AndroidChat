@@ -4,4 +4,5 @@
         android:id="@+id/view_details"
         android:title="View Details"
         />
+
 </menu>

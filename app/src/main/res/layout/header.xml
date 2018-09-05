@@ -21,11 +21,24 @@
         android:layout_alignRight="@+id/image_header"
         android:layout_alignEnd="@+id/image_header"
         android:layout_alignBottom="@+id/image_header"
-        android:background="@drawable/round_shape"
+        android:background="@drawable/header_icon_round"
         android:layout_margin="10dp"
         android:padding="8dp"
         android:clickable="true"
-        android:onClick="click"
         />
+
+    <ImageButton
+        android:id="@+id/reset_profile_pic"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@android:drawable/ic_popup_sync"
+        android:background="@drawable/header_icon_round"
+        android:padding="8dp"
+        android:clickable="true"
+        android:layout_marginRight="5dp"
+        android:layout_marginEnd="5dp"
+        android:layout_alignTop="@+id/update_profile_pic"
+        android:layout_toLeftOf="@+id/update_profile_pic"
+        android:layout_toStartOf="@+id/update_profile_pic"/>
 
 </RelativeLayout>
