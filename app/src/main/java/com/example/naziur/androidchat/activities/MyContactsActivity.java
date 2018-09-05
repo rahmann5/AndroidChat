@@ -155,6 +155,9 @@ public class MyContactsActivity extends AppCompatActivity implements AddContactD
     private void onActionSelected (int pos, Contact c, int itemLoc) {
         switch (pos) {
             case 0 : // see profile info
+                Intent chatDetailActivity = new Intent(this, ChatDetailActivity.class);
+                chatDetailActivity.putExtra("username", c.getContact().getUsername());
+                startActivity(chatDetailActivity);
                 break;
 
             case 1 : // chat with contact

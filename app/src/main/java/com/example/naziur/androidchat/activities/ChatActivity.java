@@ -2,6 +2,7 @@ package com.example.naziur.androidchat.activities;
 
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
@@ -351,7 +352,9 @@ public class ChatActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.view_details :
-                Toast.makeText(this, "View contact details for " + friend.getUsername(), Toast.LENGTH_SHORT).show();
+                Intent chatDetailActivity = new Intent(this, ChatDetailActivity.class);
+                chatDetailActivity.putExtra("username", friend.getUsername());
+                startActivity(chatDetailActivity);
                 return true;
 
             default: return super.onOptionsItemSelected(item);

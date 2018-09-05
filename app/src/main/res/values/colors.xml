@@ -4,8 +4,13 @@
     <color name="colorPrimaryDark">#303F9F</color>
     <color name="colorAccent">#FF4081</color>
     <color name="white">#ffffff</color>
+    <color name="red">#fd0000</color>
+    <color name="black">#333333</color>
+    <color name="my_msg_bg">#b1d69c</color>
+    <color name="sender_msg_bg">#b7b7b7</color>
 
-    <color name="messageTextColor">#0f3564</color>
+    <color name="messageTextColor">#ffffff</color>
+    <color name="timeTextColor">#edecec</color>
 
     <color name="cardDividerColor">#d593908c</color>
     <color name="profile_camera_button">#f17110</color>
