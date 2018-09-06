@@ -107,12 +107,13 @@ public class MyContactsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
         }
 
         public void bind (final Contact contact, final int position, final OnItemClickListener listener, Context context) {
-            itemView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    listener.onItemClick(contact, position);
-                }
-            });
+            if (listener != null ) {
+                itemView.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {listener.onItemClick(contact, position);
+                    }
+                });
+            }
             usernameTv.setText(contact.getContact().getUsername());
             profileTv.setText(contact.getContact().getProfileName());
             Glide.with(context).load(contact.getContact().getProfilePic()).apply(new RequestOptions().placeholder(R.drawable.unknown).error(R.drawable.unknown)).into(profPicIv);

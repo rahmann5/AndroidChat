@@ -2,12 +2,15 @@ package com.example.naziur.androidchat.activities;
 
 
 import android.content.Intent;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.AppCompatButton;
 import android.support.v7.widget.AppCompatEditText;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -24,6 +27,10 @@ import android.widget.Toast;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
 import com.example.naziur.androidchat.R;
+import com.example.naziur.androidchat.adapter.MyContactsAdapter;
+import com.example.naziur.androidchat.database.ContactDBHelper;
+import com.example.naziur.androidchat.database.MyContactsContract;
+import com.example.naziur.androidchat.models.Contact;
 import com.example.naziur.androidchat.models.FirebaseUserModel;
 import com.example.naziur.androidchat.utils.FadingActionBarHelper;
 import com.example.naziur.androidchat.models.User;
@@ -59,16 +66,19 @@ public class ProfileActivity extends AppCompatActivity {
     private FirebaseDatabase database;
     private DatabaseReference userRef;
 
+    private ContactDBHelper db;
+
     User user = User.getInstance();
-    private ListView myGroups, myContacts;
+    private RecyclerView myGroups, myContacts;
     private TextView emptyGroupsList, emptyContactsList, myUsername;
     private AppCompatButton saveButton;
     private ImageView editToggle, profilePic;
-    private ImageButton updatePic, resetPic;
+    private ImageButton updatePic, resetPic, revertPic;
     private AppCompatEditText profileName;
     private Spinner profileStatus;
     private File myImageFile;
     private ProgressDialog progressBar;
+    private boolean reset = false;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -78,6 +88,7 @@ public class ProfileActivity extends AppCompatActivity {
         database = FirebaseDatabase.getInstance();
         mStorageRef = FirebaseStorage.getInstance().getReference();
         userRef = database.getReference("users");
+        db = new ContactDBHelper(getApplicationContext());
         progressBar = new ProgressDialog(ProfileActivity.this, R.layout.progress_dialog, true);
         FadingActionBarHelper helper = new FadingActionBarHelper()
                 .actionBarBackground(R.color.colorPrimaryDark)
@@ -88,14 +99,30 @@ public class ProfileActivity extends AppCompatActivity {
         helper.initActionBar(this);
         EasyImage.configuration(this).setAllowMultiplePickInGallery(false);
         profilePic = (ImageView) findViewById(R.id.image_header);
-        Glide.with(ProfileActivity.this).load(user.profilePic).apply(new RequestOptions().placeholder(R.drawable.unknown).error(R.drawable.unknown)).into(profilePic);
+        Glide.with(ProfileActivity.this).load(user.profilePic)
+                .apply(new RequestOptions().placeholder(R.drawable.unknown).error(R.drawable.unknown))
+                .into(profilePic);
         updatePic = (ImageButton) findViewById(R.id.update_profile_pic);
+
+        revertPic = (ImageButton) findViewById(R.id.undo_profile_pic);
+        revertPic.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                reset(false);
+                Glide.with(ProfileActivity.this).load(user.profilePic)
+                        .apply(new RequestOptions().placeholder(R.drawable.unknown).error(R.drawable.unknown))
+                        .into(profilePic);
+            }
+        });
+
         resetPic = (ImageButton) findViewById(R.id.reset_profile_pic);
         resetPic.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                myImageFile = null;
-                Glide.with(ProfileActivity.this).load(R.drawable.unknown).into(profilePic);
+                if (!user.profilePic.equals("") || myImageFile != null) {
+                    reset(true);
+                    Glide.with(ProfileActivity.this).load(R.drawable.unknown).into(profilePic);
+                }
             }
         });
 
@@ -118,17 +145,9 @@ public class ProfileActivity extends AppCompatActivity {
         myUsername.setText("Username : " + user.name);
 
         saveButton = (AppCompatButton) findViewById(R.id.save_profile_btn);
-        ArrayAdapter<String> adapterContacts = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, new ArrayList<String>());
-        emptyContactsList = (TextView) findViewById(R.id.no_contacts);
-        myContacts = (ListView) findViewById(R.id.profile_contacts_list);
-        myContacts.setAdapter(adapterContacts);
-        myContacts.setEmptyView(emptyContactsList);
 
-        emptyGroupsList = (TextView) findViewById(R.id.no_groups);
-        ArrayAdapter<String> adapterGroup = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, new ArrayList<String>());
-        myGroups = (ListView) findViewById(R.id.profile_groups_list);
-        myGroups.setAdapter(adapterGroup);
-        myGroups.setEmptyView(emptyGroupsList);
+        showContacts();
+        showGroups();
 
         editToggle.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -144,12 +163,71 @@ public class ProfileActivity extends AppCompatActivity {
         saveButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (!profileName.isEnabled() && !profileName.getText().equals("")) {
+                if (hasChanged()) {
                     progressBar.toggleDialog(true);
-                    uploadImageToCloud();
+                    deletePrevImage();
+                } else {
+                    Toast.makeText(ProfileActivity.this, "Changes must be made and edit must be disabled", Toast.LENGTH_SHORT).show();
                 }
             }
         });
+    }
+
+    private void showGroups() {
+        ArrayAdapter<String> adapterGroup = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, new ArrayList<String>());
+        emptyGroupsList = (TextView) findViewById(R.id.no_groups);
+        myGroups = (RecyclerView) findViewById(R.id.profile_groups_list);
+        emptyGroupsList.setVisibility(View.VISIBLE);
+        //myGroups.setAdapter(adapterGroup);
+    }
+
+
+    private void showContacts() {
+        //ArrayAdapter<String> adapterContacts = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, new ArrayList<String>());
+        final List<Contact> allContacts = new ArrayList<>();
+        emptyContactsList = (TextView) findViewById(R.id.no_contacts);
+        myContacts = (RecyclerView) findViewById(R.id.profile_contacts_list);
+        Cursor c = db.getAllMyContacts(null);
+        try {
+            while (c.moveToNext()) {
+                final String friendUsername = c.getString(c.getColumnIndex(MyContactsContract.MyContactsContractEntry.COLUMN_USERNAME));
+                userRef.orderByChild("username").equalTo(friendUsername)
+                        .addListenerForSingleValueEvent(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(DataSnapshot dataSnapshot) {
+                                if(dataSnapshot.exists()){
+                                    for (DataSnapshot userSnapshot : dataSnapshot.getChildren()) {
+                                        FirebaseUserModel firebaseUserModel = userSnapshot.getValue(FirebaseUserModel.class);
+                                        boolean res = db.updateProfile(firebaseUserModel.getUsername(), firebaseUserModel.getProfileName(), firebaseUserModel.getProfilePic());
+                                        if (!res) {
+                                            Log.i(TAG, "Failed to update local data for : " + firebaseUserModel.getUsername());
+                                        }
+                                        allContacts.add(new Contact(firebaseUserModel));
+                                    }
+
+                                    MyContactsAdapter contactsAdapter = new MyContactsAdapter(ProfileActivity.this, allContacts, null);
+                                    LinearLayoutManager l = new LinearLayoutManager(ProfileActivity.this);
+                                    myContacts.setLayoutManager(l);
+                                    myContacts.setAdapter(contactsAdapter);
+
+
+                                    if (myContacts.getAdapter() == null || myContacts.getAdapter().getItemCount() == 0) {
+                                        emptyContactsList.setVisibility(View.VISIBLE);
+                                    }
+
+                                }
+                            }
+
+                            @Override
+                            public void onCancelled(DatabaseError databaseError) {
+                                Log.i(TAG, "Failed to connect to real time database for: " + friendUsername + " reason: " + databaseError.getMessage());
+                            }
+                        });
+            }
+
+        } finally {
+           c.close();
+        }
     }
 
     private void uploadImageToCloud () {
@@ -195,8 +273,15 @@ public class ProfileActivity extends AppCompatActivity {
                     final FirebaseUserModel updatedUser = snapshot.getValue(FirebaseUserModel.class);
                     updatedUser.setStatus(profileStatus.getSelectedItem().toString());
                     updatedUser.setProfileName(profileName.getText().toString());
-                    if (uploadedImgUri != null) updatedUser.setProfilePic(uploadedImgUri.toString());
-                    else updatedUser.setProfilePic("");
+
+                    if (uploadedImgUri != null && !reset) { // new profile pic upload
+                        updatedUser.setProfilePic(uploadedImgUri.toString());
+                    } else if (uploadedImgUri == null && reset) { // reset image back to unknown
+                        updatedUser.setProfilePic("");
+                    } else if (uploadedImgUri == null && !reset){ // keep current image but change other information
+                        // do nothing
+                    }
+
                     snapshot.getRef().setValue(updatedUser, new DatabaseReference.CompletionListener() {
                         @Override
                         public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
@@ -232,6 +317,7 @@ public class ProfileActivity extends AppCompatActivity {
         EasyImage.handleActivityResult(requestCode, resultCode, data, this, new DefaultCallback() {
             @Override
             public void onImagePickerError(Exception e, EasyImage.ImageSource source, int type) {
+                Toast.makeText(ProfileActivity.this, "Error choosing file", Toast.LENGTH_SHORT).show();
                 Log.e(TAG,"Error loading image");
                 e.printStackTrace();
             }
@@ -240,6 +326,7 @@ public class ProfileActivity extends AppCompatActivity {
             public void onCanceled(EasyImage.ImageSource source, int type) {
                 // Cancel handling, you might wanna remove taken photo if it was canceled
                 if (source == EasyImage.ImageSource.CAMERA) {
+                    Toast.makeText(ProfileActivity.this, "Deleting captured image", Toast.LENGTH_SHORT).show();
                     File photoFile = EasyImage.lastlyTakenButCanceledPhoto(ProfileActivity.this);
                     if (photoFile != null) photoFile.delete();
                 }
@@ -249,6 +336,7 @@ public class ProfileActivity extends AppCompatActivity {
             public void onImagesPicked(@NonNull List<File> imageFiles, EasyImage.ImageSource source, int type) {
                 switch (type){
                     case REQUEST_CODE_GALLERY_CAMERA:
+                        reset(false);
                         myImageFile = imageFiles.get(0);
                         Glide.with(ProfileActivity.this)
                                 .load(myImageFile)
@@ -261,7 +349,53 @@ public class ProfileActivity extends AppCompatActivity {
         });
     }
 
+    private boolean hasChanged () {
+        boolean changed = false;
+        if (!profileName.isEnabled() && !profileName.getText().toString().equals("")) { // edit disabled && profile has been set
+            if (!profileName.getText().toString().trim().equals(user.profileName) // profile name is different
+                    || !user.status.equals(profileStatus.getSelectedItem().toString()) // status is different
+                    || reset // image reset from previously set image
+                    || myImageFile != null) { // new image set
+                changed = true;
+            }
+        }
+
+        return changed;
+    }
+
+    private void reset(boolean value) {
+        myImageFile = null;
+        reset = value;
+    }
+
     private void deletePrevImage () {
+        StorageReference photoRef = null;
+       if (!user.profilePic.equals("")) {
+            if (reset) { // reverting back to original picture
+                photoRef = FirebaseStorage.getInstance().getReferenceFromUrl(user.profilePic);
+            } else if (myImageFile != null) { // uploading new picture
+                photoRef = FirebaseStorage.getInstance().getReferenceFromUrl(user.profilePic);
+            }
+        }
+
+        if (photoRef != null) {
+            photoRef.delete().addOnSuccessListener(new OnSuccessListener<Void>() {
+                @Override
+                public void onSuccess(Void aVoid) {
+                    uploadImageToCloud ();
+                }
+            }).addOnFailureListener(new OnFailureListener() {
+                @Override
+                public void onFailure(@NonNull Exception exception) {
+                    progressBar.toggleDialog(false);
+                    Toast.makeText(ProfileActivity.this, "Error Removing old picture", Toast.LENGTH_SHORT).show();
+                    Log.d(TAG, "onFailure: did not delete file");
+                    exception.printStackTrace();
+                }
+            });
+        } else {
+            uploadImageToCloud ();
+        }
 
     }
 

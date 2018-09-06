@@ -16,4 +16,6 @@
     <color name="itemDividerColor">#d5d7d7d7</color>
     <color name="profile_camera_button">#f17110</color>
     <color name="profile_save_button">#224488</color>
+
+    <color name="button_color">#3f94df</color>
 </resources>

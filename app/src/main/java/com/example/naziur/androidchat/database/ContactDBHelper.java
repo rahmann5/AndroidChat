@@ -131,11 +131,12 @@ public class ContactDBHelper extends SQLiteOpenHelper {
         return db.delete(MyContactsContract.MyContactsContractEntry.TABLE_NAME, where, new String []{username});
     }
 
-    public void updateProfile(String username, String newProfile, String profilePic){
+    public boolean updateProfile(String username, String newProfile, String profilePic){
         SQLiteDatabase db = getWritableDatabase();
         ContentValues cv = new ContentValues();
         cv.put(MyContactsContract.MyContactsContractEntry.COLUMN_PROFILE, newProfile);
         cv.put(MyContactsContract.MyContactsContractEntry.COLUMN_PROFILE_PIC, profilePic);
-        db.update(MyContactsContract.MyContactsContractEntry.TABLE_NAME, cv, MyContactsContract.MyContactsContractEntry.COLUMN_USERNAME + "= ?", new String[] {username});
+        int res = db.update(MyContactsContract.MyContactsContractEntry.TABLE_NAME, cv, MyContactsContract.MyContactsContractEntry.COLUMN_USERNAME + "= ?", new String[] {username});
+        return (res > 0);
     }
 }

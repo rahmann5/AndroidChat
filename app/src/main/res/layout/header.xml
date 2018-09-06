@@ -28,10 +28,10 @@
         />
 
     <ImageButton
-        android:id="@+id/reset_profile_pic"
+        android:id="@+id/undo_profile_pic"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:src="@android:drawable/ic_popup_sync"
+        android:src="@android:drawable/ic_menu_revert"
         android:background="@drawable/header_icon_round"
         android:padding="8dp"
         android:clickable="true"
@@ -40,5 +40,20 @@
         android:layout_alignTop="@+id/update_profile_pic"
         android:layout_toLeftOf="@+id/update_profile_pic"
         android:layout_toStartOf="@+id/update_profile_pic"/>
+
+    <ImageButton
+        android:id="@+id/reset_profile_pic"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@android:drawable/ic_popup_sync"
+        android:background="@drawable/header_icon_round"
+        android:padding="8dp"
+        android:clickable="true"
+        android:layout_marginRight="15dp"
+        android:layout_marginEnd="15dp"
+        android:layout_alignTop="@+id/undo_profile_pic"
+        android:layout_toLeftOf="@+id/undo_profile_pic"
+        android:layout_toStartOf="@+id/undo_profile_pic"/>
+
 
 </RelativeLayout>

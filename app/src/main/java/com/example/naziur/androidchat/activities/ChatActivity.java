@@ -66,7 +66,7 @@ public class ChatActivity extends AppCompatActivity {
     ListView listView;
 
     EditText textComment;
-    ImageView btnSend;
+    CircleImageView btnSend, btnMedia;
 
     List<FirebaseMessageModel> messages = new ArrayList<FirebaseMessageModel>();
 
@@ -101,32 +101,8 @@ public class ChatActivity extends AppCompatActivity {
         listView = (ListView) findViewById(R.id.chattingList);
 
         textComment = (EditText) findViewById(R.id.comment_text);
-        btnSend = (ImageView) findViewById(R.id.send_button);
-        btnSend.setEnabled(false);
-        btnSend.setColorFilter(getResources().getColor(android.R.color.darker_gray));
-
-        textComment.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-
-            }
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {
-                if (s.length() < 5) {
-                    btnSend.setEnabled(false);
-                    btnSend.setColorFilter(getResources().getColor(android.R.color.darker_gray));
-                } else {
-                    btnSend.setEnabled(true);
-                    btnSend.setColorFilter(getResources().getColor(android.R.color.holo_red_dark));
-                }
-            }
-        });
+        btnSend = (CircleImageView) findViewById(R.id.send_button);
+        btnMedia = (CircleImageView) findViewById(R.id.media_button);
 
         final ProgressDialog Dialog = new ProgressDialog(this);
         Dialog.setMessage("Please wait..");
@@ -244,6 +220,13 @@ public class ChatActivity extends AppCompatActivity {
                     Dialog.dismiss();
                 }
                 System.out.println("The read failed: " + databaseError.getMessage());
+            }
+        });
+
+        btnMedia.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Toast.makeText(ChatActivity.this, "Adding media", Toast.LENGTH_SHORT).show();
             }
         });
 
