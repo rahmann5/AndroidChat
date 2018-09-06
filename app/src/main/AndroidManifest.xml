@@ -37,7 +37,8 @@
         </service>
 
         <activity android:name=".activities.ChatActivity" />
-        <activity android:name=".activities.SessionActivity" />
+        <activity android:name=".activities.SessionActivity"
+            android:theme="@style/AppTheme.NoActionBar"/>
         <activity android:name=".activities.MyContactsActivity" />
         <activity
             android:name=".activities.ProfileActivity"

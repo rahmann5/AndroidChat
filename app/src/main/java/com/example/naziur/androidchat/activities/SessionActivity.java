@@ -1,9 +1,11 @@
 package com.example.naziur.androidchat.activities;
 
 import android.content.Intent;
+import android.support.design.widget.TabLayout;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -22,7 +24,13 @@ public class SessionActivity extends AppCompatActivity {
         ViewPager viewPager = (ViewPager) findViewById(R.id.viewpager);
         SessionFragmentPagerAdapter sessionFragmentPagerAdapter = new SessionFragmentPagerAdapter(getSupportFragmentManager());
 
+        Toolbar mToolbar = (Toolbar) findViewById(R.id.toolbar);
+        mToolbar.setTitle("All Chats");
+        setSupportActionBar(mToolbar);
+
         viewPager.setAdapter(sessionFragmentPagerAdapter);
+        TabLayout tabLayout = (TabLayout) findViewById(R.id.sliding_tabs);
+        tabLayout.setupWithViewPager(viewPager);
 
     }
 

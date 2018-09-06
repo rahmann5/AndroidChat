@@ -8,6 +8,7 @@ import android.support.v4.app.DialogFragment;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -24,6 +25,7 @@ import com.example.naziur.androidchat.models.Contact;
 import com.example.naziur.androidchat.fragment.AddContactDialogFragment;
 import com.example.naziur.androidchat.models.FirebaseUserModel;
 import com.example.naziur.androidchat.models.User;
+import com.example.naziur.androidchat.utils.ProgressDialog;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -43,6 +45,7 @@ public class MyContactsActivity extends AppCompatActivity implements AddContactD
     private TextView emptyState;
     private User user = User.getInstance();
     private DatabaseReference userRef;
+    private ProgressDialog progressBar;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -51,6 +54,7 @@ public class MyContactsActivity extends AppCompatActivity implements AddContactD
         setTitle("My Contacts");
         db = new ContactDBHelper(getApplicationContext());
         myContactsRecycler = (RecyclerView) findViewById(R.id.contacts_recycler);
+        progressBar = new ProgressDialog(MyContactsActivity.this, R.layout.progress_dialog, true);
         emptyState = (TextView) findViewById(R.id.empty_contacts);
         userRef = FirebaseDatabase.getInstance().getReference("users");
         FloatingActionButton floatingActionButton  = (FloatingActionButton) findViewById(R.id.add_contact);
@@ -80,6 +84,7 @@ public class MyContactsActivity extends AppCompatActivity implements AddContactD
     }
 
     private void setUpList () {
+
         Cursor c = db.getAllMyContacts(null);
         if (c != null && c.getCount() > 0) {
             myContactsAdapter = new MyContactsAdapter(this, updateExistingContacts(c), setUpListener ());
@@ -91,10 +96,14 @@ public class MyContactsActivity extends AppCompatActivity implements AddContactD
         }
         LinearLayoutManager mLayoutManager = new LinearLayoutManager(this);
         myContactsRecycler.setLayoutManager(mLayoutManager);
+        DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(this,
+                mLayoutManager.getOrientation());
+        myContactsRecycler.addItemDecoration(dividerItemDecoration);
         myContactsRecycler.setAdapter(myContactsAdapter);
     }
 
     private List<Contact> updateExistingContacts (Cursor c) {
+        progressBar.toggleDialog(true);
         final List<Contact> contacts = new ArrayList<>();
         try{
             while (c.moveToNext()) {
@@ -116,16 +125,18 @@ public class MyContactsActivity extends AppCompatActivity implements AddContactD
                                 }
                             }
                         }
+
                     }
 
                     @Override
                     public void onCancelled(DatabaseError databaseError) {
-
+                        progressBar.toggleDialog(false);
                     }
                 });
 
             }
         } finally {
+            progressBar.toggleDialog(false);
             c.close();
         }
         return contacts;
@@ -168,6 +179,7 @@ public class MyContactsActivity extends AppCompatActivity implements AddContactD
 
     @Override
     public void onDialogPositiveClick(DialogFragment dialog, final String username) {
+        progressBar.toggleDialog(true);
         if(!db.isUserAlreadyInContacts(username) && !username.equals(user.name)){
             Query query = userRef.orderByChild("username").equalTo(username);
             query.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -190,14 +202,17 @@ public class MyContactsActivity extends AppCompatActivity implements AddContactD
                     } else {
                         Log.i(TAG, "Contact doesn't exist");
                     }
+                    progressBar.toggleDialog(false);
                 }
 
                 @Override
                 public void onCancelled(DatabaseError databaseError) {
+                    progressBar.toggleDialog(false);
                     Log.i(TAG, "Failed to add contact");
                 }
             });
         } else {
+            progressBar.toggleDialog(false);
             Log.i(TAG, "User cannot be added as they may already exist or it is your username");
         }
     }

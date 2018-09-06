@@ -2,6 +2,10 @@
     <dimen name="fab_margin">16dp</dimen>
     <dimen name="app_bar_height">350dp</dimen>
 
+    <dimen name="divider">100dp</dimen>
+    <dimen name="leftmargin">8dp</dimen>
+    <dimen name="rightmargin">0dp</dimen>
+
     <dimen name="speech_bubble_corners">10dp</dimen>
     <dimen name="speech_bubble_corners_plus_tail">15dp</dimen>
     <dimen name="speech_bubble_spacing">5dp</dimen>

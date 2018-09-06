@@ -18,6 +18,7 @@ import com.bumptech.glide.request.RequestOptions;
 import com.example.naziur.androidchat.R;
 import com.example.naziur.androidchat.database.ContactDBHelper;
 import com.example.naziur.androidchat.models.FirebaseUserModel;
+import com.example.naziur.androidchat.utils.ProgressDialog;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -34,6 +35,7 @@ public class ChatDetailActivity extends AppCompatActivity {
     private FloatingActionButton fab;
     private Toolbar mToolbar;
     private Menu menu;
+    private ProgressDialog progressBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,6 +44,7 @@ public class ChatDetailActivity extends AppCompatActivity {
         db = new ContactDBHelper(this);
         database = FirebaseDatabase.getInstance();
         userRef = database.getReference("users");
+        progressBar = new ProgressDialog(ChatDetailActivity.this, R.layout.progress_dialog, true);
         Bundle extra = getIntent().getExtras();
         if (extra != null) {
             user = new FirebaseUserModel();
@@ -54,8 +57,6 @@ public class ChatDetailActivity extends AppCompatActivity {
 
         mToolbar = (Toolbar) findViewById(R.id.toolbar);
 
-        setSupportActionBar(mToolbar);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         getUsersInformation();
 
@@ -145,6 +146,7 @@ public class ChatDetailActivity extends AppCompatActivity {
     }
 
     private void getUsersInformation() {
+        progressBar.toggleDialog(true);
         userRef.orderByChild("username").equalTo(user.getUsername()).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -160,16 +162,21 @@ public class ChatDetailActivity extends AppCompatActivity {
                         usernameTv.setText("Username: " + user.getUsername());
                         profileTv.setText("Profile Name: " + user.getProfileName());
                         statusTv.setText("Status: " + user.getStatus());
-                        getSupportActionBar().setTitle(user.getProfileName());
+                        mToolbar.setTitle(user.getProfileName());
+                        setSupportActionBar(mToolbar);
+                        getSupportActionBar().setDisplayShowTitleEnabled(true);
+                        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+                        invalidateOptionsMenu();
                         Glide.with(ChatDetailActivity.this).load(user.getProfilePic()).apply(new RequestOptions().placeholder(R.drawable.unknown).error(R.drawable.unknown)).into(profilePicIv);
 
                     }
                 }
+                progressBar.toggleDialog(false);
             }
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
-
+                progressBar.toggleDialog(false);
             }
         });
     }

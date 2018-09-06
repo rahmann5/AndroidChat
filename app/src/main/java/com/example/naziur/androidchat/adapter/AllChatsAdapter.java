@@ -1,5 +1,6 @@
 package com.example.naziur.androidchat.adapter;
 
+import android.content.Context;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -8,11 +9,15 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.RequestOptions;
 import com.example.naziur.androidchat.R;
 import com.example.naziur.androidchat.models.Chat;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import de.hdodenhof.circleimageview.CircleImageView;
 
 /**
  * Created by Naziur on 01/09/2018.
@@ -23,8 +28,10 @@ public class AllChatsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     private List<Chat> allMyChats;
 
     public OnItemClickListener listener;
+    public Context context;
 
-    public AllChatsAdapter (OnItemClickListener listener) {
+    public AllChatsAdapter (Context context, OnItemClickListener listener) {
+        this.context = context;
         allMyChats = new ArrayList<>();
         this.listener = listener;
     }
@@ -37,7 +44,7 @@ public class AllChatsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
 
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
-        ((MyChatsViewHolder) holder).bind(allMyChats.get(position), position ,listener);
+        ((MyChatsViewHolder) holder).bind(allMyChats.get(position), position ,listener, context);
     }
 
     @Override
@@ -63,19 +70,19 @@ public class AllChatsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     private static class MyChatsViewHolder extends RecyclerView.ViewHolder {
 
         private TextView dateTimeTv, profileTv, lastMsgTv;
-        private ImageView profPicIv;
+        private CircleImageView profPicIv;
         private Button addContactBtn;
 
         public MyChatsViewHolder(View itemView) {
             super(itemView);
             profileTv = (TextView) itemView.findViewById(R.id.prof_name);
             lastMsgTv = (TextView) itemView.findViewById(R.id.last_msg);
-            profPicIv = (ImageView) itemView.findViewById(R.id.prof_pic);
+            profPicIv = (CircleImageView) itemView.findViewById(R.id.prof_pic);
             dateTimeTv = (TextView) itemView.findViewById(R.id.dateTime);
             addContactBtn = (Button) itemView.findViewById(R.id.add_contact_btn);
         }
 
-        public void bind (final Chat chat, final int position, final OnItemClickListener listener) {
+        public void bind (final Chat chat, final int position, final OnItemClickListener listener, Context context) {
             itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
@@ -106,6 +113,7 @@ public class AllChatsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
             profileTv.setText(chat.getSpeakingTo());
             dateTimeTv.setText(chat.getTimeOfMsg());
             lastMsgTv.setText(chat.getLastMsgInThisChat());
+            Glide.with(context).load(chat.getProfilePic()).apply(new RequestOptions().placeholder(R.drawable.unknown).error(R.drawable.unknown)).into(profPicIv);
         }
     }
 

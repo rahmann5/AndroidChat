@@ -4,10 +4,15 @@ package com.example.naziur.androidchat.fragment;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
+import android.graphics.DashPathEffect;
+import android.graphics.Paint;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AlertDialog;
+import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.OrientationHelper;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -27,6 +32,7 @@ import com.example.naziur.androidchat.models.Contact;
 import com.example.naziur.androidchat.models.FirebaseMessageModel;
 import com.example.naziur.androidchat.models.FirebaseUserModel;
 import com.example.naziur.androidchat.models.User;
+import com.example.naziur.androidchat.utils.ProgressDialog;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -56,6 +62,7 @@ public class SessionFragment extends Fragment {
     private List<String> allChatKeys;
     private List<Chat> allChats;
     private ContactDBHelper db;
+    private ProgressDialog progressBar;
     private List<ValueEventListener> valueEventListeners;
 
     public SessionFragment() {
@@ -77,6 +84,7 @@ public class SessionFragment extends Fragment {
         usersRef = database.getReference("users");
         messagesRef = database.getReference("messages");
         recyclerView = rootView.findViewById(R.id.all_chats_list);
+        progressBar = new ProgressDialog(getActivity(), R.layout.progress_dialog, true);
         db = new ContactDBHelper(getContext());
         Cursor c = db.getAllMyContacts(null);
         if (c != null && c.getCount() > 0) {
@@ -109,7 +117,7 @@ public class SessionFragment extends Fragment {
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
-
+                progressBar.toggleDialog(false);
             }
         };
 
@@ -117,6 +125,7 @@ public class SessionFragment extends Fragment {
     }
 
     private void updateExistingContacts (Cursor c) {
+        progressBar.toggleDialog(true);
         try{
             while (c.moveToNext()) {
                 final FirebaseUserModel fbModel = new FirebaseUserModel();
@@ -140,7 +149,7 @@ public class SessionFragment extends Fragment {
 
                     @Override
                     public void onCancelled(DatabaseError databaseError) {
-
+                        progressBar.toggleDialog(false);
                     }
                 });
 
@@ -175,16 +184,17 @@ public class SessionFragment extends Fragment {
 
                     @Override
                     public void onCancelled(DatabaseError databaseError) {
-
+                        progressBar.toggleDialog(false);
                     }
                 });
 
                 messagesRef.child("single").child(allChatKeys.get(i)).limitToLast(1).addValueEventListener(valueEventListeners.get(i));
             }
+        progressBar.toggleDialog(false);
     }
 
     private void setUpRecyclerView(){
-        myChatsdapter = new AllChatsAdapter(new AllChatsAdapter.OnItemClickListener() {
+        myChatsdapter = new AllChatsAdapter(getContext(), new AllChatsAdapter.OnItemClickListener() {
             @Override
             public void onItemClick(Chat chat, int pos) {
                 Intent chatActivity = new Intent(getActivity(), ChatActivity.class);
@@ -204,9 +214,12 @@ public class SessionFragment extends Fragment {
             }
         });
         LinearLayoutManager mLayoutManager = new LinearLayoutManager(getContext());
+        mLayoutManager.setOrientation(OrientationHelper.VERTICAL);
         recyclerView.setLayoutManager(mLayoutManager);
-
         recyclerView.setAdapter(myChatsdapter);
+
+
+
     }
 
     private AlertDialog createDialog (final Chat chat, final int position) {

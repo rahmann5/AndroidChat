@@ -3,46 +3,32 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:padding="5dp">
+    android:paddingTop="5dp"
+    android:paddingBottom="5dp"
+    android:paddingLeft="5dp"
+    >
 
-    <ImageView
+    <de.hdodenhof.circleimageview.CircleImageView
         android:id="@+id/prof_pic"
         android:layout_width="50dp"
         android:layout_height="50dp"
-        android:layout_centerVertical="true"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
+        android:layout_gravity="center_vertical"
+        android:layout_marginRight="2dp"
+        android:layout_marginEnd="2dp"
         android:src="@mipmap/ic_launcher"
+        android:layout_centerVertical="true"
+        android:background="?attr/selectableItemBackgroundBorderless"
         />
 
-    <LinearLayout
+    <RelativeLayout
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:layout_centerVertical="true"
+        android:layout_height="match_parent"
         android:layout_toRightOf="@+id/prof_pic"
         android:layout_toEndOf="@+id/prof_pic"
-        android:layout_marginLeft="10dp"
-        android:layout_marginStart="10dp">
-
-        <TextView
-            android:id="@+id/prof_name"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Profile Name"
-            android:textSize="16sp"
-            android:textStyle="bold"/>
-
-        <TextView
-            android:id="@+id/last_msg"
-            android:layout_marginTop="5dp"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Last Message"/>
-
-    </LinearLayout>
+        >
 
     <LinearLayout
+        android:id="@+id/linear2"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="vertical"
@@ -50,6 +36,7 @@
         android:layout_alignParentEnd="true"
         android:layout_marginRight="5dp"
         android:layout_marginEnd="5dp"
+        android:layout_marginBottom="5dp"
         android:padding="5dp"
         android:gravity="center">
 
@@ -75,7 +62,49 @@
             android:drawableLeft="@drawable/ic_friend"
             android:layout_margin="3dp"/>
 
-
     </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_centerVertical="true"
+            android:layout_alignParentStart="true"
+            android:layout_toLeftOf="@id/linear2"
+            android:id="@+id/linear"
+            android:layout_marginTop="10dp"
+            android:layout_marginLeft="10dp"
+            android:layout_marginStart="10dp"
+            android:layout_marginBottom="5dp"
+            android:layout_alignParentLeft="true">
+
+            <TextView
+                android:id="@+id/prof_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Profile Name"
+                android:textSize="16sp"
+                android:textStyle="bold"/>
+
+            <TextView
+                android:id="@+id/last_msg"
+                android:layout_marginTop="5dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="Last Message"/>
+
+        </LinearLayout>
+
+        <View
+            android:id="@+id/view"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_below="@id/linear"
+            android:background="@color/itemDividerColor"
+            android:layout_marginTop="4dp"/>
+
+    </RelativeLayout>
 
 </RelativeLayout>

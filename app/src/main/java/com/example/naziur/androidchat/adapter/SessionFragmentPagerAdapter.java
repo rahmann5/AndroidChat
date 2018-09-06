@@ -12,8 +12,11 @@ import com.example.naziur.androidchat.fragment.SessionFragment;
 
 public class SessionFragmentPagerAdapter extends FragmentPagerAdapter {
 
+    private String tabTitles [];
+
     public SessionFragmentPagerAdapter(FragmentManager fm) {
         super(fm);
+        tabTitles = new String[]{"Single Chats", "Group chats"};
     }
 
     @Override
@@ -23,6 +26,12 @@ public class SessionFragmentPagerAdapter extends FragmentPagerAdapter {
 
     @Override
     public int getCount() {
-        return 1;
+        return tabTitles.length;
+    }
+
+    @Override
+    public CharSequence getPageTitle(int position) {
+        // Generate title based on item position
+        return tabTitles[position];
     }
 }
