@@ -24,23 +24,55 @@
         android:padding="2dp"
         android:background="@color/white"
         >
-
-        <EditText
-            android:id="@+id/comment_text"
-            android:layout_width="match_parent"
+        <LinearLayout
+            android:paddingTop="5dp"
+            android:paddingBottom="5dp"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:fadeScrollbars="false"
-            android:hint="Type your message..."
-            android:inputType="textMultiLine" />
+            android:background="@drawable/rounded_corner"
+            android:focusable="true"
+            android:focusableInTouchMode="true">
+            <requestFocus />
 
-        <ImageView
+            <de.hdodenhof.circleimageview.CircleImageView
+                android:id="@+id/media_button"
+                android:layout_width="35dp"
+                android:layout_height="wrap_content"
+                android:src="@drawable/ic_action_media"
+                android:layout_marginRight="2dp"
+                android:layout_marginEnd="2dp"
+                android:layout_gravity="top"
+                android:clickable="true"
+                android:background="?selectableItemBackgroundBorderless"
+                />
+
+            <EditText
+                android:id="@+id/comment_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:fadeScrollbars="false"
+                android:hint="@string/enter_message"
+                android:inputType="textMultiLine"
+                android:background="@null"
+                android:paddingTop="5dp"
+                android:paddingBottom="5dp"
+                android:paddingRight="5dp"
+                android:paddingEnd="5dp"/>
+
+        </LinearLayout>
+
+        <de.hdodenhof.circleimageview.CircleImageView
+            android:layout_marginTop="5dp"
+            android:layout_gravity="top"
             android:id="@+id/send_button"
-            android:layout_width="48dp"
-            android:layout_height="match_parent"
-            android:layout_gravity="center_vertical"
-            android:scaleType="center"
-            android:src="@android:drawable/ic_menu_send"
+            android:layout_width="35dp"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_action_send"
+            android:layout_marginLeft="2dp"
+            android:layout_marginStart="2dp"
+            android:clickable="true"
+            android:background="?selectableItemBackgroundBorderless"
             />
     </LinearLayout>
 

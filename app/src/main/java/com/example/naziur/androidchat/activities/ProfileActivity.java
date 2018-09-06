@@ -9,6 +9,8 @@ import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.AppCompatButton;
 import android.support.v7.widget.AppCompatEditText;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -25,7 +27,10 @@ import android.widget.Toast;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
 import com.example.naziur.androidchat.R;
+import com.example.naziur.androidchat.adapter.MyContactsAdapter;
 import com.example.naziur.androidchat.database.ContactDBHelper;
+import com.example.naziur.androidchat.database.MyContactsContract;
+import com.example.naziur.androidchat.models.Contact;
 import com.example.naziur.androidchat.models.FirebaseUserModel;
 import com.example.naziur.androidchat.utils.FadingActionBarHelper;
 import com.example.naziur.androidchat.models.User;
@@ -64,7 +69,7 @@ public class ProfileActivity extends AppCompatActivity {
     private ContactDBHelper db;
 
     User user = User.getInstance();
-    private ListView myGroups, myContacts;
+    private RecyclerView myGroups, myContacts;
     private TextView emptyGroupsList, emptyContactsList, myUsername;
     private AppCompatButton saveButton;
     private ImageView editToggle, profilePic;
@@ -114,7 +119,7 @@ public class ProfileActivity extends AppCompatActivity {
         resetPic.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (!user.profilePic.equals("")) {
+                if (!user.profilePic.equals("") || myImageFile != null) {
                     reset(true);
                     Glide.with(ProfileActivity.this).load(R.drawable.unknown).into(profilePic);
                 }
@@ -169,19 +174,60 @@ public class ProfileActivity extends AppCompatActivity {
     }
 
     private void showGroups() {
-        emptyGroupsList = (TextView) findViewById(R.id.no_groups);
         ArrayAdapter<String> adapterGroup = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, new ArrayList<String>());
-        myGroups = (ListView) findViewById(R.id.profile_groups_list);
-        myGroups.setAdapter(adapterGroup);
-        myGroups.setEmptyView(emptyGroupsList);
+        emptyGroupsList = (TextView) findViewById(R.id.no_groups);
+        myGroups = (RecyclerView) findViewById(R.id.profile_groups_list);
+        emptyGroupsList.setVisibility(View.VISIBLE);
+        //myGroups.setAdapter(adapterGroup);
     }
 
+
     private void showContacts() {
-        ArrayAdapter<String> adapterContacts = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, new ArrayList<String>());
+        //ArrayAdapter<String> adapterContacts = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, new ArrayList<String>());
+        final List<Contact> allContacts = new ArrayList<>();
         emptyContactsList = (TextView) findViewById(R.id.no_contacts);
-        myContacts = (ListView) findViewById(R.id.profile_contacts_list);
-        myContacts.setAdapter(adapterContacts);
-        myContacts.setEmptyView(emptyContactsList);
+        myContacts = (RecyclerView) findViewById(R.id.profile_contacts_list);
+        Cursor c = db.getAllMyContacts(null);
+        try {
+            while (c.moveToNext()) {
+                final String friendUsername = c.getString(c.getColumnIndex(MyContactsContract.MyContactsContractEntry.COLUMN_USERNAME));
+                userRef.orderByChild("username").equalTo(friendUsername)
+                        .addListenerForSingleValueEvent(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(DataSnapshot dataSnapshot) {
+                                if(dataSnapshot.exists()){
+                                    for (DataSnapshot userSnapshot : dataSnapshot.getChildren()) {
+                                        FirebaseUserModel firebaseUserModel = userSnapshot.getValue(FirebaseUserModel.class);
+                                        boolean res = db.updateProfile(firebaseUserModel.getUsername(), firebaseUserModel.getProfileName(), firebaseUserModel.getProfilePic());
+                                        if (!res) {
+                                            Log.i(TAG, "Failed to update local data for : " + firebaseUserModel.getUsername());
+                                        }
+                                        allContacts.add(new Contact(firebaseUserModel));
+                                    }
+
+                                    MyContactsAdapter contactsAdapter = new MyContactsAdapter(ProfileActivity.this, allContacts, null);
+                                    LinearLayoutManager l = new LinearLayoutManager(ProfileActivity.this);
+                                    myContacts.setLayoutManager(l);
+                                    myContacts.setAdapter(contactsAdapter);
+
+
+                                    if (myContacts.getAdapter() == null || myContacts.getAdapter().getItemCount() == 0) {
+                                        emptyContactsList.setVisibility(View.VISIBLE);
+                                    }
+
+                                }
+                            }
+
+                            @Override
+                            public void onCancelled(DatabaseError databaseError) {
+                                Log.i(TAG, "Failed to connect to real time database for: " + friendUsername + " reason: " + databaseError.getMessage());
+                            }
+                        });
+            }
+
+        } finally {
+           c.close();
+        }
     }
 
     private void uploadImageToCloud () {

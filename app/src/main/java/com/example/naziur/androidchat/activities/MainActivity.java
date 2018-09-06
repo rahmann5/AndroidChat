@@ -30,61 +30,56 @@ import com.example.naziur.androidchat.R;
 
 public class MainActivity extends AppCompatActivity {
 
-    private static final String TAG = "MainActivity";
-
     String currentDeviceId;
 
     User user = User.getInstance();
-
-    EditText editTextUsername, editTextProfileName;
 
     FirebaseDatabase database;
     DatabaseReference usersRef;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        setTheme(R.style.AppTheme_NoActionBar);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        SharedPreferences sharedpreferences = getSharedPreferences(user.appPreferences, Context.MODE_PRIVATE);
-        user.sharedpreferences = sharedpreferences;
+        user.sharedpreferences = getSharedPreferences(user.appPreferences, Context.MODE_PRIVATE);
 
         currentDeviceId = Settings.Secure.getString(getApplicationContext().getContentResolver(), Settings.Secure.ANDROID_ID);
 
         database = FirebaseDatabase.getInstance();
         usersRef = database.getReference("users");
 
-        final ProgressDialog Dialog = new ProgressDialog(this);
-        Dialog.setMessage("Please wait..");
-        Dialog.setCancelable(false);
-        Dialog.show();
-
         usersRef.addListenerForSingleValueEvent(new com.google.firebase.database.ValueEventListener() {
             @Override
             public void onDataChange(com.google.firebase.database.DataSnapshot dataSnapshot) {
-                Dialog.dismiss();
+                boolean fail = true;
                 for (com.google.firebase.database.DataSnapshot userSnapshot : dataSnapshot.getChildren()) {
                     //Getting the data from snapshot
                     FirebaseUserModel firebaseUserModel = userSnapshot.getValue(FirebaseUserModel.class);
 
                     if (firebaseUserModel.getDeviceId().equals(currentDeviceId)) {
+                        fail = false;
                         firebaseUserModel.setDeviceToken(FirebaseInstanceId.getInstance().getToken());
                         user.login(firebaseUserModel);
                         user.saveFirebaseKey(userSnapshot.getKey());
                         moveToSessionScreen();
+                        break;
                     }
                 }
+
+                if (fail) {
+                    moveToLoginActivity ();
+                }
+
             }
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
-                Dialog.dismiss();
+                moveToLoginActivity ();
                 System.out.println("The read failed: " + databaseError.getMessage());
             }
         });
-
-        editTextUsername = (EditText) findViewById(R.id.editTextUsername);
-        editTextProfileName = (EditText) findViewById(R.id.editTextProfileName);
 
     }
 
@@ -103,77 +98,12 @@ public class MainActivity extends AppCompatActivity {
         finish();
     }
 
-    public void showMessage(String strTitle, String strMessage) {
-        AlertDialog.Builder builder;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            builder = new AlertDialog.Builder(this, android.R.style.Theme_Material_Dialog_Alert);
-        } else {
-            builder = new AlertDialog.Builder(this);
-        }
-        builder.setTitle(strTitle)
-                .setMessage(strMessage)
-                .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int which) {
-                    }
-                })
-                .setIcon(android.R.drawable.ic_dialog_info)
-                .show();
+    private void moveToLoginActivity () {
+        Intent intent = new Intent(this, LoginActivity.class);
+        startActivity(intent);
+        finish();
     }
 
-    public void btnLoginTapped(View view) {
-        final String strUsername = editTextUsername.getText().toString().trim();
-        final String strProfileName = editTextProfileName.getText().toString().trim();
-        if (strUsername.isEmpty()) {
-            showMessage("Invalid", "Please enter a username");
-        } else if (strProfileName.isEmpty()){
-            showMessage("Invalid", "Please enter a profile name");
-        } else {
-
-            final ProgressDialog Dialog = new ProgressDialog(this);
-            Dialog.setMessage("Please wait..");
-            Dialog.setCancelable(false);
-            Dialog.show();
-            Query query = usersRef.orderByChild("username").equalTo(strUsername);
-            query.addListenerForSingleValueEvent(new ValueEventListener() {
-                @Override
-                public void onDataChange(DataSnapshot dataSnapshot) {
-                    if(!dataSnapshot.exists()){
-                        addUserToDatabase(strUsername, strProfileName, Dialog);
-                    } else {
-                        Dialog.dismiss();
-                        showMessage("Invalid", "Please provide a unique username");
-                    }
-                }
-
-                @Override
-                public void onCancelled(DatabaseError databaseError) {
-
-                }
-            });
-            //
 
 
-
-        }
-    }
-
-    private void addUserToDatabase(String strUsername, String strProfileName, final ProgressDialog dialog){
-        final FirebaseUserModel firebaseUserModel = new FirebaseUserModel();
-        firebaseUserModel.setUsername(strUsername);
-        firebaseUserModel.setProfileName(strProfileName);
-        firebaseUserModel.setStatus(getResources().getString(R.string.status_available));
-        firebaseUserModel.setDeviceId(currentDeviceId);
-        firebaseUserModel.setDeviceToken(FirebaseInstanceId.getInstance().getToken());
-
-        final DatabaseReference newRef = usersRef.push();
-        newRef.setValue(firebaseUserModel, new DatabaseReference.CompletionListener() {
-            @Override
-            public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
-                dialog.dismiss();
-                if (user.login(firebaseUserModel)) {
-                    moveToSessionScreen();
-                }
-            }
-        });
-    }
 }

@@ -80,6 +80,7 @@ public class MyContactsActivity extends AppCompatActivity implements AddContactD
     }
 
     private void setUpList () {
+
         Cursor c = db.getAllMyContacts(null);
         if (c != null && c.getCount() > 0) {
             myContactsAdapter = new MyContactsAdapter(this, updateExistingContacts(c), setUpListener ());

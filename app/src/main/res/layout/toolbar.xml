@@ -31,7 +31,6 @@
             android:id="@+id/profile_icon"
             android:layout_width="45dp"
             android:layout_height="45dp"
-            android:src="@drawable/unknown"
             android:layout_gravity="center_vertical"
             android:scaleType="centerCrop"
             android:layout_marginRight="8dp"

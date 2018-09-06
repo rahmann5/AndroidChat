@@ -15,4 +15,6 @@
     <color name="cardDividerColor">#d593908c</color>
     <color name="profile_camera_button">#f17110</color>
     <color name="profile_save_button">#224488</color>
+
+    <color name="button_color">#3f94df</color>
 </resources>

@@ -101,30 +101,31 @@
        <android.support.v7.widget.CardView
            android:layout_marginTop="10dp"
            android:layout_width="match_parent"
-           android:layout_height="wrap_content"
+           android:layout_height="match_parent"
            card_view:cardElevation="4sp"
            card_view:cardUseCompatPadding="true"
            >
 
            <RelativeLayout
                android:layout_width="match_parent"
-               android:layout_height="wrap_content"
+               android:layout_height="match_parent"
                android:padding="10dp">
 
                <TextView
                    android:id="@+id/title_group_list"
-                   android:layout_marginTop="15sp"
+                   android:layout_marginTop="10dp"
                    android:layout_width="match_parent"
                    android:layout_height="wrap_content"
                    android:text="My Groups:"
                    android:textAppearance="@android:style/TextAppearance.Medium"
                    />
 
-               <ListView
+               <android.support.v7.widget.RecyclerView
+                   android:layout_marginTop="5dp"
                    android:layout_below="@+id/title_group_list"
                    android:id="@+id/profile_groups_list"
-                   android:layout_width="wrap_content"
-                   android:layout_height="wrap_content"
+                   android:layout_width="match_parent"
+                   android:layout_height="match_parent"
                    />
 
                <TextView
@@ -145,29 +146,30 @@
         <android.support.v7.widget.CardView
             android:layout_marginTop="10dp"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             card_view:cardElevation="4sp"
             card_view:cardUseCompatPadding="true">
 
             <RelativeLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent"
                 android:padding="10dp">
 
                 <TextView
                     android:id="@+id/title_contact_list"
-                    android:layout_marginTop="15sp"
+                    android:layout_marginTop="10dp"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="My Contacts:"
                     android:textAppearance="@android:style/TextAppearance.Medium"
                     />
 
-                <ListView
+                <android.support.v7.widget.RecyclerView
+                    android:layout_marginTop="5dp"
                     android:layout_below="@+id/title_contact_list"
                     android:id="@+id/profile_contacts_list"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
                     />
 
                 <TextView

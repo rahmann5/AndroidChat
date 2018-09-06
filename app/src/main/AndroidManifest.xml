@@ -11,8 +11,11 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/AppTheme">
-        <activity android:name=".activities.MainActivity">
+        android:theme="@style/AppTheme"
+        android:configChanges="orientation|screenSize">
+        <activity
+            android:name=".activities.MainActivity"
+            android:theme="@style/AppTheme.Launcher">
             <intent-filter>
                 <action android:name=".MainActivity" />
 
@@ -42,8 +45,10 @@
         <activity
             android:name=".activities.ProfileActivity"
             android:theme="@style/AppTheme.Transparent" />
-        <activity android:name=".activities.ChatDetailActivity"
-            android:theme="@style/AppTheme.NoActionBar"></activity>
+        <activity
+            android:name=".activities.ChatDetailActivity"
+            android:theme="@style/AppTheme.NoActionBar" />
+        <activity android:name=".activities.LoginActivity"></activity>
     </application>
 
 </manifest>
