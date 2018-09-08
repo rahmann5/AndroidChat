@@ -4,13 +4,9 @@ package com.example.naziur.androidchat.fragment;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
-import android.graphics.DashPathEffect;
-import android.graphics.Paint;
-import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AlertDialog;
-import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.OrientationHelper;
 import android.support.v7.widget.RecyclerView;
@@ -18,20 +14,20 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.naziur.androidchat.R;
 import com.example.naziur.androidchat.activities.ChatActivity;
 import com.example.naziur.androidchat.activities.ChatDetailActivity;
-import com.example.naziur.androidchat.activities.ProfileActivity;
 import com.example.naziur.androidchat.adapter.AllChatsAdapter;
 import com.example.naziur.androidchat.database.ContactDBHelper;
 import com.example.naziur.androidchat.database.MyContactsContract;
 import com.example.naziur.androidchat.models.Chat;
-import com.example.naziur.androidchat.models.Contact;
 import com.example.naziur.androidchat.models.FirebaseMessageModel;
 import com.example.naziur.androidchat.models.FirebaseUserModel;
 import com.example.naziur.androidchat.models.User;
+import com.example.naziur.androidchat.utils.Network;
 import com.example.naziur.androidchat.utils.ProgressDialog;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -48,9 +44,9 @@ import java.util.List;
 /**
  * A simple {@link Fragment} subclass.
  */
-public class SessionFragment extends Fragment {
+public class SingleSessionFragment extends Fragment {
 
-    private static final String TAG = SessionFragment.class.getSimpleName();
+    private static final String TAG = SingleSessionFragment.class.getSimpleName();
 
     private FirebaseDatabase database;
     private DatabaseReference messagesRef;
@@ -58,6 +54,7 @@ public class SessionFragment extends Fragment {
     private ValueEventListener userListener;
     private AllChatsAdapter myChatsdapter;
     private RecyclerView recyclerView;
+    private TextView emptyChats;
     private User user = User.getInstance();
     private List<String> allChatKeys;
     private List<Chat> allChats;
@@ -65,7 +62,7 @@ public class SessionFragment extends Fragment {
     private ProgressDialog progressBar;
     private List<ValueEventListener> valueEventListeners;
 
-    public SessionFragment() {
+    public SingleSessionFragment() {
         // Required empty public constructor
     }
 
@@ -76,19 +73,22 @@ public class SessionFragment extends Fragment {
         // Inflate the layout for this fragment
         getActivity().setTitle("All Chats");
 
-        View rootView = inflater.inflate(R.layout.fragment_session, container, false);
+        View rootView = inflater.inflate(R.layout.fragment_session_single, container, false);
         valueEventListeners = new ArrayList<>();
         allChats = new ArrayList<>();
         allChatKeys = new ArrayList<>();
         database = FirebaseDatabase.getInstance();
         usersRef = database.getReference("users");
         messagesRef = database.getReference("messages");
+        emptyChats = (TextView) rootView.findViewById(R.id.no_chats);
         recyclerView = rootView.findViewById(R.id.all_chats_list);
         progressBar = new ProgressDialog(getActivity(), R.layout.progress_dialog, true);
         db = new ContactDBHelper(getContext());
-        Cursor c = db.getAllMyContacts(null);
-        if (c != null && c.getCount() > 0) {
-            updateExistingContacts (c);
+        if (Network.isInternetAvailable(getActivity(), true)) {
+            Cursor c = db.getAllMyContacts(null);
+            if (c != null && c.getCount() > 0) {
+                updateExistingContacts (c);
+            }
         }
         setUpRecyclerView();
         return rootView;
@@ -97,6 +97,12 @@ public class SessionFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
+        if (!Network.isInternetAvailable(getActivity(), true) && myChatsdapter.getItemCount() == 0) {
+            emptyChats.setVisibility(View.VISIBLE);
+            return;
+        } else {
+            emptyChats.setVisibility(View.GONE);
+        }
         userListener = new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -118,6 +124,7 @@ public class SessionFragment extends Fragment {
             @Override
             public void onCancelled(DatabaseError databaseError) {
                 progressBar.toggleDialog(false);
+                Log.i(TAG, databaseError.getMessage());
             }
         };
 
@@ -125,7 +132,6 @@ public class SessionFragment extends Fragment {
     }
 
     private void updateExistingContacts (Cursor c) {
-        progressBar.toggleDialog(true);
         try{
             while (c.moveToNext()) {
                 final FirebaseUserModel fbModel = new FirebaseUserModel();
@@ -149,7 +155,7 @@ public class SessionFragment extends Fragment {
 
                     @Override
                     public void onCancelled(DatabaseError databaseError) {
-                        progressBar.toggleDialog(false);
+                        Log.i(TAG, databaseError.getMessage());
                     }
                 });
 
@@ -161,6 +167,7 @@ public class SessionFragment extends Fragment {
     }
 
     private void setUpMsgEventListeners(){
+        progressBar.toggleDialog(true);
         allChats.clear();
             for (int i = 0; i < allChatKeys.size(); i++) {
                 final String chatKey = allChatKeys.get(i);
@@ -171,24 +178,25 @@ public class SessionFragment extends Fragment {
                         if (dataSnapshot.exists()) {
                             for (com.google.firebase.database.DataSnapshot msgSnapshot : dataSnapshot.getChildren()) {
                                 FirebaseMessageModel firebaseMessageModel = msgSnapshot.getValue(FirebaseMessageModel.class);
-                                if(firebaseMessageModel != null) {
-                                    String isChattingTo = (firebaseMessageModel.getSenderName().equals(user.name)) ? db.getProfileNameAndPic(firebaseMessageModel.getReceiverName())[0] : db.getProfileNameAndPic(firebaseMessageModel.getSenderName())[0];
-                                    String username = (firebaseMessageModel.getSenderName().equals(user.name)) ? firebaseMessageModel.getReceiverName() : firebaseMessageModel.getSenderName();
-                                    SimpleDateFormat formatter = new SimpleDateFormat(getString(R.string.simple_date));
-                                    String dateString = formatter.format(new Date(firebaseMessageModel.getCreatedDateLong()));
-                                    Chat chat = new Chat(isChattingTo, username, firebaseMessageModel.getText(), db.getProfileNameAndPic(username)[1], dateString, chatKey);
-                                    allChats.add(chat);
-                                } else {
-                                    System.out.println("Firebase message is null");
-                                }
+                                String isChattingTo = (firebaseMessageModel.getSenderName().equals(user.name)) ? db.getProfileNameAndPic(firebaseMessageModel.getReceiverName())[0] : db.getProfileNameAndPic(firebaseMessageModel.getSenderName())[0];
+                                String username = (firebaseMessageModel.getSenderName().equals(user.name)) ? firebaseMessageModel.getReceiverName() : firebaseMessageModel.getSenderName();
+                                SimpleDateFormat formatter = new SimpleDateFormat(getString(R.string.simple_date));
+                                String dateString = formatter.format(new Date(firebaseMessageModel.getCreatedDateLong()));
+                                Chat chat = new Chat(isChattingTo, username, firebaseMessageModel.getText(), db.getProfileNameAndPic(username)[1], dateString, chatKey, firebaseMessageModel.getIsReceived());
+                                allChats.add(chat);
                             }
                             myChatsdapter.setAllMyChats(allChats);
+                        }
+
+                        if (myChatsdapter.getItemCount() == 0) {
+                            emptyChats.setVisibility(View.VISIBLE);
                         }
                     }
 
                     @Override
                     public void onCancelled(DatabaseError databaseError) {
                         progressBar.toggleDialog(false);
+                        Log.i(TAG, databaseError.getMessage());
                     }
                 });
 
@@ -277,7 +285,8 @@ public class SessionFragment extends Fragment {
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
-
+                Toast.makeText(getActivity(), "Failed to delete chat try again later.", Toast.LENGTH_SHORT).show();
+                Log.i(TAG, databaseError.getMessage());
             }
         });
     }
@@ -304,17 +313,18 @@ public class SessionFragment extends Fragment {
                         }
 
                     } else {
-                        Log.i(TAG, "Contact doesn't exist");
+                        Toast.makeText(getActivity(), "That contact does not exist.", Toast.LENGTH_LONG).show();
                     }
                 }
 
                 @Override
                 public void onCancelled(DatabaseError databaseError) {
-                    Log.i(TAG, "Failed to add contact");
+                    Toast.makeText(getActivity(), "Failed to add contact.", Toast.LENGTH_LONG).show();
+                    Log.i(TAG, databaseError.getMessage());
                 }
             });
         } else {
-            Log.i(TAG, "User cannot be added as they may already exist");
+            Toast.makeText(getActivity(), "That user may already exists in your contacts.", Toast.LENGTH_LONG).show();
         }
 
     }
@@ -349,5 +359,9 @@ public class SessionFragment extends Fragment {
 
     }
 
-
+    @Override
+    public void onDestroy() {
+        db.close();
+        super.onDestroy();
+    }
 }

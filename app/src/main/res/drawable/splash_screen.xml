@@ -1,17 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android"
     android:opacity="opaque">
-    <item android:drawable="@color/white"/>
+    <item android:drawable="@drawable/splash_screen_bck"/>
     <item>
         <bitmap
-            android:src="@drawable/splash_screen_bck"
-            android:gravity="center_horizontal|center_vertical"
-            />
-    </item>
-
-    <item>
-        <bitmap
-            android:src="@mipmap/ic_launcher"
+            android:src="@mipmap/ic_launcher_logo"
             android:gravity="center"/>
     </item>
 

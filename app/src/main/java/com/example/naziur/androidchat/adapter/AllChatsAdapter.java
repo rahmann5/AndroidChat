@@ -1,6 +1,7 @@
 package com.example.naziur.androidchat.adapter;
 
 import android.content.Context;
+import android.os.Build;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -113,6 +114,14 @@ public class AllChatsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
             profileTv.setText(chat.getSpeakingTo());
             dateTimeTv.setText(chat.getTimeOfMsg());
             lastMsgTv.setText(chat.getLastMsgInThisChat());
+            if (chat.getIsSeen() == 0){
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    itemView.setBackgroundColor(context.getResources().getColor(R.color.red, null));
+                } else {
+                    itemView.setBackgroundColor(context.getResources().getColor(R.color.red));
+                }
+            }
+
             Glide.with(context).load(chat.getProfilePic()).apply(new RequestOptions().placeholder(R.drawable.unknown).error(R.drawable.unknown)).into(profPicIv);
         }
     }

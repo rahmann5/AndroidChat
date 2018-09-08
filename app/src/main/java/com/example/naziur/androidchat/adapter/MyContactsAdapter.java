@@ -116,7 +116,7 @@ public class MyContactsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
             }
             usernameTv.setText(contact.getContact().getUsername());
             profileTv.setText(contact.getContact().getProfileName());
-            Glide.with(context).load(contact.getContact().getProfilePic()).apply(new RequestOptions().placeholder(R.drawable.unknown).error(R.drawable.unknown)).into(profPicIv);
+            Glide.with(context).load(contact.getContact().getProfilePic()).apply(new RequestOptions().placeholder(R.drawable.placeholder).error(R.drawable.unknown)).into(profPicIv);
         }
     }
 }

@@ -31,7 +31,7 @@
         android:layout_marginRight="24dp"
         android:ems="10"
         android:gravity="center"
-        android:hint="Profile Name"
+        android:hint="Profile Name (New User Only)"
         android:inputType="textPersonName"
         app:layout_constraintBottom_toTopOf="@+id/button2"
         app:layout_constraintHorizontal_bias="0.0"

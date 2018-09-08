@@ -1,6 +1,5 @@
 package com.example.naziur.androidchat.activities;
 
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -25,6 +24,7 @@ import com.example.naziur.androidchat.models.FirebaseUserModel;
 import com.example.naziur.androidchat.models.MessageCell;
 import com.example.naziur.androidchat.models.User;
 import com.example.naziur.androidchat.utils.Constants;
+import com.example.naziur.androidchat.utils.ProgressDialog;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -65,6 +65,8 @@ public class ChatActivity extends AppCompatActivity {
     DatabaseReference messagesRef;
     DatabaseReference usersRef;
 
+    private ProgressDialog progressBar;
+
     private ActionBar actionBar;
     private FirebaseUserModel friend, me;
 
@@ -95,11 +97,8 @@ public class ChatActivity extends AppCompatActivity {
         btnSend = (CircleImageView) findViewById(R.id.send_button);
         btnMedia = (CircleImageView) findViewById(R.id.media_button);
 
-        final ProgressDialog Dialog = new ProgressDialog(this);
-        Dialog.setMessage("Please wait..");
-        Dialog.setCancelable(false);
-        Dialog.show();
-
+        progressBar = new ProgressDialog(this, R.layout.progress_dialog, true);
+        progressBar.toggleDialog(true);
         //messagesRef.equalTo(user.name + "-" + friend.getUsername()).equalTo(friend.getUsername() + "-" + user.name);
 
         final com.google.firebase.database.ValueEventListener commentValueEventListener = new com.google.firebase.database.ValueEventListener() {
@@ -118,20 +117,15 @@ public class ChatActivity extends AppCompatActivity {
 
                 updateListView();
 
-                if (Dialog.isShowing()) {
-                    Dialog.dismiss();
-                }
+                progressBar.toggleDialog(false);
             }
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
                 messages.clear();
                 updateListView();
-
-                if (Dialog.isShowing()) {
-                    Dialog.dismiss();
-                }
-                System.out.println("The read failed: " + databaseError.getMessage());
+                progressBar.toggleDialog(false);
+                Log.i(TAG, databaseError.getMessage());
             }
         };
 
@@ -148,7 +142,7 @@ public class ChatActivity extends AppCompatActivity {
                         ((TextView) actionBar.getCustomView().findViewById(R.id.profile_name)).setText(friend.getProfileName());
                         Glide.with(getApplicationContext())
                                 .load(friend.getProfilePic())
-                                .apply(new RequestOptions().placeholder(R.drawable.unknown).error(R.drawable.unknown))
+                                .apply(new RequestOptions().placeholder(R.drawable.placeholder).error(R.drawable.unknown))
                                 .into(((CircleImageView) actionBar.getCustomView().findViewById(R.id.profile_icon)));
                     }
 
@@ -163,7 +157,6 @@ public class ChatActivity extends AppCompatActivity {
 
                 if (me != null) {
                     if (!me.getChatKeys().equals("") && !friend.getChatKeys().equals("")) { // both with keys but maybe not same keys
-                        System.out.println("BOTH HAVE DATA");
                         String[] allMyKeys  = me.getChatKeys().split(",");
                         List<String> allFriendKeys  = Arrays.asList(friend.getChatKeys().split(","));
                         for(String key : allMyKeys) {
@@ -177,15 +170,12 @@ public class ChatActivity extends AppCompatActivity {
                         }
 
                     } else if (me.getChatKeys().equals("") && !friend.getChatKeys().equals("")) { // me without key but friend with key but not sure same key
-                        System.out.println("FRIEND HAS DATA");
                         verifyUserChatKeys(friend, me);
 
                     }  else if (!me.getChatKeys().equals("") && friend.getChatKeys().equals("")) { // friend without key but me with key but not sure same key
-                        System.out.println("ME HAS DATA");
                         verifyUserChatKeys(me, friend);
 
                     } else { // no chat keys created yet for both
-                        System.out.println("NONE HAS DATA");
                         createMessageRefWithNewKey ();
                     }
 
@@ -201,16 +191,12 @@ public class ChatActivity extends AppCompatActivity {
                     finish();
                 }
 
-                if (Dialog.isShowing()) {
-                    Dialog.dismiss();
-                }
+                progressBar.toggleDialog(false);
             }
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
-                if (Dialog.isShowing()) {
-                    Dialog.dismiss();
-                }
+                progressBar.toggleDialog(false);
                 System.out.println("The read failed: " + databaseError.getMessage());
             }
         });
@@ -241,19 +227,16 @@ public class ChatActivity extends AppCompatActivity {
                     firebaseMessageModel.setReceiverName(friend.getUsername());
                     firebaseMessageModel.setIsReceived(Constants.MESSAGE_SENT);
 
-                    final ProgressDialog Dialog = new ProgressDialog(chattingActivity);
-                    Dialog.setMessage("Please wait..");
-                    Dialog.setCancelable(false);
-                    Dialog.show();
+                    progressBar.toggleDialog(true);
 
                     final DatabaseReference newRef = messagesRef.push();
                     newRef.setValue(firebaseMessageModel, new DatabaseReference.CompletionListener() {
                         @Override
                         public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
-                            Dialog.dismiss();
 
                             if (databaseError != null) {
-                                Log.i(TAG, databaseError.toString());
+                                progressBar.toggleDialog(false);
+                                Log.i(TAG, databaseError.getMessage());
                             } else {
                                 textComment.setText("");
 
@@ -286,13 +269,13 @@ public class ChatActivity extends AppCompatActivity {
                                         client.post(getApplicationContext(), url, entity, RequestParams.APPLICATION_JSON, new TextHttpResponseHandler() {
                                             @Override
                                             public void onFailure(int statusCode, cz.msebera.android.httpclient.Header[] headers, String responseString, Throwable throwable) {
-                                                Dialog.dismiss();
+                                                progressBar.toggleDialog(false);
                                                 Log.i(TAG, responseString);
                                             }
 
                                             @Override
                                             public void onSuccess(int statusCode, cz.msebera.android.httpclient.Header[] headers, String responseString) {
-                                                Dialog.dismiss();
+                                                progressBar.toggleDialog(false);
                                                 Log.i(TAG, responseString);
                                             }
                                         });
@@ -385,12 +368,12 @@ public class ChatActivity extends AppCompatActivity {
 
                 @Override
                 public void onCancelled(DatabaseError databaseError) {
-                    System.out.println("The read failed: " + databaseError.getMessage());
+                    Log.i(TAG, databaseError.getMessage());
                 }
             });
 
         } catch (Exception e) {
-            System.out.println("FAILED " + addKeyTo.getUsername());
+            Log.i(TAG,"FAILED " + addKeyTo.getUsername());
             e.printStackTrace();
         }
 
@@ -403,6 +386,7 @@ public class ChatActivity extends AppCompatActivity {
         actionBar.getCustomView().findViewById(R.id.back).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                startActivity(new Intent (ChatActivity.this, SessionActivity.class));
                 finish();
             }
         });

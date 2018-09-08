@@ -34,6 +34,7 @@ import com.example.naziur.androidchat.models.Contact;
 import com.example.naziur.androidchat.models.FirebaseUserModel;
 import com.example.naziur.androidchat.utils.FadingActionBarHelper;
 import com.example.naziur.androidchat.models.User;
+import com.example.naziur.androidchat.utils.Network;
 import com.example.naziur.androidchat.utils.ProgressDialog;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -100,7 +101,7 @@ public class ProfileActivity extends AppCompatActivity {
         EasyImage.configuration(this).setAllowMultiplePickInGallery(false);
         profilePic = (ImageView) findViewById(R.id.image_header);
         Glide.with(ProfileActivity.this).load(user.profilePic)
-                .apply(new RequestOptions().placeholder(R.drawable.unknown).error(R.drawable.unknown))
+                .apply(new RequestOptions().placeholder(R.drawable.placeholder).error(R.drawable.unknown))
                 .into(profilePic);
         updatePic = (ImageButton) findViewById(R.id.update_profile_pic);
 
@@ -110,7 +111,7 @@ public class ProfileActivity extends AppCompatActivity {
             public void onClick(View view) {
                 reset(false);
                 Glide.with(ProfileActivity.this).load(user.profilePic)
-                        .apply(new RequestOptions().placeholder(R.drawable.unknown).error(R.drawable.unknown))
+                        .apply(new RequestOptions().error(R.drawable.unknown))
                         .into(profilePic);
             }
         });
@@ -147,7 +148,7 @@ public class ProfileActivity extends AppCompatActivity {
         saveButton = (AppCompatButton) findViewById(R.id.save_profile_btn);
 
         showContacts();
-        showGroups();
+        //showGroups(); do inside showContacts for before hiding progress dialog
 
         editToggle.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -163,11 +164,13 @@ public class ProfileActivity extends AppCompatActivity {
         saveButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (hasChanged()) {
-                    progressBar.toggleDialog(true);
-                    deletePrevImage();
-                } else {
-                    Toast.makeText(ProfileActivity.this, "Changes must be made and edit must be disabled", Toast.LENGTH_SHORT).show();
+                if (Network.isInternetAvailable(ProfileActivity.this, true)) {
+                    if (hasChanged()) {
+                        progressBar.toggleDialog(true);
+                        deletePrevImage();
+                    } else {
+                        Toast.makeText(ProfileActivity.this, "Changes must be made and edit must be disabled", Toast.LENGTH_SHORT).show();
+                    }
                 }
             }
         });
@@ -183,51 +186,69 @@ public class ProfileActivity extends AppCompatActivity {
 
 
     private void showContacts() {
+        progressBar.toggleDialog(true);
         //ArrayAdapter<String> adapterContacts = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, new ArrayList<String>());
         final List<Contact> allContacts = new ArrayList<>();
         emptyContactsList = (TextView) findViewById(R.id.no_contacts);
         myContacts = (RecyclerView) findViewById(R.id.profile_contacts_list);
+        MyContactsAdapter contactsAdapter = new MyContactsAdapter(ProfileActivity.this, updateContacts (), null);
+        LinearLayoutManager l = new LinearLayoutManager(ProfileActivity.this);
+        myContacts.setLayoutManager(l);
+        myContacts.setAdapter(contactsAdapter);
+
+
+        if (myContacts.getAdapter() == null || myContacts.getAdapter().getItemCount() == 0) {
+            emptyContactsList.setVisibility(View.VISIBLE);
+        }
+
+    }
+
+    private List<Contact> updateContacts () {
+        final List<Contact> allContacts = new ArrayList<>();
         Cursor c = db.getAllMyContacts(null);
+        boolean hasInternet = Network.isInternetAvailable(this, true);
         try {
             while (c.moveToNext()) {
                 final String friendUsername = c.getString(c.getColumnIndex(MyContactsContract.MyContactsContractEntry.COLUMN_USERNAME));
-                userRef.orderByChild("username").equalTo(friendUsername)
-                        .addListenerForSingleValueEvent(new ValueEventListener() {
-                            @Override
-                            public void onDataChange(DataSnapshot dataSnapshot) {
-                                if(dataSnapshot.exists()){
-                                    for (DataSnapshot userSnapshot : dataSnapshot.getChildren()) {
-                                        FirebaseUserModel firebaseUserModel = userSnapshot.getValue(FirebaseUserModel.class);
-                                        boolean res = db.updateProfile(firebaseUserModel.getUsername(), firebaseUserModel.getProfileName(), firebaseUserModel.getProfilePic());
-                                        if (!res) {
-                                            Log.i(TAG, "Failed to update local data for : " + firebaseUserModel.getUsername());
+
+                if (hasInternet) {
+                    userRef.orderByChild("username").equalTo(friendUsername)
+                            .addListenerForSingleValueEvent(new ValueEventListener() {
+                                @Override
+                                public void onDataChange(DataSnapshot dataSnapshot) {
+                                    if(dataSnapshot.exists()){
+                                        for (DataSnapshot userSnapshot : dataSnapshot.getChildren()) {
+                                            FirebaseUserModel firebaseUserModel = userSnapshot.getValue(FirebaseUserModel.class);
+                                            boolean res = db.updateProfile(firebaseUserModel.getUsername(), firebaseUserModel.getProfileName(), firebaseUserModel.getProfilePic());
+                                            if (!res) {
+                                                Log.i(TAG, "Failed to update local data for : " + firebaseUserModel.getUsername());
+                                            }
+                                            allContacts.add(new Contact(firebaseUserModel));
                                         }
-                                        allContacts.add(new Contact(firebaseUserModel));
+
                                     }
-
-                                    MyContactsAdapter contactsAdapter = new MyContactsAdapter(ProfileActivity.this, allContacts, null);
-                                    LinearLayoutManager l = new LinearLayoutManager(ProfileActivity.this);
-                                    myContacts.setLayoutManager(l);
-                                    myContacts.setAdapter(contactsAdapter);
-
-
-                                    if (myContacts.getAdapter() == null || myContacts.getAdapter().getItemCount() == 0) {
-                                        emptyContactsList.setVisibility(View.VISIBLE);
-                                    }
-
                                 }
-                            }
 
-                            @Override
-                            public void onCancelled(DatabaseError databaseError) {
-                                Log.i(TAG, "Failed to connect to real time database for: " + friendUsername + " reason: " + databaseError.getMessage());
-                            }
-                        });
+                                @Override
+                                public void onCancelled(DatabaseError databaseError) {
+                                    Log.i(TAG, "Failed to connect to real time database for: " + friendUsername + " reason: " + databaseError.getMessage());
+                                }
+                            });
+                } else {
+                    FirebaseUserModel firebaseUserModel = new FirebaseUserModel();
+                    firebaseUserModel.setUsername(friendUsername);
+                    firebaseUserModel.setProfileName(c.getString(c.getColumnIndex(MyContactsContract.MyContactsContractEntry.COLUMN_PROFILE)));
+                    firebaseUserModel.setProfilePic(c.getString(c.getColumnIndex(MyContactsContract.MyContactsContractEntry.COLUMN_PROFILE_PIC)));
+                    allContacts.add(new Contact(firebaseUserModel));
+                }
             }
 
         } finally {
-           c.close();
+            if (!hasInternet) Toast.makeText(this, "Data maybe outdated", Toast.LENGTH_LONG).show();
+            progressBar.toggleDialog(false);
+            c.close();
         }
+        return allContacts;
     }
 
     private void uploadImageToCloud () {
@@ -255,8 +276,8 @@ public class ProfileActivity extends AppCompatActivity {
                     }).addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
                 @Override
                 public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
-                    @SuppressWarnings("VisibleForTests")
-                    double progresss = (100.0* taskSnapshot.getBytesTransferred()/ taskSnapshot.getTotalByteCount());
+                    //@SuppressWarnings("VisibleForTests")
+                    //double progresss = (100.0* taskSnapshot.getBytesTransferred()/ taskSnapshot.getTotalByteCount());
                 }
             });
         } else {
@@ -304,7 +325,7 @@ public class ProfileActivity extends AppCompatActivity {
             public void onCancelled(DatabaseError databaseError) {
                 progressBar.toggleDialog(false);
                 Toast.makeText(ProfileActivity.this, "Error Uploading to Database", Toast.LENGTH_SHORT).show();
-                Log.e(TAG, databaseError.toString());
+                Log.i(TAG, databaseError.toString());
             }
         });
 
@@ -318,7 +339,6 @@ public class ProfileActivity extends AppCompatActivity {
             @Override
             public void onImagePickerError(Exception e, EasyImage.ImageSource source, int type) {
                 Toast.makeText(ProfileActivity.this, "Error choosing file", Toast.LENGTH_SHORT).show();
-                Log.e(TAG,"Error loading image");
                 e.printStackTrace();
             }
 
@@ -326,7 +346,7 @@ public class ProfileActivity extends AppCompatActivity {
             public void onCanceled(EasyImage.ImageSource source, int type) {
                 // Cancel handling, you might wanna remove taken photo if it was canceled
                 if (source == EasyImage.ImageSource.CAMERA) {
-                    Toast.makeText(ProfileActivity.this, "Deleting captured image", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(ProfileActivity.this, "Deleting captured image...", Toast.LENGTH_SHORT).show();
                     File photoFile = EasyImage.lastlyTakenButCanceledPhoto(ProfileActivity.this);
                     if (photoFile != null) photoFile.delete();
                 }
@@ -340,7 +360,7 @@ public class ProfileActivity extends AppCompatActivity {
                         myImageFile = imageFiles.get(0);
                         Glide.with(ProfileActivity.this)
                                 .load(myImageFile)
-                                .apply(new RequestOptions().placeholder(R.drawable.unknown).error(R.drawable.unknown))
+                                .apply(new RequestOptions().error(R.drawable.unknown))
                                 .into(profilePic);
                         break;
                 }
@@ -414,5 +434,11 @@ public class ProfileActivity extends AppCompatActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    protected void onDestroy() {
+        db.close();
+        super.onDestroy();
     }
 }

@@ -1,6 +1,7 @@
 package com.example.naziur.androidchat.activities;
 
 import android.content.Intent;
+import android.database.Cursor;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
@@ -18,6 +19,7 @@ import com.bumptech.glide.request.RequestOptions;
 import com.example.naziur.androidchat.R;
 import com.example.naziur.androidchat.database.ContactDBHelper;
 import com.example.naziur.androidchat.models.FirebaseUserModel;
+import com.example.naziur.androidchat.utils.Network;
 import com.example.naziur.androidchat.utils.ProgressDialog;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -50,7 +52,7 @@ public class ChatDetailActivity extends AppCompatActivity {
             user = new FirebaseUserModel();
             user.setUsername(extra.getString("username"));
         } else {
-            Toast.makeText(this, "Error occured", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Error occurred", Toast.LENGTH_LONG).show();
             finish();
         }
         isInContacts = db.isUserAlreadyInContacts(user.getUsername());
@@ -58,7 +60,13 @@ public class ChatDetailActivity extends AppCompatActivity {
         mToolbar = (Toolbar) findViewById(R.id.toolbar);
 
 
-        getUsersInformation();
+        if (Network.isInternetAvailable(this, true))
+            getUsersInformationOnline();
+        else if (!Network.isInternetAvailable(this, true) && isInContacts) {
+            getUsersInformationOffline();
+        } else {
+            finish();
+        }
 
         fab = (FloatingActionButton) findViewById(R.id.fab);
         if(!isInContacts) {
@@ -145,7 +153,15 @@ public class ChatDetailActivity extends AppCompatActivity {
         }
     }
 
-    private void getUsersInformation() {
+    private void getUsersInformationOffline () {
+        String[] profileAndPic= db.getProfileNameAndPic(user.getUsername());
+        user.setProfileName(profileAndPic[0]);
+        user.setProfilePic(profileAndPic[1]);
+        user.setStatus(getResources().getString(R.string.status_available));
+        putUserData();
+    }
+
+    private void getUsersInformationOnline() {
         progressBar.toggleDialog(true);
         userRef.orderByChild("username").equalTo(user.getUsername()).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
@@ -154,20 +170,7 @@ public class ChatDetailActivity extends AppCompatActivity {
                     FirebaseUserModel firebaseUserModel = userSnapshot.getValue(FirebaseUserModel.class);
                     if (user.getUsername().equals(user.getUsername())){
                         user = firebaseUserModel;
-
-                        TextView usernameTv = (TextView) findViewById(R.id.username_tv);
-                        TextView profileTv = (TextView) findViewById(R.id.profile_tv);
-                        TextView statusTv = (TextView) findViewById(R.id.status_tv);
-                        ImageView profilePicIv = (ImageView) findViewById(R.id.expandedImage);
-                        usernameTv.setText("Username: " + user.getUsername());
-                        profileTv.setText("Profile Name: " + user.getProfileName());
-                        statusTv.setText("Status: " + user.getStatus());
-                        mToolbar.setTitle(user.getProfileName());
-                        setSupportActionBar(mToolbar);
-                        getSupportActionBar().setDisplayShowTitleEnabled(true);
-                        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-                        invalidateOptionsMenu();
-                        Glide.with(ChatDetailActivity.this).load(user.getProfilePic()).apply(new RequestOptions().placeholder(R.drawable.unknown).error(R.drawable.unknown)).into(profilePicIv);
+                        putUserData();
 
                     }
                 }
@@ -176,8 +179,31 @@ public class ChatDetailActivity extends AppCompatActivity {
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
+                Toast.makeText(ChatDetailActivity.this, "Failed to retrieve latest information", Toast.LENGTH_SHORT).show();
                 progressBar.toggleDialog(false);
             }
         });
+    }
+
+    private void putUserData() {
+        TextView usernameTv = (TextView) findViewById(R.id.username_tv);
+        TextView profileTv = (TextView) findViewById(R.id.profile_tv);
+        TextView statusTv = (TextView) findViewById(R.id.status_tv);
+        ImageView profilePicIv = (ImageView) findViewById(R.id.expandedImage);
+        usernameTv.setText("Username: " + user.getUsername());
+        profileTv.setText("Profile Name: " + user.getProfileName());
+        statusTv.setText("Status: " + user.getStatus());
+        mToolbar.setTitle(user.getProfileName());
+        setSupportActionBar(mToolbar);
+        getSupportActionBar().setDisplayShowTitleEnabled(true);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        invalidateOptionsMenu();
+        Glide.with(ChatDetailActivity.this).load(user.getProfilePic()).apply(new RequestOptions().placeholder(R.drawable.placeholder).error(R.drawable.unknown)).into(profilePicIv);
+    }
+
+    @Override
+    protected void onDestroy() {
+        db.close();
+        super.onDestroy();
     }
 }
