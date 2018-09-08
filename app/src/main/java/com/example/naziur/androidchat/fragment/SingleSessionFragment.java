@@ -4,13 +4,9 @@ package com.example.naziur.androidchat.fragment;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
-import android.graphics.DashPathEffect;
-import android.graphics.Paint;
-import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AlertDialog;
-import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.OrientationHelper;
 import android.support.v7.widget.RecyclerView;
@@ -24,12 +20,10 @@ import android.widget.Toast;
 import com.example.naziur.androidchat.R;
 import com.example.naziur.androidchat.activities.ChatActivity;
 import com.example.naziur.androidchat.activities.ChatDetailActivity;
-import com.example.naziur.androidchat.activities.ProfileActivity;
 import com.example.naziur.androidchat.adapter.AllChatsAdapter;
 import com.example.naziur.androidchat.database.ContactDBHelper;
 import com.example.naziur.androidchat.database.MyContactsContract;
 import com.example.naziur.androidchat.models.Chat;
-import com.example.naziur.androidchat.models.Contact;
 import com.example.naziur.androidchat.models.FirebaseMessageModel;
 import com.example.naziur.androidchat.models.FirebaseUserModel;
 import com.example.naziur.androidchat.models.User;
@@ -50,9 +44,9 @@ import java.util.List;
 /**
  * A simple {@link Fragment} subclass.
  */
-public class SessionFragment extends Fragment {
+public class SingleSessionFragment extends Fragment {
 
-    private static final String TAG = SessionFragment.class.getSimpleName();
+    private static final String TAG = SingleSessionFragment.class.getSimpleName();
 
     private FirebaseDatabase database;
     private DatabaseReference messagesRef;
@@ -68,7 +62,7 @@ public class SessionFragment extends Fragment {
     private ProgressDialog progressBar;
     private List<ValueEventListener> valueEventListeners;
 
-    public SessionFragment() {
+    public SingleSessionFragment() {
         // Required empty public constructor
     }
 
@@ -79,7 +73,7 @@ public class SessionFragment extends Fragment {
         // Inflate the layout for this fragment
         getActivity().setTitle("All Chats");
 
-        View rootView = inflater.inflate(R.layout.fragment_session, container, false);
+        View rootView = inflater.inflate(R.layout.fragment_session_single, container, false);
         valueEventListeners = new ArrayList<>();
         allChats = new ArrayList<>();
         allChatKeys = new ArrayList<>();
@@ -103,7 +97,7 @@ public class SessionFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        if (!Network.isInternetAvailable(getActivity(), false)) {
+        if (!Network.isInternetAvailable(getActivity(), true) && myChatsdapter.getItemCount() == 0) {
             emptyChats.setVisibility(View.VISIBLE);
             return;
         } else {
@@ -188,7 +182,7 @@ public class SessionFragment extends Fragment {
                                 String username = (firebaseMessageModel.getSenderName().equals(user.name)) ? firebaseMessageModel.getReceiverName() : firebaseMessageModel.getSenderName();
                                 SimpleDateFormat formatter = new SimpleDateFormat(getString(R.string.simple_date));
                                 String dateString = formatter.format(new Date(firebaseMessageModel.getCreatedDateLong()));
-                                Chat chat = new Chat(isChattingTo, username, firebaseMessageModel.getText(), db.getProfileNameAndPic(username)[1], dateString, chatKey);
+                                Chat chat = new Chat(isChattingTo, username, firebaseMessageModel.getText(), db.getProfileNameAndPic(username)[1], dateString, chatKey, firebaseMessageModel.getIsReceived());
                                 allChats.add(chat);
                             }
                             myChatsdapter.setAllMyChats(allChats);

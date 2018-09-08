@@ -13,16 +13,18 @@ public class Chat {
     private String usernameOfTheOneBeingSpokenTo;
     private String lastMsgInThisChat;
     private String timeOfMsg;
+    private int isSeen;
 
     private String profilePic;
 
-    public Chat(String speakingTo, String username, String lastMsg, String pic, String time, String chatKey){
+    public Chat(String speakingTo, String username, String lastMsg, String pic, String time, String chatKey, int received){
         this.speakingTo = speakingTo;
         usernameOfTheOneBeingSpokenTo = username;
         lastMsgInThisChat = lastMsg;
         profilePic = pic;
         timeOfMsg = time;
         this.chatKey = chatKey;
+        isSeen = received;
 
     }
 
@@ -56,6 +58,11 @@ public class Chat {
     }
 
 
+    public int getIsSeen() {
+        return isSeen;
+    }
 
-
+    public void setIsSeen(int isSeen) {
+        this.isSeen = isSeen;
+    }
 }
