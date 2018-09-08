@@ -167,15 +167,17 @@ public class SingleSessionFragment extends Fragment {
     }
 
     private void setUpMsgEventListeners(){
+        valueEventListeners.clear();
+        allChats.clear();
+        myChatsdapter.clearAllChats ();
         progressBar.toggleDialog(true);
             for (int i = 0; i < allChatKeys.size(); i++) {
                 final String chatKey = allChatKeys.get(i);
-                valueEventListeners.clear();
+
                 valueEventListeners.add(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
-                        allChats.clear();
-                        myChatsdapter.clearAllChats ();
+
                         if (dataSnapshot.exists()) {
                             for (com.google.firebase.database.DataSnapshot msgSnapshot : dataSnapshot.getChildren()) {
                                 FirebaseMessageModel firebaseMessageModel = msgSnapshot.getValue(FirebaseMessageModel.class);
@@ -184,6 +186,11 @@ public class SingleSessionFragment extends Fragment {
                                 SimpleDateFormat formatter = new SimpleDateFormat(getString(R.string.simple_date));
                                 String dateString = formatter.format(new Date(firebaseMessageModel.getCreatedDateLong()));
                                 Chat chat = new Chat(isChattingTo, username, firebaseMessageModel.getText(), db.getProfileNameAndPic(username)[1], dateString, chatKey, firebaseMessageModel.getIsReceived());
+
+                                for(int i =0; i < allChats.size(); i++){
+                                    if(allChats.get(i).getUsernameOfTheOneBeingSpokenTo().equals(chat.getUsernameOfTheOneBeingSpokenTo()))
+                                        allChats.remove(i);
+                                }
                                 allChats.add(chat);
                             }
                             myChatsdapter.setAllMyChats(allChats);
