@@ -11,6 +11,7 @@ import android.widget.TextView;
 
 import com.example.naziur.androidchat.R;
 import com.example.naziur.androidchat.models.MessageCell;
+import com.example.naziur.androidchat.utils.Constants;
 
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -39,6 +40,11 @@ public class MessagesListAdapter extends ArrayAdapter<MessageCell> {
 
         if (cellItem[position].getSender()) {
             convertView = inflater.inflate(R.layout.my_message_cell, parent, false);
+
+            ImageView receiveStatusIv = (ImageView) convertView.findViewById(R.id.receive_status);
+            if(cellItem[position].getRecieved() == Constants.MESSAGE_RECEIVED)
+                receiveStatusIv.setImageResource(R.drawable.ic_thumb_up_green);
+
         } else {
             convertView = inflater.inflate(R.layout.receiving_message_cell, parent, false);
         }
@@ -53,9 +59,7 @@ public class MessagesListAdapter extends ArrayAdapter<MessageCell> {
             dateTime.setVisibility(View.VISIBLE);
         }
 
-        ImageView receiveStatusIv = (ImageView) convertView.findViewById(R.id.receive_status);
-        if(cellItem[position].getRecieved() == 1)
-            receiveStatusIv.setVisibility(View.VISIBLE);
+
 
         TextView wish = (TextView) convertView.findViewById(R.id.wishMessage);
         wish.setText(cellItem[position].getMessageText());

@@ -18,7 +18,7 @@ public class FirebaseMessageModel {
     private String senderName;
     private String receiverName;
     private String Id;
-    private int isReceived;
+    private Integer isReceived;
 
     public FirebaseMessageModel() {
       /*Blank default constructor essential for Firebase*/
@@ -52,11 +52,11 @@ public class FirebaseMessageModel {
         this.receiverName = receiverName;
     }
 
-    public void setIsReceived(int isRecieved){
+    public void setIsReceived(Integer isRecieved){
         this.isReceived = isRecieved;
     }
 
-    public int getIsReceived(){
+    public Integer getIsReceived(){
         return isReceived;
     }
 

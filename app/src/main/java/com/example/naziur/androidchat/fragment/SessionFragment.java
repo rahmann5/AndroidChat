@@ -171,12 +171,16 @@ public class SessionFragment extends Fragment {
                         if (dataSnapshot.exists()) {
                             for (com.google.firebase.database.DataSnapshot msgSnapshot : dataSnapshot.getChildren()) {
                                 FirebaseMessageModel firebaseMessageModel = msgSnapshot.getValue(FirebaseMessageModel.class);
-                                String isChattingTo = (firebaseMessageModel.getSenderName().equals(user.name)) ? db.getProfileNameAndPic(firebaseMessageModel.getReceiverName())[0] : db.getProfileNameAndPic(firebaseMessageModel.getSenderName())[0];
-                                String username = (firebaseMessageModel.getSenderName().equals(user.name)) ? firebaseMessageModel.getReceiverName() : firebaseMessageModel.getSenderName();
-                                SimpleDateFormat formatter = new SimpleDateFormat(getString(R.string.simple_date));
-                                String dateString = formatter.format(new Date(firebaseMessageModel.getCreatedDateLong()));
-                                Chat chat = new Chat(isChattingTo, username, firebaseMessageModel.getText(), db.getProfileNameAndPic(username)[1], dateString, chatKey);
-                                allChats.add(chat);
+                                if(firebaseMessageModel != null) {
+                                    String isChattingTo = (firebaseMessageModel.getSenderName().equals(user.name)) ? db.getProfileNameAndPic(firebaseMessageModel.getReceiverName())[0] : db.getProfileNameAndPic(firebaseMessageModel.getSenderName())[0];
+                                    String username = (firebaseMessageModel.getSenderName().equals(user.name)) ? firebaseMessageModel.getReceiverName() : firebaseMessageModel.getSenderName();
+                                    SimpleDateFormat formatter = new SimpleDateFormat(getString(R.string.simple_date));
+                                    String dateString = formatter.format(new Date(firebaseMessageModel.getCreatedDateLong()));
+                                    Chat chat = new Chat(isChattingTo, username, firebaseMessageModel.getText(), db.getProfileNameAndPic(username)[1], dateString, chatKey);
+                                    allChats.add(chat);
+                                } else {
+                                    System.out.println("Firebase message is null");
+                                }
                             }
                             myChatsdapter.setAllMyChats(allChats);
                         }

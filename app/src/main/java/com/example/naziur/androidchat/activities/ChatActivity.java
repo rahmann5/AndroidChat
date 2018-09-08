@@ -24,6 +24,7 @@ import com.example.naziur.androidchat.models.FirebaseMessageModel;
 import com.example.naziur.androidchat.models.FirebaseUserModel;
 import com.example.naziur.androidchat.models.MessageCell;
 import com.example.naziur.androidchat.models.User;
+import com.example.naziur.androidchat.utils.Constants;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -238,7 +239,7 @@ public class ChatActivity extends AppCompatActivity {
                     firebaseMessageModel.setSenderDeviceId(user.deviceId);
                     firebaseMessageModel.setSenderName(user.name);
                     firebaseMessageModel.setReceiverName(friend.getUsername());
-                    firebaseMessageModel.setIsReceived(0);
+                    firebaseMessageModel.setIsReceived(Constants.MESSAGE_SENT);
 
                     final ProgressDialog Dialog = new ProgressDialog(chattingActivity);
                     Dialog.setMessage("Please wait..");
@@ -430,9 +431,9 @@ public class ChatActivity extends AppCompatActivity {
 
         for (int counter = 0; counter < totalWishes; counter++) {
             final FirebaseMessageModel firebaseMessageModel = messages.get(counter);
-            if(firebaseMessageModel.getIsReceived() == 0) {
-                firebaseMessageModel.setIsReceived(1);
-                //messegesThatNeedUpdating.put(firebaseMessageModel.getCreatedDateLong(), firebaseMessageModel.toMap());
+            if(!firebaseMessageModel.getSenderName().equals(me.getUsername()) && firebaseMessageModel.getIsReceived() == Constants.MESSAGE_SENT) {
+                firebaseMessageModel.setIsReceived(Constants.MESSAGE_RECEIVED);
+                messegesThatNeedUpdating.put(firebaseMessageModel.getCreatedDateLong(), firebaseMessageModel.toMap());
             }
             MessageCell messageCell = new MessageCell(firebaseMessageModel.getSenderName() , firebaseMessageModel.getText(),  getDate(firebaseMessageModel.getCreatedDateLong()), firebaseMessageModel.getSenderDeviceId().equals(user.deviceId), firebaseMessageModel.getIsReceived());
             messageCell.setDateOnly(getDateOnly(firebaseMessageModel.getCreatedDateLong()));
@@ -461,7 +462,7 @@ public class ChatActivity extends AppCompatActivity {
                        FirebaseMessageModel firebaseMessageModel = snapshot.getValue(FirebaseMessageModel.class);
                        System.out.println("Updating " + firebaseMessageModel.getText() + " with key " + snapshot.getKey());
                        if (messages.get(firebaseMessageModel.getCreatedDateLong()) != null)
-                           messagesRef.child("single").child(chatKey).child(snapshot.getKey()).updateChildren(messages.get(firebaseMessageModel.getCreatedDateLong()));
+                           messagesRef.child(snapshot.getKey()).updateChildren(messages.get(firebaseMessageModel.getCreatedDateLong()));
                    }
                } else {
                    System.out.println("Data doesn't exist");
