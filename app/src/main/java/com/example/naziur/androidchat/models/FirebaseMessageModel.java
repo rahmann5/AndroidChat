@@ -3,6 +3,9 @@ package com.example.naziur.androidchat.models;
 import com.google.firebase.database.Exclude;
 import com.google.firebase.database.ServerValue;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Created by Hamidur on 27/08/2018.
  */
@@ -15,6 +18,7 @@ public class FirebaseMessageModel {
     private String senderName;
     private String receiverName;
     private String Id;
+    private int isReceived;
 
     public FirebaseMessageModel() {
       /*Blank default constructor essential for Firebase*/
@@ -48,6 +52,14 @@ public class FirebaseMessageModel {
         this.receiverName = receiverName;
     }
 
+    public void setIsReceived(int isRecieved){
+        this.isReceived = isRecieved;
+    }
+
+    public int getIsReceived(){
+        return isReceived;
+    }
+
     @Exclude
     public Long getCreatedDateLong() {
         return createdDate;
@@ -71,6 +83,18 @@ public class FirebaseMessageModel {
 
     public void setId(String id) {
         Id = id;
+    }
+
+    public Map<String, Object> toMap() {
+        HashMap<String, Object> result = new HashMap<>();
+        result.put("createdDate", createdDate);
+        result.put("receiverName", receiverName);
+        result.put("senderDeviceId", senderDeviceId);
+        result.put("senderName", senderName);
+        result.put("text", text);
+        result.put("isReceived", isReceived);
+
+        return result;
     }
 
 }

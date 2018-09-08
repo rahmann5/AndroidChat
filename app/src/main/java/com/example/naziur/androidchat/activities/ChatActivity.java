@@ -2,34 +2,22 @@ package com.example.naziur.androidchat.activities;
 
 import android.app.ProgressDialog;
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
-import android.graphics.drawable.ScaleDrawable;
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.util.Log;
-import android.util.TypedValue;
-import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
-import com.bumptech.glide.request.target.SimpleTarget;
-import com.bumptech.glide.request.transition.Transition;
 import com.example.naziur.androidchat.adapter.MessagesListAdapter;
 import com.example.naziur.androidchat.R;
 import com.example.naziur.androidchat.models.FirebaseMessageModel;
@@ -51,7 +39,9 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import cz.msebera.android.httpclient.HttpHeaders;
 import cz.msebera.android.httpclient.entity.StringEntity;
@@ -78,7 +68,7 @@ public class ChatActivity extends AppCompatActivity {
     private FirebaseUserModel friend, me;
 
     public static ChatActivity chattingActivity;
-
+    private String chatKey;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -144,7 +134,7 @@ public class ChatActivity extends AppCompatActivity {
             }
         };
 
-        // improve for future search of users (need only the sender and receiver - currently looping through al users)
+        // improve for future search of users (need only the sender and receiver - currently looping through all users)
         usersRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(com.google.firebase.database.DataSnapshot dataSnapshot) {
@@ -180,6 +170,7 @@ public class ChatActivity extends AppCompatActivity {
                                 messagesRef = database.getReference("messages")
                                         .child("single")
                                         .child(key);
+                                chatKey = key;
                                 break;
                             }
                         }
@@ -247,6 +238,7 @@ public class ChatActivity extends AppCompatActivity {
                     firebaseMessageModel.setSenderDeviceId(user.deviceId);
                     firebaseMessageModel.setSenderName(user.name);
                     firebaseMessageModel.setReceiverName(friend.getUsername());
+                    firebaseMessageModel.setIsReceived(0);
 
                     final ProgressDialog Dialog = new ProgressDialog(chattingActivity);
                     Dialog.setMessage("Please wait..");
@@ -322,9 +314,11 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     private void createMessageRefWithNewKey () {
+        String key = makeChatKey(me, friend);
         messagesRef = database.getReference("messages")
                 .child("single")
-                .child(makeChatKey(me, friend));
+                .child(key);
+        chatKey = key;
     }
 
     private void verifyUserChatKeys (FirebaseUserModel withKeys, FirebaseUserModel withoutKeys) {
@@ -333,9 +327,11 @@ public class ChatActivity extends AppCompatActivity {
             String username1 = key.split("-")[0];
             String username2 = key.split("-")[1];
             if (username1.equals(withoutKeys.getUsername()) || username2.equals(withoutKeys.getUsername())) {
+                String keyFinal = addChatKey(withoutKeys, key);
                 messagesRef = database.getReference("messages")
                         .child("single")
-                        .child(addChatKey(withoutKeys, key));
+                        .child(keyFinal);
+                chatKey = keyFinal;
                 break;
             }
         }
@@ -430,22 +426,53 @@ public class ChatActivity extends AppCompatActivity {
         MessageCell[] messageCells;
         messageCells = new MessageCell[totalWishes];
 
+        Map<Long, Map<String, Object>> messegesThatNeedUpdating = new HashMap<>();
+
         for (int counter = 0; counter < totalWishes; counter++) {
             final FirebaseMessageModel firebaseMessageModel = messages.get(counter);
-
-            MessageCell messageCell = new MessageCell(firebaseMessageModel.getSenderName() , firebaseMessageModel.getText(),  getDate(firebaseMessageModel.getCreatedDateLong()), firebaseMessageModel.getSenderDeviceId().equals(user.deviceId));
-
+            if(firebaseMessageModel.getIsReceived() == 0) {
+                firebaseMessageModel.setIsReceived(1);
+                //messegesThatNeedUpdating.put(firebaseMessageModel.getCreatedDateLong(), firebaseMessageModel.toMap());
+            }
+            MessageCell messageCell = new MessageCell(firebaseMessageModel.getSenderName() , firebaseMessageModel.getText(),  getDate(firebaseMessageModel.getCreatedDateLong()), firebaseMessageModel.getSenderDeviceId().equals(user.deviceId), firebaseMessageModel.getIsReceived());
+            messageCell.setDateOnly(getDateOnly(firebaseMessageModel.getCreatedDateLong()));
             messageCells[counter] = messageCell;
         }
 
         MessagesListAdapter adapter = new MessagesListAdapter(this, messageCells);
-
+        if(messegesThatNeedUpdating.size() > 0)
+            updateMessageReceiveStatus(messegesThatNeedUpdating);
         // Assign adapter to ListView
         listView.setAdapter(adapter);
 
         listView.setSelection(listView.getCount() - 1);
 
         listView.requestFocus();
+    }
+
+    private void updateMessageReceiveStatus(final Map<Long, Map<String, Object>> messages){
+        //System.out.println("Updating " +chatKey + " with size " + messages.size());
+
+        database.getReference("messages").child("single").child(chatKey).limitToLast(messages.size()).addListenerForSingleValueEvent(new ValueEventListener() {
+           @Override
+           public void onDataChange(DataSnapshot dataSnapshot) {
+               if (dataSnapshot.exists()) {
+                   for (com.google.firebase.database.DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                       FirebaseMessageModel firebaseMessageModel = snapshot.getValue(FirebaseMessageModel.class);
+                       System.out.println("Updating " + firebaseMessageModel.getText() + " with key " + snapshot.getKey());
+                       if (messages.get(firebaseMessageModel.getCreatedDateLong()) != null)
+                           messagesRef.child("single").child(chatKey).child(snapshot.getKey()).updateChildren(messages.get(firebaseMessageModel.getCreatedDateLong()));
+                   }
+               } else {
+                   System.out.println("Data doesn't exist");
+               }
+           }
+
+           @Override
+           public void onCancelled(DatabaseError databaseError) {
+
+           }
+       });
     }
 
     /**
@@ -457,6 +484,17 @@ public class ChatActivity extends AppCompatActivity {
     {
         // Create a DateFormatter object for displaying date in specified format.
         SimpleDateFormat formatter = new SimpleDateFormat("dd MMM, yyyy, hh:mm a");
+
+        // Create a calendar object that will convert the date and time value in milliseconds to date.
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(milliSeconds);
+        return formatter.format(calendar.getTime());
+    }
+
+    public static String getDateOnly(long milliSeconds)
+    {
+        // Create a DateFormatter object for displaying date in specified format.
+        SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy");
 
         // Create a calendar object that will convert the date and time value in milliseconds to date.
         Calendar calendar = Calendar.getInstance();

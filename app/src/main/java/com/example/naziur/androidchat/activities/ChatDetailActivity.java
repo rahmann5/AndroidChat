@@ -119,7 +119,7 @@ public class ChatDetailActivity extends AppCompatActivity {
                 startActivity(new Intent(ChatDetailActivity.this, ProfileActivity.class));
                 break;
             case R.id.action_contacts:
-                startActivity(new Intent(ChatDetailActivity.this, MyContactsActivity.class));
+                Toast.makeText(this, "Settings in progress", Toast.LENGTH_SHORT).show();
                 break;
             case R.id.action_info:
                 addUserAsContact();
