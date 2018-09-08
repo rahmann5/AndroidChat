@@ -10,13 +10,16 @@ import android.os.Build;
 import android.provider.Settings;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import com.example.naziur.androidchat.models.FirebaseUserModel;
 import com.example.naziur.androidchat.models.User;
 
+import com.example.naziur.androidchat.utils.Network;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -30,6 +33,7 @@ import com.example.naziur.androidchat.R;
 
 public class MainActivity extends AppCompatActivity {
 
+    private static final String TAG = "MainActivity";
     String currentDeviceId;
 
     User user = User.getInstance();
@@ -39,9 +43,13 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        setTheme(R.style.AppTheme_NoActionBar);
+        setTheme(R.style.AppTheme_Launcher);
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+
+        if (!Network.isInternetAvailable(this, true)) {
+            moveToLoginActivity ();
+            return;
+        }
 
         user.sharedpreferences = getSharedPreferences(user.appPreferences, Context.MODE_PRIVATE);
 
@@ -77,7 +85,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onCancelled(DatabaseError databaseError) {
                 moveToLoginActivity ();
-                System.out.println("The read failed: " + databaseError.getMessage());
+                Log.i(TAG, databaseError.getMessage());
             }
         });
 

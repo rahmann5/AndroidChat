@@ -1,7 +1,6 @@
 package com.example.naziur.androidchat.activities;
 
 import android.app.AlertDialog;
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -10,12 +9,16 @@ import android.os.Build;
 import android.provider.Settings;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import com.example.naziur.androidchat.R;
 import com.example.naziur.androidchat.models.FirebaseUserModel;
 import com.example.naziur.androidchat.models.User;
+import com.example.naziur.androidchat.utils.Network;
+import com.example.naziur.androidchat.utils.ProgressDialog;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -26,6 +29,7 @@ import com.google.firebase.iid.FirebaseInstanceId;
 
 public class LoginActivity extends AppCompatActivity {
 
+    private static final String TAG = "LoginActivity";
     EditText editTextUsername, editTextProfileName;
     User user = User.getInstance();
     FirebaseDatabase database;
@@ -52,30 +56,34 @@ public class LoginActivity extends AppCompatActivity {
         final String strUsername = editTextUsername.getText().toString().trim();
         final String strProfileName = editTextProfileName.getText().toString().trim();
         if (strUsername.isEmpty()) {
-            showMessage("Invalid", "Please enter a username");
-        } else if (strProfileName.isEmpty()){
-            showMessage("Invalid", "Please enter a profile name");
+            Toast.makeText(this, "Please enter unique username", Toast.LENGTH_LONG).show();
         } else {
 
-            final ProgressDialog Dialog = new ProgressDialog(this);
-            Dialog.setMessage("Please wait..");
-            Dialog.setCancelable(false);
-            Dialog.show();
+            if (!Network.isInternetAvailable(this, true)) {
+                return;
+            }
+
+            final ProgressDialog progressDialog = new ProgressDialog(this, R.layout.progress_dialog, true);
+            progressDialog.toggleDialog(true);
             Query query = usersRef.orderByChild("username").equalTo(strUsername);
             query.addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
                 public void onDataChange(DataSnapshot dataSnapshot) {
                     if(!dataSnapshot.exists()){
-                        addUserToDatabase(strUsername, strProfileName, Dialog);
+                        if (!strProfileName.isEmpty())
+                            addUserToDatabase(strUsername, strProfileName, progressDialog);
+                        else
+                            Toast.makeText(LoginActivity.this, "Please enter a profile name", Toast.LENGTH_LONG).show();
                     } else {
-                        Dialog.dismiss();
-                        showMessage("Invalid", "Please provide a unique username");
+                        progressDialog.toggleDialog(false);
+                        Toast.makeText(LoginActivity.this, "Please enter unique username", Toast.LENGTH_LONG).show();
                     }
                 }
 
                 @Override
                 public void onCancelled(DatabaseError databaseError) {
-
+                    progressDialog.toggleDialog(false);
+                    Log.i(TAG, databaseError.getMessage());
                 }
             });
             //
@@ -83,26 +91,8 @@ public class LoginActivity extends AppCompatActivity {
         }
     }
 
-    public void showMessage(String strTitle, String strMessage) {
-        AlertDialog.Builder builder;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            builder = new AlertDialog.Builder(this, android.R.style.Theme_Material_Dialog_Alert);
-        } else {
-            builder = new AlertDialog.Builder(this);
-        }
-        builder.setTitle(strTitle)
-                .setMessage(strMessage)
-                .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int which) {
-                    }
-                })
-                .setIcon(android.R.drawable.ic_dialog_info)
-                .show();
-    }
 
-
-
-    private void addUserToDatabase(String strUsername, String strProfileName, final ProgressDialog dialog){
+    private void addUserToDatabase(final String strUsername, String strProfileName, final ProgressDialog progressDialog){
         final FirebaseUserModel firebaseUserModel = new FirebaseUserModel();
         firebaseUserModel.setUsername(strUsername);
         firebaseUserModel.setProfileName(strProfileName);
@@ -114,11 +104,18 @@ public class LoginActivity extends AppCompatActivity {
         newRef.setValue(firebaseUserModel, new DatabaseReference.CompletionListener() {
             @Override
             public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
-                dialog.dismiss();
-                if (user.login(firebaseUserModel)) {
-                    Intent intent = new Intent(LoginActivity.this, SessionActivity.class);
-                    startActivity(intent);
+                progressDialog.toggleDialog(false);
+                if (databaseError == null) {
+                    if (user.login(firebaseUserModel)) {
+                        Intent intent = new Intent(LoginActivity.this, SessionActivity.class);
+                        startActivity(intent);
+                        finish();
+                    }
+                } else {
+                    Toast.makeText(LoginActivity.this, "Failed to register user " +  strUsername + " please try again.", Toast.LENGTH_LONG).show();
+                    Log.i(TAG, databaseError.getMessage());
                 }
+
             }
         });
     }

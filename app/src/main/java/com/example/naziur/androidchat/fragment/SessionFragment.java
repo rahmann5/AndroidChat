@@ -18,6 +18,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.naziur.androidchat.R;
@@ -32,6 +33,7 @@ import com.example.naziur.androidchat.models.Contact;
 import com.example.naziur.androidchat.models.FirebaseMessageModel;
 import com.example.naziur.androidchat.models.FirebaseUserModel;
 import com.example.naziur.androidchat.models.User;
+import com.example.naziur.androidchat.utils.Network;
 import com.example.naziur.androidchat.utils.ProgressDialog;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -58,6 +60,7 @@ public class SessionFragment extends Fragment {
     private ValueEventListener userListener;
     private AllChatsAdapter myChatsdapter;
     private RecyclerView recyclerView;
+    private TextView emptyChats;
     private User user = User.getInstance();
     private List<String> allChatKeys;
     private List<Chat> allChats;
@@ -83,12 +86,15 @@ public class SessionFragment extends Fragment {
         database = FirebaseDatabase.getInstance();
         usersRef = database.getReference("users");
         messagesRef = database.getReference("messages");
+        emptyChats = (TextView) rootView.findViewById(R.id.no_chats);
         recyclerView = rootView.findViewById(R.id.all_chats_list);
         progressBar = new ProgressDialog(getActivity(), R.layout.progress_dialog, true);
         db = new ContactDBHelper(getContext());
-        Cursor c = db.getAllMyContacts(null);
-        if (c != null && c.getCount() > 0) {
-            updateExistingContacts (c);
+        if (Network.isInternetAvailable(getActivity(), true)) {
+            Cursor c = db.getAllMyContacts(null);
+            if (c != null && c.getCount() > 0) {
+                updateExistingContacts (c);
+            }
         }
         setUpRecyclerView();
         return rootView;
@@ -97,6 +103,12 @@ public class SessionFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
+        if (!Network.isInternetAvailable(getActivity(), false)) {
+            emptyChats.setVisibility(View.VISIBLE);
+            return;
+        } else {
+            emptyChats.setVisibility(View.GONE);
+        }
         userListener = new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -118,6 +130,7 @@ public class SessionFragment extends Fragment {
             @Override
             public void onCancelled(DatabaseError databaseError) {
                 progressBar.toggleDialog(false);
+                Log.i(TAG, databaseError.getMessage());
             }
         };
 
@@ -125,7 +138,6 @@ public class SessionFragment extends Fragment {
     }
 
     private void updateExistingContacts (Cursor c) {
-        progressBar.toggleDialog(true);
         try{
             while (c.moveToNext()) {
                 final FirebaseUserModel fbModel = new FirebaseUserModel();
@@ -149,7 +161,7 @@ public class SessionFragment extends Fragment {
 
                     @Override
                     public void onCancelled(DatabaseError databaseError) {
-                        progressBar.toggleDialog(false);
+                        Log.i(TAG, databaseError.getMessage());
                     }
                 });
 
@@ -161,6 +173,7 @@ public class SessionFragment extends Fragment {
     }
 
     private void setUpMsgEventListeners(){
+        progressBar.toggleDialog(true);
         allChats.clear();
             for (int i = 0; i < allChatKeys.size(); i++) {
                 final String chatKey = allChatKeys.get(i);
@@ -180,11 +193,16 @@ public class SessionFragment extends Fragment {
                             }
                             myChatsdapter.setAllMyChats(allChats);
                         }
+
+                        if (myChatsdapter.getItemCount() == 0) {
+                            emptyChats.setVisibility(View.VISIBLE);
+                        }
                     }
 
                     @Override
                     public void onCancelled(DatabaseError databaseError) {
                         progressBar.toggleDialog(false);
+                        Log.i(TAG, databaseError.getMessage());
                     }
                 });
 
@@ -273,7 +291,8 @@ public class SessionFragment extends Fragment {
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
-
+                Toast.makeText(getActivity(), "Failed to delete chat try again later.", Toast.LENGTH_SHORT).show();
+                Log.i(TAG, databaseError.getMessage());
             }
         });
     }
@@ -300,17 +319,18 @@ public class SessionFragment extends Fragment {
                         }
 
                     } else {
-                        Log.i(TAG, "Contact doesn't exist");
+                        Toast.makeText(getActivity(), "That contact does not exist.", Toast.LENGTH_LONG).show();
                     }
                 }
 
                 @Override
                 public void onCancelled(DatabaseError databaseError) {
-                    Log.i(TAG, "Failed to add contact");
+                    Toast.makeText(getActivity(), "Failed to add contact.", Toast.LENGTH_LONG).show();
+                    Log.i(TAG, databaseError.getMessage());
                 }
             });
         } else {
-            Log.i(TAG, "User cannot be added as they may already exist");
+            Toast.makeText(getActivity(), "That user may already exists in your contacts.", Toast.LENGTH_LONG).show();
         }
 
     }
@@ -345,5 +365,9 @@ public class SessionFragment extends Fragment {
 
     }
 
-
+    @Override
+    public void onDestroy() {
+        db.close();
+        super.onDestroy();
+    }
 }

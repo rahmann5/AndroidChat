@@ -15,6 +15,7 @@ import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.naziur.androidchat.database.ContactDBHelper;
 import com.example.naziur.androidchat.R;
@@ -25,6 +26,7 @@ import com.example.naziur.androidchat.models.Contact;
 import com.example.naziur.androidchat.fragment.AddContactDialogFragment;
 import com.example.naziur.androidchat.models.FirebaseUserModel;
 import com.example.naziur.androidchat.models.User;
+import com.example.naziur.androidchat.utils.Network;
 import com.example.naziur.androidchat.utils.ProgressDialog;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -105,37 +107,47 @@ public class MyContactsActivity extends AppCompatActivity implements AddContactD
     private List<Contact> updateExistingContacts (Cursor c) {
         progressBar.toggleDialog(true);
         final List<Contact> contacts = new ArrayList<>();
+        boolean hasInternet = Network.isInternetAvailable(this, true);
         try{
             while (c.moveToNext()) {
+
                 final FirebaseUserModel fbModel = new FirebaseUserModel();
                 fbModel.setUsername(c.getString(c.getColumnIndex(MyContactsContract.MyContactsContractEntry.COLUMN_USERNAME)));
                 fbModel.setProfileName(c.getString(c.getColumnIndex(MyContactsContract.MyContactsContractEntry.COLUMN_PROFILE)));
-                // need one for profile picture
-                Query query = userRef.orderByChild("username").equalTo(fbModel.getUsername());
-                query.addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(DataSnapshot dataSnapshot) {
-                        if(dataSnapshot.exists()){
-                            for (com.google.firebase.database.DataSnapshot userSnapshot : dataSnapshot.getChildren()) {
-                                FirebaseUserModel firebaseUserModel = userSnapshot.getValue(FirebaseUserModel.class);
-                                if(firebaseUserModel.getUsername().equals(fbModel.getUsername())) {
-                                    db.updateProfile(firebaseUserModel.getUsername(), firebaseUserModel.getProfileName(), firebaseUserModel.getProfilePic());
-                                    contacts.add(new Contact(firebaseUserModel));
-                                    break;
+
+                if (hasInternet) {
+                    // need one for profile picture
+                    Query query = userRef.orderByChild("username").equalTo(fbModel.getUsername());
+                    query.addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(DataSnapshot dataSnapshot) {
+                            if(dataSnapshot.exists()){
+                                for (com.google.firebase.database.DataSnapshot userSnapshot : dataSnapshot.getChildren()) {
+                                    FirebaseUserModel firebaseUserModel = userSnapshot.getValue(FirebaseUserModel.class);
+                                    if(firebaseUserModel.getUsername().equals(fbModel.getUsername())) {
+                                        db.updateProfile(firebaseUserModel.getUsername(), firebaseUserModel.getProfileName(), firebaseUserModel.getProfilePic());
+                                        contacts.add(new Contact(firebaseUserModel));
+                                        break;
+                                    }
                                 }
                             }
+
                         }
 
-                    }
-
-                    @Override
-                    public void onCancelled(DatabaseError databaseError) {
-                        progressBar.toggleDialog(false);
-                    }
-                });
+                        @Override
+                        public void onCancelled(DatabaseError databaseError) {
+                            progressBar.toggleDialog(false);
+                            Log.i(TAG, databaseError.getMessage());
+                        }
+                    });
+                } else {
+                    fbModel.setProfilePic(c.getString(c.getColumnIndex(MyContactsContract.MyContactsContractEntry.COLUMN_PROFILE_PIC)));
+                    contacts.add(new Contact(fbModel));
+                }
 
             }
         } finally {
+            if (!hasInternet) Toast.makeText(this, "Data maybe outdated", Toast.LENGTH_LONG).show();
             progressBar.toggleDialog(false);
             c.close();
         }
@@ -200,7 +212,7 @@ public class MyContactsActivity extends AppCompatActivity implements AddContactD
                         }
 
                     } else {
-                        Log.i(TAG, "Contact doesn't exist");
+                        Toast.makeText(MyContactsActivity.this, "That contact does not exist", Toast.LENGTH_LONG).show();
                     }
                     progressBar.toggleDialog(false);
                 }
@@ -208,12 +220,12 @@ public class MyContactsActivity extends AppCompatActivity implements AddContactD
                 @Override
                 public void onCancelled(DatabaseError databaseError) {
                     progressBar.toggleDialog(false);
-                    Log.i(TAG, "Failed to add contact");
+                    Log.i(TAG, "Failed to add contact " + databaseError.getMessage());
                 }
             });
         } else {
             progressBar.toggleDialog(false);
-            Log.i(TAG, "User cannot be added as they may already exist or it is your username");
+            Toast.makeText(MyContactsActivity.this, "User cannot be added as they may already exist or it is your username", Toast.LENGTH_LONG).show();
         }
     }
 
