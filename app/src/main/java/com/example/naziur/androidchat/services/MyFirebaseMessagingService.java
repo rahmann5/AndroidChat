@@ -33,9 +33,12 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         Log.d(TAG, "Notification Message Body: " + remoteMessage.getNotification().getBody());
 
         //Calling method to show notification
-        if (!isForeground(getApplicationContext()))
+        if (!isForeground(getApplicationContext())){
             showNotification(remoteMessage.getNotification().getBody(), remoteMessage.getNotification().getTitle(),
                     Integer.parseInt(remoteMessage.getNotification().getTag()));
+            System.out.println(remoteMessage.getNotification().getTag());
+        }
+
     }
 
     private void showNotification(String messageBody, String to, int dToken) {
