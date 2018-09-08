@@ -26,6 +26,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
 
     private static final String TAG = "MyFirebaseMsgService";
 
+
     @Override
     public void onMessageReceived(RemoteMessage remoteMessage) {
         Log.d(TAG, "From: " + remoteMessage.getFrom());
@@ -33,16 +34,19 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
 
         //Calling method to show notification
         if (!isForeground(getApplicationContext()))
-            showNotification(remoteMessage.getNotification().getBody(), remoteMessage.getNotification().getTitle());
+            showNotification(remoteMessage.getNotification().getBody(), remoteMessage.getNotification().getTitle(),
+                    Integer.parseInt(remoteMessage.getNotification().getTag()));
     }
 
-    private void showNotification(String messageBody, String to) {
+    private void showNotification(String messageBody, String to, int dToken) {
         Intent intent = new Intent(this, MainActivity.class);
-        intent.putExtra("username", to);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         intent.putExtra("sender", to);
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent,
                 PendingIntent.FLAG_ONE_SHOT);
+
+        NotificationManager mNotificationManager =
+                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
         Uri defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
         NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this)
@@ -55,10 +59,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                 .setSound(defaultSoundUri)
                 .setContentIntent(pendingIntent);
 
-        NotificationManager notificationManager =
-                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-
-        notificationManager.notify(0, notificationBuilder.build());
+        mNotificationManager.notify(dToken, notificationBuilder.build());
     }
 
     private static boolean isForeground(Context context) {
