@@ -9,11 +9,27 @@ public class MessageCell {
     String messageDateTime;
     Boolean isSender;
 
-    public MessageCell(String messageSender, String messageText, String messageDateTime, Boolean isSender){
+    int isRecieved;
+
+    String dateOnly;
+
+    public MessageCell(String messageSender, String messageText, String messageDateTime, Boolean isSender, int isRecieved){
         this.messageSender = messageSender;
         this.messageText = messageText;
         this.messageDateTime = messageDateTime;
         this.isSender = isSender;
+        this.isRecieved = isRecieved;
+    }
+    public int getRecieved() {
+        return isRecieved;
+    }
+
+    public String getDateOnly() {
+        return dateOnly;
+    }
+
+    public void setDateOnly(String dateOnly) {
+        this.dateOnly = dateOnly;
     }
 
     public String getMessageDateTime() {
