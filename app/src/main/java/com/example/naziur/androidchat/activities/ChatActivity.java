@@ -341,6 +341,13 @@ public class ChatActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    public void onBackPressed() {
+        startActivity(new Intent (ChatActivity.this, SessionActivity.class));
+        finish();
+        super.onBackPressed();
+    }
+
     private String addChatKey (FirebaseUserModel user, String key) {
         stringVerification(user, key);
         return key;
