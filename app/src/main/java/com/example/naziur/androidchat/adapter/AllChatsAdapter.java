@@ -1,7 +1,9 @@
 package com.example.naziur.androidchat.adapter;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.os.Build;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -14,6 +16,8 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
 import com.example.naziur.androidchat.R;
 import com.example.naziur.androidchat.models.Chat;
+import com.example.naziur.androidchat.models.User;
+import com.example.naziur.androidchat.utils.Constants;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -62,6 +66,12 @@ public class AllChatsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         notifyDataSetChanged();
     }
 
+    public void clearAllChats () {
+        this.allMyChats.clear();
+        notifyDataSetChanged();
+    }
+
+
     public interface OnItemClickListener {
         void onItemClick (Chat chat, int pos);
         void onItemLongClicked(Chat chat, int pos);
@@ -69,7 +79,7 @@ public class AllChatsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     }
 
     private static class MyChatsViewHolder extends RecyclerView.ViewHolder {
-
+        User user = User.getInstance();
         private TextView dateTimeTv, profileTv, lastMsgTv;
         private CircleImageView profPicIv;
         private Button addContactBtn;
@@ -114,17 +124,22 @@ public class AllChatsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
             profileTv.setText(chat.getSpeakingTo());
             dateTimeTv.setText(chat.getTimeOfMsg());
             lastMsgTv.setText(chat.getLastMsgInThisChat());
-            if (chat.getIsSeen() == 0){
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    itemView.setBackgroundColor(context.getResources().getColor(R.color.red, null));
+            if (!user.name.equals(chat.getUsernameOfTheOneBeingSpokenTo())) {
+                if (chat.getIsSeen() == Constants.MESSAGE_SENT){
+                    lastMsgTv.setTextColor(ContextCompat.getColor(context, R.color.red));
                 } else {
-                    itemView.setBackgroundColor(context.getResources().getColor(R.color.red));
+                    lastMsgTv.setTextColor(ContextCompat.getColor(context, R.color.black));
                 }
             }
 
+
             Glide.with(context).load(chat.getProfilePic()).apply(new RequestOptions().placeholder(R.drawable.unknown).error(R.drawable.unknown)).into(profPicIv);
         }
+
     }
+
+
+
 
 
 }

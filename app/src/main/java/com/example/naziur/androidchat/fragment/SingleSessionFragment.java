@@ -168,13 +168,14 @@ public class SingleSessionFragment extends Fragment {
 
     private void setUpMsgEventListeners(){
         progressBar.toggleDialog(true);
-        allChats.clear();
             for (int i = 0; i < allChatKeys.size(); i++) {
                 final String chatKey = allChatKeys.get(i);
                 valueEventListeners.clear();
                 valueEventListeners.add(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
+                        allChats.clear();
+                        myChatsdapter.clearAllChats ();
                         if (dataSnapshot.exists()) {
                             for (com.google.firebase.database.DataSnapshot msgSnapshot : dataSnapshot.getChildren()) {
                                 FirebaseMessageModel firebaseMessageModel = msgSnapshot.getValue(FirebaseMessageModel.class);
