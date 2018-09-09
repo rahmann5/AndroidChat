@@ -124,12 +124,14 @@ public class AllChatsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
             profileTv.setText(chat.getSpeakingTo());
             dateTimeTv.setText(chat.getTimeOfMsg());
             lastMsgTv.setText(chat.getLastMsgInThisChat());
-            if (!user.name.equals(chat.getUsernameOfTheOneBeingSpokenTo())) {
+            if (user.name.equals(chat.getUsernameOfTheOneBeingSpokenTo())) {
                 if (chat.getIsSeen() == Constants.MESSAGE_SENT){
                     lastMsgTv.setTextColor(ContextCompat.getColor(context, R.color.red));
                 } else {
                     lastMsgTv.setTextColor(ContextCompat.getColor(context, R.color.black));
                 }
+            }else {
+                lastMsgTv.setTextColor(ContextCompat.getColor(context, R.color.black));
             }
 
 

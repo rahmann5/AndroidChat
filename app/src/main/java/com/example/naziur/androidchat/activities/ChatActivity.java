@@ -82,7 +82,7 @@ public class ChatActivity extends AppCompatActivity {
             friend = new FirebaseUserModel();
             friend.setUsername(extra.getString("username"));
         } else {
-            Toast.makeText(this, "Error occured", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Error occurred", Toast.LENGTH_LONG).show();
             finish();
         }
         createCustomActionBar();
@@ -99,7 +99,6 @@ public class ChatActivity extends AppCompatActivity {
 
         progressBar = new ProgressDialog(this, R.layout.progress_dialog, true);
         progressBar.toggleDialog(true);
-        //messagesRef.equalTo(user.name + "-" + friend.getUsername()).equalTo(friend.getUsername() + "-" + user.name);
 
         final com.google.firebase.database.ValueEventListener commentValueEventListener = new com.google.firebase.database.ValueEventListener() {
 

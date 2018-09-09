@@ -1,10 +1,10 @@
 package com.example.naziur.androidchat.utils;
 
-        import android.app.Activity;
-        import android.graphics.Color;
-        import android.graphics.drawable.ColorDrawable;
-        import android.support.v7.app.AlertDialog;
-        import android.view.LayoutInflater;
+import android.app.Activity;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
+import android.support.v7.app.AlertDialog;
+import android.view.LayoutInflater;
 
 /**
  * Created by Naziur on 24/04/2018.
