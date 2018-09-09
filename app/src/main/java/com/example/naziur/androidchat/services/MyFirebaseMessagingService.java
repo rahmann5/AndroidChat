@@ -35,13 +35,14 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
 
         //Calling method to show notification
         if (!isForeground(getApplicationContext())){
-            showNotification(remoteMessage.getNotification().getBody(), remoteMessage.getNotification().getTitle());
+            showNotification(remoteMessage.getNotification().getBody(), remoteMessage.getNotification().getTitle(),
+                    remoteMessage.getNotification().getTag());
             System.out.println(remoteMessage.getNotification().getTag());
         }
 
     }
 
-    private void showNotification(String messageBody, String to) {
+    private void showNotification(String messageBody, String to, String dToken) {
         Intent intent = new Intent(this, MainActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         intent.putExtra("sender", to);
@@ -62,7 +63,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                 .setSound(defaultSoundUri)
                 .setContentIntent(pendingIntent);
 
-        mNotificationManager.notify(NOTIFICATION_ID, notificationBuilder.build());
+        mNotificationManager.notify(dToken, NOTIFICATION_ID, notificationBuilder.build());
     }
 
     private static boolean isForeground(Context context) {

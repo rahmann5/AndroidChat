@@ -218,6 +218,7 @@ public class ChatActivity extends AppCompatActivity {
                 if (wishMessage.isEmpty()) {
                     return;
                 } else {
+                    btnSend.setEnabled(false);
                     // send text as wish
 
                     final FirebaseMessageModel firebaseMessageModel = new FirebaseMessageModel();
@@ -235,6 +236,7 @@ public class ChatActivity extends AppCompatActivity {
                         public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
 
                             if (databaseError != null) {
+                                btnSend.setEnabled(true);
                                 progressBar.toggleDialog(false);
                                 Log.i(TAG, databaseError.getMessage());
                             } else {
@@ -260,6 +262,7 @@ public class ChatActivity extends AppCompatActivity {
                                         notificationObject.put("click_action", ".MainActivity");
                                         notificationObject.put("body", wishMessage);
                                         notificationObject.put("title", user.name);
+                                        notificationObject.put("tag", user.deviceId);
                                         params.put("data", payload);
 
                                         params.put("notification", notificationObject);
@@ -269,20 +272,24 @@ public class ChatActivity extends AppCompatActivity {
                                         client.post(getApplicationContext(), url, entity, RequestParams.APPLICATION_JSON, new TextHttpResponseHandler() {
                                             @Override
                                             public void onFailure(int statusCode, cz.msebera.android.httpclient.Header[] headers, String responseString, Throwable throwable) {
+                                                btnSend.setEnabled(true);
                                                 progressBar.toggleDialog(false);
                                                 Log.i(TAG, responseString);
                                             }
 
                                             @Override
                                             public void onSuccess(int statusCode, cz.msebera.android.httpclient.Header[] headers, String responseString) {
+                                                btnSend.setEnabled(true);
                                                 progressBar.toggleDialog(false);
                                                 Log.i(TAG, responseString);
                                             }
                                         });
 
                                     } catch (Exception e) {
-
+                                        btnSend.setEnabled(true);
                                     }
+                                } else {
+                                    btnSend.setEnabled(true);
                                 }
 
                             }
