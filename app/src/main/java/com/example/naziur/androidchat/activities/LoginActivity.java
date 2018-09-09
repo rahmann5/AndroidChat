@@ -1,11 +1,8 @@
 package com.example.naziur.androidchat.activities;
 
-import android.app.AlertDialog;
+
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.SharedPreferences;
-import android.os.Build;
 import android.provider.Settings;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -75,6 +72,15 @@ public class LoginActivity extends AppCompatActivity {
                         else
                             Toast.makeText(LoginActivity.this, "Please enter a profile name", Toast.LENGTH_LONG).show();
                     } else {
+                        String currentDeviceId = Settings.Secure.getString(getApplicationContext().getContentResolver(), Settings.Secure.ANDROID_ID);
+                        for(DataSnapshot snapshot : dataSnapshot.getChildren()){
+                           FirebaseUserModel firebaseUserModel = snapshot.getValue(FirebaseUserModel.class);
+                            if(firebaseUserModel.getDeviceId().equals(currentDeviceId)){
+                                System.out.println("Found a match");
+                                startActivity( new Intent(LoginActivity.this, SessionActivity.class));
+                                break;
+                            }
+                        }
                         progressDialog.toggleDialog(false);
                         Toast.makeText(LoginActivity.this, "Please enter unique username", Toast.LENGTH_LONG).show();
                     }
