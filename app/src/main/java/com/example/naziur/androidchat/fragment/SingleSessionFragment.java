@@ -191,7 +191,7 @@ public class SingleSessionFragment extends Fragment {
                                     if(allChats.get(i).getUsernameOfTheOneBeingSpokenTo().equals(chat.getUsernameOfTheOneBeingSpokenTo()))
                                         allChats.remove(i);
                                 }
-                                allChats.add(chat);
+                                allChats.add(0, chat);
                             }
                             myChatsdapter.setAllMyChats(allChats);
                         }
