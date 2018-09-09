@@ -260,10 +260,6 @@ public class ChatActivity extends AppCompatActivity {
                                         notificationObject.put("click_action", ".MainActivity");
                                         notificationObject.put("body", wishMessage);
                                         notificationObject.put("title", user.name);
-                                        String id = createNotificationId(friend.getDeviceId());
-                                        System.out.println("As string " + id);
-                                        System.out.println("As int " + Integer.parseInt(id));
-                                        notificationObject.put("tag", id);
                                         params.put("data", payload);
 
                                         params.put("notification", notificationObject);
@@ -298,28 +294,6 @@ public class ChatActivity extends AppCompatActivity {
                 }
             }
         });
-
-    }
-
-    private String createNotificationId (String deviceToken) {
-        String formula = deviceToken;
-
-        //insert "1" in atom-atom boundry
-        formula = formula.replaceAll("(?<=[A-Z])(?=[A-Z])|(?<=[a-z])(?=[A-Z])|(?<=\\D)$", "1");
-
-        //split at letter-digit or digit-letter boundry
-        String regex = "(?<=\\D)(?=\\d)|(?<=\\d)(?=\\D)";
-        String[] atoms = formula.split(regex);
-        String[] a = new String[ atoms.length/2 ];
-
-        String notificationID = "";
-
-        for(int i = 0 ; i < a.length ; i++) {
-            a[i] = atoms[i*2];
-            notificationID += Integer.parseInt(atoms[i*2+1]);
-        }
-
-        return notificationID;
 
     }
 
