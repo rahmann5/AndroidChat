@@ -26,6 +26,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
 
     private static final String TAG = "MyFirebaseMsgService";
 
+    private static final int NOTIFICATION_ID = 100;
 
     @Override
     public void onMessageReceived(RemoteMessage remoteMessage) {
@@ -34,14 +35,13 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
 
         //Calling method to show notification
         if (!isForeground(getApplicationContext())){
-            showNotification(remoteMessage.getNotification().getBody(), remoteMessage.getNotification().getTitle(),
-                    Integer.parseInt(remoteMessage.getNotification().getTag()));
+            showNotification(remoteMessage.getNotification().getBody(), remoteMessage.getNotification().getTitle());
             System.out.println(remoteMessage.getNotification().getTag());
         }
 
     }
 
-    private void showNotification(String messageBody, String to, int dToken) {
+    private void showNotification(String messageBody, String to) {
         Intent intent = new Intent(this, MainActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         intent.putExtra("sender", to);
@@ -62,7 +62,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                 .setSound(defaultSoundUri)
                 .setContentIntent(pendingIntent);
 
-        mNotificationManager.notify(dToken, notificationBuilder.build());
+        mNotificationManager.notify(NOTIFICATION_ID, notificationBuilder.build());
     }
 
     private static boolean isForeground(Context context) {

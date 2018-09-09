@@ -260,10 +260,6 @@ public class ChatActivity extends AppCompatActivity {
                                         notificationObject.put("click_action", ".MainActivity");
                                         notificationObject.put("body", wishMessage);
                                         notificationObject.put("title", user.name);
-                                        String id = createNotificationId(friend.getDeviceId());
-                                        System.out.println("As string " + id);
-                                        System.out.println("As int " + Integer.parseInt(id));
-                                        notificationObject.put("tag", id);
                                         params.put("data", payload);
 
                                         params.put("notification", notificationObject);
@@ -301,7 +297,7 @@ public class ChatActivity extends AppCompatActivity {
 
     }
 
-    private String createNotificationId (String deviceToken) {
+    private int createNotificationId (String deviceToken) {
         String formula = deviceToken;
 
         //insert "1" in atom-atom boundry
@@ -312,7 +308,7 @@ public class ChatActivity extends AppCompatActivity {
         String[] atoms = formula.split(regex);
         String[] a = new String[ atoms.length/2 ];
 
-        String notificationID = "";
+        int notificationID = 0;
 
         for(int i = 0 ; i < a.length ; i++) {
             a[i] = atoms[i*2];
