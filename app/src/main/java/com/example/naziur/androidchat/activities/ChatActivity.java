@@ -516,7 +516,7 @@ public class ChatActivity extends AppCompatActivity {
     public static String getDate(long milliSeconds)
     {
         // Create a DateFormatter object for displaying date in specified format.
-        SimpleDateFormat formatter = new SimpleDateFormat("dd MMM, yyyy, hh:mm a");
+        SimpleDateFormat formatter = new SimpleDateFormat("dd MMM, yyyy, HH:mm a");
 
         // Create a calendar object that will convert the date and time value in milliseconds to date.
         Calendar calendar = Calendar.getInstance();
