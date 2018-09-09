@@ -13,6 +13,7 @@ import android.util.Log;
 
 import com.example.naziur.androidchat.activities.MainActivity;
 import com.example.naziur.androidchat.R;
+import com.example.naziur.androidchat.utils.Network;
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
 
@@ -34,7 +35,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         Log.d(TAG, "Notification Message Body: " + remoteMessage.getNotification().getBody());
 
         //Calling method to show notification
-        if (!isForeground(getApplicationContext())){
+        if (!Network.isForeground(getApplicationContext())){
             showNotification(remoteMessage.getNotification().getBody(), remoteMessage.getNotification().getTitle(),
                     remoteMessage.getNotification().getTag());
             System.out.println(remoteMessage.getNotification().getTag());
@@ -44,7 +45,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
 
     private void showNotification(String messageBody, String to, String dToken) {
         Intent intent = new Intent(this, MainActivity.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
         intent.putExtra("sender", to);
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent,
                 PendingIntent.FLAG_ONE_SHOT);
@@ -66,16 +67,6 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         mNotificationManager.notify(dToken, NOTIFICATION_ID, notificationBuilder.build());
     }
 
-    private static boolean isForeground(Context context) {
-        ActivityManager am = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
-        List<ActivityManager.RunningAppProcessInfo> tasks = am.getRunningAppProcesses();
-        final String packageName = context.getPackageName();
-        for (ActivityManager.RunningAppProcessInfo appProcess : tasks) {
-            if (ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND == appProcess.importance && packageName.equals(appProcess.processName)) {
-                return true;
-            }
-        }
-        return false;
-    }
+
 
 }
