@@ -24,6 +24,7 @@ import com.example.naziur.androidchat.models.FirebaseUserModel;
 import com.example.naziur.androidchat.models.MessageCell;
 import com.example.naziur.androidchat.models.User;
 import com.example.naziur.androidchat.utils.Constants;
+import com.example.naziur.androidchat.utils.Network;
 import com.example.naziur.androidchat.utils.ProgressDialog;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -439,7 +440,7 @@ public class ChatActivity extends AppCompatActivity {
         }
 
         MessagesListAdapter adapter = new MessagesListAdapter(this, messageCells);
-        if(messegesThatNeedUpdating.size() > 0)
+        if(messegesThatNeedUpdating.size() > 0 && Network.isForeground(getApplicationContext()))
             updateMessageReceiveStatus(messegesThatNeedUpdating);
         // Assign adapter to ListView
         listView.setAdapter(adapter);
