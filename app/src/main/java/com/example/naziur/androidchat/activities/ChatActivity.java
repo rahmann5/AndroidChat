@@ -19,11 +19,13 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
 import com.example.naziur.androidchat.adapter.MessagesListAdapter;
 import com.example.naziur.androidchat.R;
+import com.example.naziur.androidchat.database.ContactDBHelper;
 import com.example.naziur.androidchat.models.FirebaseMessageModel;
 import com.example.naziur.androidchat.models.FirebaseUserModel;
 import com.example.naziur.androidchat.models.MessageCell;
 import com.example.naziur.androidchat.models.User;
 import com.example.naziur.androidchat.utils.Constants;
+import com.example.naziur.androidchat.utils.ErrorDialogFragment;
 import com.example.naziur.androidchat.utils.Network;
 import com.example.naziur.androidchat.utils.ProgressDialog;
 import com.google.firebase.database.DataSnapshot;
@@ -129,77 +131,82 @@ public class ChatActivity extends AppCompatActivity {
             }
         };
 
-        // improve for future search of users (need only the sender and receiver - currently looping through all users)
-        usersRef.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(com.google.firebase.database.DataSnapshot dataSnapshot) {
-                for (com.google.firebase.database.DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
-                    System.out.println("Child: " + postSnapshot);
-                    //Getting the data from snapshot
-                    FirebaseUserModel firebaseUserModel = postSnapshot.getValue(FirebaseUserModel.class);
-                    if (firebaseUserModel.getUsername().equals(friend.getUsername())) {
-                        friend = firebaseUserModel;
-                        ((TextView) actionBar.getCustomView().findViewById(R.id.profile_name)).setText(friend.getProfileName());
-                        Glide.with(getApplicationContext())
-                                .load(friend.getProfilePic())
-                                .apply(new RequestOptions().placeholder(R.drawable.placeholder).error(R.drawable.unknown))
-                                .into(((CircleImageView) actionBar.getCustomView().findViewById(R.id.profile_icon)));
-                    }
-
-                    if (firebaseUserModel.getUsername().equals(user.name)) {
-                        me = firebaseUserModel;
-                    }
-
-                    if (me != null && !friend.getDeviceToken().equals("")) {
-                        break;
-                    }
-                }
-
-                if (me != null) {
-                    if (!me.getChatKeys().equals("") && !friend.getChatKeys().equals("")) { // both with keys but maybe not same keys
-                        String[] allMyKeys  = me.getChatKeys().split(",");
-                        List<String> allFriendKeys  = Arrays.asList(friend.getChatKeys().split(","));
-                        for(String key : allMyKeys) {
-                            if (allFriendKeys.contains(key)) { // both make existing keys
-                                messagesRef = database.getReference("messages")
-                                        .child("single")
-                                        .child(key);
-                                chatKey = key;
-                                break;
-                            }
+        if (Network.isInternetAvailable(this, true)) {
+            // improve for future search of users (need only the sender and receiver - currently looping through all users)
+            usersRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(com.google.firebase.database.DataSnapshot dataSnapshot) {
+                    for (com.google.firebase.database.DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
+                        System.out.println("Child: " + postSnapshot);
+                        //Getting the data from snapshot
+                        FirebaseUserModel firebaseUserModel = postSnapshot.getValue(FirebaseUserModel.class);
+                        if (firebaseUserModel.getUsername().equals(friend.getUsername())) {
+                            friend = firebaseUserModel;
+                            ((TextView) actionBar.getCustomView().findViewById(R.id.profile_name)).setText(friend.getProfileName());
+                            Glide.with(getApplicationContext())
+                                    .load(friend.getProfilePic())
+                                    .apply(new RequestOptions().placeholder(R.drawable.placeholder).error(R.drawable.unknown))
+                                    .into(((CircleImageView) actionBar.getCustomView().findViewById(R.id.profile_icon)));
                         }
 
-                    } else if (me.getChatKeys().equals("") && !friend.getChatKeys().equals("")) { // me without key but friend with key but not sure same key
-                        verifyUserChatKeys(friend, me);
+                        if (firebaseUserModel.getUsername().equals(user.name)) {
+                            me = firebaseUserModel;
+                        }
 
-                    }  else if (!me.getChatKeys().equals("") && friend.getChatKeys().equals("")) { // friend without key but me with key but not sure same key
-                        verifyUserChatKeys(me, friend);
-
-                    } else { // no chat keys created yet for both
-                        createMessageRefWithNewKey ();
+                        if (me != null && !friend.getDeviceToken().equals("")) {
+                            break;
+                        }
                     }
 
-                    if (messagesRef == null) {
-                        createMessageRefWithNewKey ();
+                    if (me != null) {
+                        if (!me.getChatKeys().equals("") && !friend.getChatKeys().equals("")) { // both with keys but maybe not same keys
+                            String[] allMyKeys  = me.getChatKeys().split(",");
+                            List<String> allFriendKeys  = Arrays.asList(friend.getChatKeys().split(","));
+                            for(String key : allMyKeys) {
+                                if (allFriendKeys.contains(key)) { // both make existing keys
+                                    messagesRef = database.getReference("messages")
+                                            .child("single")
+                                            .child(key);
+                                    chatKey = key;
+                                    break;
+                                }
+                            }
+
+                        } else if (me.getChatKeys().equals("") && !friend.getChatKeys().equals("")) { // me without key but friend with key but not sure same key
+                            verifyUserChatKeys(friend, me);
+
+                        }  else if (!me.getChatKeys().equals("") && friend.getChatKeys().equals("")) { // friend without key but me with key but not sure same key
+                            verifyUserChatKeys(me, friend);
+
+                        } else { // no chat keys created yet for both
+                            createMessageRefWithNewKey ();
+                        }
+
+                        if (messagesRef == null) {
+                            createMessageRefWithNewKey ();
+                        }
+
+                        //Value event listener for realtime data update
+                        messagesRef.addValueEventListener(commentValueEventListener);
+
+                    } else {
+                        System.out.println("ME is null");
+                        finish();
                     }
 
-                    //Value event listener for realtime data update
-                    messagesRef.addValueEventListener(commentValueEventListener);
-
-                } else {
-                    System.out.println("ME is null");
-                    finish();
                 }
 
-                progressBar.toggleDialog(false);
-            }
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
+                    loadLocalData("Oops an error has occurred and we have no clue what it is.");
+                    progressBar.toggleDialog(false);
+                    Log.i(TAG, "The read failed: " + databaseError.getMessage());
+                }
+            });
+        } else {
+            loadLocalData("Please connect to the internet.");
+        }
 
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-                progressBar.toggleDialog(false);
-                System.out.println("The read failed: " + databaseError.getMessage());
-            }
-        });
 
         btnMedia.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -215,7 +222,7 @@ public class ChatActivity extends AppCompatActivity {
                 hideKeyboard();
 
                 final String wishMessage = textComment.getText().toString().trim();
-                if (wishMessage.isEmpty()) {
+                if (!Network.isInternetAvailable(ChatActivity.this, true) || wishMessage.isEmpty()) {
                     return;
                 } else {
                     btnSend.setEnabled(false);
@@ -296,6 +303,7 @@ public class ChatActivity extends AppCompatActivity {
                         }
                     });
 
+                    messagesRef.removeEventListener(commentValueEventListener);
                     messagesRef.addValueEventListener(commentValueEventListener);
 
                 }
@@ -310,6 +318,32 @@ public class ChatActivity extends AppCompatActivity {
                 .child("single")
                 .child(key);
         chatKey = key;
+    }
+
+    private void loadLocalData (String errorMsg) {
+        progressBar.toggleDialog(false);
+        ContactDBHelper db = new ContactDBHelper(this);
+        if (db.isUserAlreadyInContacts(friend.getUsername())) {
+            String[] friendInfo = db.getProfileNameAndPic(friend.getUsername());
+            System.out.println("FOUND LOCAL DATA");
+            friend.setProfileName(friendInfo[0]);
+            friend.setProfilePic(friendInfo[1]);
+            ((TextView) actionBar.getCustomView().findViewById(R.id.profile_name)).setText(friend.getProfileName());
+            Glide.with(getApplicationContext())
+                    .load(friend.getProfilePic())
+                    .apply(new RequestOptions().placeholder(R.drawable.placeholder).error(R.drawable.unknown))
+                    .into(((CircleImageView) actionBar.getCustomView().findViewById(R.id.profile_icon)));
+        } else {
+            System.out.println("NO LOCAL DATA");
+            ((TextView) actionBar.getCustomView().findViewById(R.id.profile_name)).setText(friend.getUsername());
+            Glide.with(getApplicationContext())
+                    .load(R.drawable.unknown)
+                    .into(((CircleImageView) actionBar.getCustomView().findViewById(R.id.profile_icon)));
+            ErrorDialogFragment errorDialog = ErrorDialogFragment.newInstance(errorMsg);
+            errorDialog.show(getSupportFragmentManager(), "ErrorDialogFragment");
+        }
+        db.close();
+
     }
 
     private void verifyUserChatKeys (FirebaseUserModel withKeys, FirebaseUserModel withoutKeys) {
