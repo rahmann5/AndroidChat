@@ -33,6 +33,8 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
 
     private static final int NOTIFICATION_ID = 100;
 
+
+
     @Override
     public void onMessageReceived(RemoteMessage remoteMessage) {
         Log.d(TAG, "From: " + remoteMessage.getFrom());
@@ -41,9 +43,11 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         //Calling method to show notification
         if (!Network.isForeground(getApplicationContext())){
             String type = Constants.MESSAGE_TYPE_TEXT;
+            String dId = "";
             try {
-                JSONObject objType = new JSONObject(remoteMessage.getData());
+                JSONObject objType = new JSONObject(remoteMessage.getNotification().getTag());
                 type = objType.getString("type");
+                dId = objType.getString("deviceId");
             } catch (JSONException e) {
                 e.printStackTrace();
             }
@@ -51,7 +55,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
             showNotification(remoteMessage.getNotification().getBody(),
                     remoteMessage.getNotification().getTitle(),
                     type,
-                    remoteMessage.getNotification().getTag());
+                    dId);
         }
 
     }
