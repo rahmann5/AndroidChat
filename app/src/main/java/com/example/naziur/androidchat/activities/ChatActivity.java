@@ -321,14 +321,11 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
         StringEntity entity = null;
         try {
             params.put("to", friend.getDeviceToken());
-            JSONObject payload = new JSONObject();
-            payload.put("type", type);
-            payload.put("deviceId", user.deviceId);
             JSONObject notificationObject = new JSONObject();
             notificationObject.put("click_action", ".MainActivity");
-            notificationObject.put("body", wishMessage);
+            notificationObject.put("body", getNotificationBody(type, wishMessage));
             notificationObject.put("title", user.name);
-            notificationObject.put("tag", payload.toString());
+            notificationObject.put("tag", user.deviceId);
 
             params.put("notification", notificationObject);
 
@@ -338,6 +335,18 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
         }
 
         return entity;
+    }
+
+    private String getNotificationBody(String type, String wishMessage) {
+        switch (type) {
+            case Constants.MESSAGE_TYPE_TEXT :
+                return wishMessage;
+
+            case Constants.MESSAGE_TYPE_PIC :
+                return "Picture";
+
+            default: return Constants.MESSAGE_TYPE_TEXT;
+        }
     }
 
     private FirebaseMessageModel makeNewMessageNode (String type, String wishMessage) {
