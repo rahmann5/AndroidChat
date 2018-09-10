@@ -10,4 +10,7 @@ public class Constants {
     public static final int MESSAGE_RECEIVED = 1;
     public static final int MESSAGE_ERROR = 2;
 
+    public static final String MESSAGE_TYPE_TEXT = "TEXT";
+    public static final String MESSAGE_TYPE_PIC = "PIC";
+
 }

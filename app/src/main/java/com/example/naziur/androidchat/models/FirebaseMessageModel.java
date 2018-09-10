@@ -19,6 +19,7 @@ public class FirebaseMessageModel {
     private String receiverName;
     private String Id;
     private Integer isReceived;
+    private String mediaType;
 
     public FirebaseMessageModel() {
       /*Blank default constructor essential for Firebase*/
@@ -60,6 +61,14 @@ public class FirebaseMessageModel {
         return isReceived;
     }
 
+    public String getMediaType() {
+        return mediaType;
+    }
+
+    public void setMediaType(String mediaType) {
+        this.mediaType = mediaType;
+    }
+
     @Exclude
     public Long getCreatedDateLong() {
         return createdDate;
@@ -96,5 +105,4 @@ public class FirebaseMessageModel {
 
         return result;
     }
-
 }

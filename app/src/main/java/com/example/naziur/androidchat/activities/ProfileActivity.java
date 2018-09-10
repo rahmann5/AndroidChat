@@ -111,7 +111,7 @@ public class ProfileActivity extends AppCompatActivity {
             public void onClick(View view) {
                 reset(false);
                 Glide.with(ProfileActivity.this).load(user.profilePic)
-                        .apply(new RequestOptions().error(R.drawable.unknown))
+                        .apply(new RequestOptions().placeholder(R.drawable.placeholder).error(R.drawable.unknown))
                         .into(profilePic);
             }
         });
@@ -360,7 +360,7 @@ public class ProfileActivity extends AppCompatActivity {
                         myImageFile = imageFiles.get(0);
                         Glide.with(ProfileActivity.this)
                                 .load(myImageFile)
-                                .apply(new RequestOptions().error(R.drawable.unknown))
+                                .apply(new RequestOptions().placeholder(R.drawable.placeholder).error(R.drawable.unknown))
                                 .into(profilePic);
                         break;
                 }
