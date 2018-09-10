@@ -323,12 +323,12 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
             params.put("to", friend.getDeviceToken());
             JSONObject payload = new JSONObject();
             payload.put("type", type);
-            params.put("data", payload);
+            payload.put("deviceId", user.deviceId);
             JSONObject notificationObject = new JSONObject();
             notificationObject.put("click_action", ".MainActivity");
             notificationObject.put("body", wishMessage);
             notificationObject.put("title", user.name);
-            notificationObject.put("tag", user.deviceId);
+            notificationObject.put("tag", payload.toString());
 
             params.put("notification", notificationObject);
 
