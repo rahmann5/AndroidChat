@@ -1,21 +1,15 @@
-package com.example.naziur.androidchat.utils;
+package com.example.naziur.androidchat.fragment;
 
-import android.app.Activity;
 import android.app.Dialog;
 import android.content.DialogInterface;
-import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
-import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AlertDialog;
-import android.support.v7.widget.AppCompatButton;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.TextView;
 
 import com.example.naziur.androidchat.R;
-import com.example.naziur.androidchat.fragment.AddContactDialogFragment;
 
 /**
  * Created by Hamidur on 09/09/2018.
@@ -29,8 +23,7 @@ public class ErrorDialogFragment extends DialogFragment {
             String message) {
 
         mMessageToDisplay = message;
-        ErrorDialogFragment infoDialog = new ErrorDialogFragment();
-        return infoDialog;
+        return new ErrorDialogFragment();
     }
 
 

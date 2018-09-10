@@ -13,9 +13,13 @@ import android.util.Log;
 
 import com.example.naziur.androidchat.activities.MainActivity;
 import com.example.naziur.androidchat.R;
+import com.example.naziur.androidchat.utils.Constants;
 import com.example.naziur.androidchat.utils.Network;
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.List;
 
@@ -36,14 +40,23 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
 
         //Calling method to show notification
         if (!Network.isForeground(getApplicationContext())){
-            showNotification(remoteMessage.getNotification().getBody(), remoteMessage.getNotification().getTitle(),
+            String type = Constants.MESSAGE_TYPE_TEXT;
+            try {
+                JSONObject objType = new JSONObject(remoteMessage.getData());
+                type = objType.getString("type");
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+            showNotification(remoteMessage.getNotification().getBody(),
+                    remoteMessage.getNotification().getTitle(),
+                    type,
                     remoteMessage.getNotification().getTag());
-            System.out.println(remoteMessage.getNotification().getTag());
         }
 
     }
 
-    private void showNotification(String messageBody, String to, String dToken) {
+    private void showNotification(String messageBody, String to, String type ,String dToken) {
         Intent intent = new Intent(this, MainActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
         intent.putExtra("sender", to);
@@ -59,7 +72,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                 .setLargeIcon(BitmapFactory.decodeResource(getApplicationContext().getResources(),
                         R.mipmap.ic_launcher_round))
                 .setContentTitle(getString(R.string.app_name))
-                .setContentText(messageBody)
+                .setContentText(getContent(type, messageBody))
                 .setAutoCancel(true)
                 .setSound(defaultSoundUri)
                 .setContentIntent(pendingIntent);
@@ -67,6 +80,17 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         mNotificationManager.notify(dToken, NOTIFICATION_ID, notificationBuilder.build());
     }
 
+    private String getContent (String type, String body) {
+        switch (type) {
+            case Constants.MESSAGE_TYPE_TEXT :
+                return body;
 
+            case Constants.MESSAGE_TYPE_PIC :
+                return "Picture";
+
+            default: return body;
+
+        }
+    }
 
 }

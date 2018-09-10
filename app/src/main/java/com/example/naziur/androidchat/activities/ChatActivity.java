@@ -1,10 +1,15 @@
 package com.example.naziur.androidchat.activities;
 
+import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.support.annotation.NonNull;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.AppCompatImageButton;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -12,6 +17,7 @@ import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -20,25 +26,34 @@ import com.bumptech.glide.request.RequestOptions;
 import com.example.naziur.androidchat.adapter.MessagesListAdapter;
 import com.example.naziur.androidchat.R;
 import com.example.naziur.androidchat.database.ContactDBHelper;
+import com.example.naziur.androidchat.fragment.ImageViewDialogFragment;
 import com.example.naziur.androidchat.models.FirebaseMessageModel;
 import com.example.naziur.androidchat.models.FirebaseUserModel;
 import com.example.naziur.androidchat.models.MessageCell;
 import com.example.naziur.androidchat.models.User;
 import com.example.naziur.androidchat.utils.Constants;
-import com.example.naziur.androidchat.utils.ErrorDialogFragment;
+import com.example.naziur.androidchat.fragment.ErrorDialogFragment;
 import com.example.naziur.androidchat.utils.Network;
 import com.example.naziur.androidchat.utils.ProgressDialog;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.OnProgressListener;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.RequestParams;
 import com.loopj.android.http.TextHttpResponseHandler;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -47,16 +62,19 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import cz.msebera.android.httpclient.Header;
 import cz.msebera.android.httpclient.HttpHeaders;
 import cz.msebera.android.httpclient.entity.StringEntity;
 import de.hdodenhof.circleimageview.CircleImageView;
+import pl.aprilapps.easyphotopicker.DefaultCallback;
+import pl.aprilapps.easyphotopicker.EasyImage;
 
 
-public class ChatActivity extends AppCompatActivity {
+public class ChatActivity extends AppCompatActivity implements ImageViewDialogFragment.ImageViewDialogListener{
     private static final String TAG = "ChatActivity";
-
+    private static final int REQUEST_CODE_GALLERY_CAMERA = 0;
     User user = User.getInstance();
-
+    private String url = "https://fcm.googleapis.com/fcm/send";
     ListView listView;
 
     EditText textComment;
@@ -211,7 +229,7 @@ public class ChatActivity extends AppCompatActivity {
         btnMedia.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Toast.makeText(ChatActivity.this, "Adding media", Toast.LENGTH_SHORT).show();
+                EasyImage.openChooserWithGallery(ChatActivity.this, getResources().getString(R.string.gallery_chooser), REQUEST_CODE_GALLERY_CAMERA);
             }
         });
 
@@ -227,22 +245,15 @@ public class ChatActivity extends AppCompatActivity {
                 } else {
                     btnSend.setEnabled(false);
                     // send text as wish
-
-                    final FirebaseMessageModel firebaseMessageModel = new FirebaseMessageModel();
-                    firebaseMessageModel.setText(wishMessage);
-                    firebaseMessageModel.setSenderDeviceId(user.deviceId);
-                    firebaseMessageModel.setSenderName(user.name);
-                    firebaseMessageModel.setReceiverName(friend.getUsername());
-                    firebaseMessageModel.setIsReceived(Constants.MESSAGE_SENT);
-
                     progressBar.toggleDialog(true);
 
-                    final DatabaseReference newRef = messagesRef.push();
-                    newRef.setValue(firebaseMessageModel, new DatabaseReference.CompletionListener() {
+                    DatabaseReference newRef = messagesRef.push();
+                    newRef.setValue(makeNewMessageNode(Constants.MESSAGE_TYPE_TEXT,wishMessage), new DatabaseReference.CompletionListener() {
                         @Override
                         public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
 
                             if (databaseError != null) {
+                                // show message failed to send (icon)
                                 btnSend.setEnabled(true);
                                 progressBar.toggleDialog(false);
                                 Log.i(TAG, databaseError.getMessage());
@@ -251,32 +262,14 @@ public class ChatActivity extends AppCompatActivity {
 
                                 if (friend != null) {
 
-                                    String url = "https://fcm.googleapis.com/fcm/send";
-                                    AsyncHttpClient client = new AsyncHttpClient();
-
-                                   //client.addHeader(HttpHeaders.AUTHORIZATION, "key=AIzaSyCl-lEfl7Rx9ZcDEyXX4sSpXhJYMS6PHfk");
-                                    client.addHeader(HttpHeaders.AUTHORIZATION, "key=AAAAQmgvFoU:APA91bF8shJboV6QDRVUvy-8ZKhZ6c1eri8a6zlkSPLDosvPZ-MegfsPEOGeKUhoxmtMq3d11bzeOEWWIupjCuKW3rgbwmqZ8LqumrK_ldWYT_ipDExdy4J2OWnhYwvb9Y6pIx8vOWD8");
-                                    client.addHeader(HttpHeaders.CONTENT_TYPE, RequestParams.APPLICATION_JSON);
-
                                     try {
-                                        JSONObject params = new JSONObject();
+                                        StringEntity entity = generateEntity(Constants.MESSAGE_TYPE_TEXT, wishMessage);
+                                        if (entity == null){
+                                            Toast.makeText(ChatActivity.this, "Failed to make notification", Toast.LENGTH_SHORT).show();
+                                            return;
+                                        }
 
-                                        //params.put("registration_ids", registration_ids);
-                                        params.put("to", friend.getDeviceToken());
-                                        JSONObject payload = new JSONObject();
-                                        payload.put("sender", user.name);
-                                        JSONObject notificationObject = new JSONObject();
-                                        notificationObject.put("click_action", ".MainActivity");
-                                        notificationObject.put("body", wishMessage);
-                                        notificationObject.put("title", user.name);
-                                        notificationObject.put("tag", user.deviceId);
-                                        params.put("data", payload);
-
-                                        params.put("notification", notificationObject);
-
-                                        StringEntity entity = new StringEntity(params.toString());
-
-                                        client.post(getApplicationContext(), url, entity, RequestParams.APPLICATION_JSON, new TextHttpResponseHandler() {
+                                        createAsyncClient().post(getApplicationContext(), url, entity, RequestParams.APPLICATION_JSON, new TextHttpResponseHandler() {
                                             @Override
                                             public void onFailure(int statusCode, cz.msebera.android.httpclient.Header[] headers, String responseString, Throwable throwable) {
                                                 btnSend.setEnabled(true);
@@ -312,6 +305,87 @@ public class ChatActivity extends AppCompatActivity {
 
     }
 
+    private AsyncHttpClient createAsyncClient () {
+
+        AsyncHttpClient client = new AsyncHttpClient();
+
+        //client.addHeader(HttpHeaders.AUTHORIZATION, "key=AIzaSyCl-lEfl7Rx9ZcDEyXX4sSpXhJYMS6PHfk");
+        client.addHeader(HttpHeaders.AUTHORIZATION, "key=AAAAQmgvFoU:APA91bF8shJboV6QDRVUvy-8ZKhZ6c1eri8a6zlkSPLDosvPZ-MegfsPEOGeKUhoxmtMq3d11bzeOEWWIupjCuKW3rgbwmqZ8LqumrK_ldWYT_ipDExdy4J2OWnhYwvb9Y6pIx8vOWD8");
+        client.addHeader(HttpHeaders.CONTENT_TYPE, RequestParams.APPLICATION_JSON);
+        return client;
+    }
+
+    private StringEntity generateEntity (String type, String wishMessage) {
+        JSONObject params = new JSONObject();
+        //params.put("registration_ids", registration_ids);
+        StringEntity entity = null;
+        try {
+            params.put("to", friend.getDeviceToken());
+            JSONObject payload = new JSONObject();
+            payload.put("type", type);
+            params.put("data", payload);
+            JSONObject notificationObject = new JSONObject();
+            notificationObject.put("click_action", ".MainActivity");
+            notificationObject.put("body", wishMessage);
+            notificationObject.put("title", user.name);
+            notificationObject.put("tag", user.deviceId);
+
+            params.put("notification", notificationObject);
+
+            entity = new StringEntity(params.toString());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return entity;
+    }
+
+    private FirebaseMessageModel makeNewMessageNode (String type, String wishMessage) {
+        final FirebaseMessageModel firebaseMessageModel = new FirebaseMessageModel();
+        firebaseMessageModel.setText(wishMessage);
+        firebaseMessageModel.setSenderDeviceId(user.deviceId);
+        firebaseMessageModel.setSenderName(user.name);
+        firebaseMessageModel.setReceiverName(friend.getUsername());
+        firebaseMessageModel.setIsReceived(Constants.MESSAGE_SENT);
+        firebaseMessageModel.setMediaType(type);
+        return  firebaseMessageModel;
+    }
+
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        EasyImage.handleActivityResult(requestCode, resultCode, data, this, new DefaultCallback() {
+            @Override
+            public void onImagePickerError(Exception e, EasyImage.ImageSource source, int type) {
+                Toast.makeText(ChatActivity.this, "Error choosing file", Toast.LENGTH_SHORT).show();
+                e.printStackTrace();
+            }
+
+            @Override
+            public void onCanceled(EasyImage.ImageSource source, int type) {
+                // Cancel handling, you might wanna remove taken photo if it was canceled
+                if (source == EasyImage.ImageSource.CAMERA) {
+                    Toast.makeText(ChatActivity.this, "Deleting captured image...", Toast.LENGTH_SHORT).show();
+                    File photoFile = EasyImage.lastlyTakenButCanceledPhoto(ChatActivity.this);
+                    if (photoFile != null) photoFile.delete();
+                }
+            }
+
+            @Override
+            public void onImagesPicked(@NonNull List<File> imageFiles, EasyImage.ImageSource source, int type) {
+                switch (type){
+                    case REQUEST_CODE_GALLERY_CAMERA:
+                        ImageViewDialogFragment imageViewDialog = ImageViewDialogFragment.newInstance(imageFiles.get(0));
+                        imageViewDialog.show(getSupportFragmentManager(), "ImageViewDialogFragment");
+                        break;
+                }
+            }
+
+        });
+    }
+
     private void createMessageRefWithNewKey () {
         String key = makeChatKey(me, friend);
         messagesRef = database.getReference("messages")
@@ -325,7 +399,6 @@ public class ChatActivity extends AppCompatActivity {
         ContactDBHelper db = new ContactDBHelper(this);
         if (db.isUserAlreadyInContacts(friend.getUsername())) {
             String[] friendInfo = db.getProfileNameAndPic(friend.getUsername());
-            System.out.println("FOUND LOCAL DATA");
             friend.setProfileName(friendInfo[0]);
             friend.setProfilePic(friendInfo[1]);
             ((TextView) actionBar.getCustomView().findViewById(R.id.profile_name)).setText(friend.getProfileName());
@@ -334,7 +407,6 @@ public class ChatActivity extends AppCompatActivity {
                     .apply(new RequestOptions().placeholder(R.drawable.placeholder).error(R.drawable.unknown))
                     .into(((CircleImageView) actionBar.getCustomView().findViewById(R.id.profile_icon)));
         } else {
-            System.out.println("NO LOCAL DATA");
             ((TextView) actionBar.getCustomView().findViewById(R.id.profile_name)).setText(friend.getUsername());
             Glide.with(getApplicationContext())
                     .load(R.drawable.unknown)
@@ -383,7 +455,7 @@ public class ChatActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-        startActivity(new Intent (ChatActivity.this, SessionActivity.class));
+        startActivity(new Intent (ChatActivity.this, SessionActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
         finish();
         super.onBackPressed();
     }
@@ -534,4 +606,79 @@ public class ChatActivity extends AppCompatActivity {
         calendar.setTimeInMillis(milliSeconds);
         return formatter.format(calendar.getTime());
     }
+
+    @Override
+    public void onSendPressed(final Dialog dialog, File f, final ProgressBar progressBar) {
+        if (f != null) {
+            Uri imgUri = Uri.fromFile(f);
+            StorageReference mStorageRef = FirebaseStorage.getInstance()
+                    .getReference().child("single/" + chatKey + "/pictures/" + imgUri.getLastPathSegment());
+            mStorageRef.putFile(imgUri).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                @Override
+                public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                    Handler handler = new Handler();
+                    handler.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            progressBar.setProgress(0);
+                        }
+                    }, 5000);
+                    dialog.dismiss();
+                    ChatActivity.this.progressBar.toggleDialog(true);
+
+                    DatabaseReference newRef = messagesRef.push();
+                    @SuppressWarnings("VisibleForTests")
+                    final Uri downloadUrl = taskSnapshot.getDownloadUrl();
+                    newRef.setValue(makeNewMessageNode(Constants.MESSAGE_TYPE_PIC, downloadUrl.toString()), new DatabaseReference.CompletionListener() {
+
+                        @Override
+                        public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
+                            if (databaseError != null) {
+                                // remove image from storage
+                                // show message failed to send (icon)
+                                ChatActivity.this.progressBar.toggleDialog(false);
+                                Log.i(TAG, databaseError.getMessage());
+                            } else {
+                                StringEntity entity = generateEntity(Constants.MESSAGE_TYPE_PIC, downloadUrl.toString());
+                                if (entity == null){
+                                    Toast.makeText(ChatActivity.this, "Failed to make notification", Toast.LENGTH_SHORT).show();
+                                    return;
+                                }
+                                createAsyncClient().post(getApplicationContext(), url, entity, RequestParams.APPLICATION_JSON, new TextHttpResponseHandler() {
+                                    @Override
+                                    public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
+                                        ChatActivity.this.progressBar.toggleDialog(false);
+                                        Log.i(TAG, responseString);
+                                    }
+
+                                    @Override
+                                    public void onSuccess(int statusCode, Header[] headers, String responseString) {
+                                        ChatActivity.this.progressBar.toggleDialog(false);
+                                        Log.i(TAG, responseString);
+                                    }
+                                });
+                            }
+                        }
+
+
+                    });
+                }
+            }).addOnFailureListener(new OnFailureListener() {
+                @Override
+                public void onFailure(@NonNull Exception e) {
+                    Toast.makeText(ChatActivity.this, "Image Upload Failed", Toast.LENGTH_SHORT ).show();
+                    dialog.dismiss();
+                }
+            }).addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
+                @Override
+                public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
+                    @SuppressWarnings("VisibleForTests")
+                    double progresss = (100.0* taskSnapshot.getBytesTransferred()/ taskSnapshot.getTotalByteCount());
+                    progressBar.setProgress((int)progresss);
+                }
+            });
+
+        }
+    }
+
 }
