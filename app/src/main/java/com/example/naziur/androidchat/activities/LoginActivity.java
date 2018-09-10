@@ -73,16 +73,23 @@ public class LoginActivity extends AppCompatActivity {
                             Toast.makeText(LoginActivity.this, "Please enter a profile name", Toast.LENGTH_LONG).show();
                     } else {
                         String currentDeviceId = Settings.Secure.getString(getApplicationContext().getContentResolver(), Settings.Secure.ANDROID_ID);
+                        boolean foundMatch = false;
+
                         for(DataSnapshot snapshot : dataSnapshot.getChildren()){
                            FirebaseUserModel firebaseUserModel = snapshot.getValue(FirebaseUserModel.class);
                             if(firebaseUserModel.getDeviceId().equals(currentDeviceId)){
-                                System.out.println("Found a match");
-                                startActivity( new Intent(LoginActivity.this, SessionActivity.class));
+                                user.login(firebaseUserModel);
+                                user.saveFirebaseKey(snapshot.getKey());
+                                foundMatch = true;
                                 break;
                             }
                         }
+                        if(!foundMatch)
+                            Toast.makeText(LoginActivity.this, "Please enter unique username", Toast.LENGTH_LONG).show();
+                        else
+                            startActivity(new Intent(LoginActivity.this, SessionActivity.class));
+
                         progressDialog.toggleDialog(false);
-                        Toast.makeText(LoginActivity.this, "Please enter unique username", Toast.LENGTH_LONG).show();
                     }
                 }
 

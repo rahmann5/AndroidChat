@@ -1,6 +1,7 @@
 package com.example.naziur.androidchat.fragment;
 
 
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
@@ -131,6 +132,53 @@ public class SingleSessionFragment extends Fragment {
         usersRef.addValueEventListener(userListener);
     }
 
+    private void setUpMsgEventListeners(){
+        valueEventListeners.clear();
+        allChats.clear();
+        myChatsdapter.clearAllChats ();
+        progressBar.toggleDialog(true);
+            for (int i = 0; i < allChatKeys.size(); i++) {
+                final String chatKey = allChatKeys.get(i);
+
+                valueEventListeners.add(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+
+                        if (dataSnapshot.exists()) {
+                            for (com.google.firebase.database.DataSnapshot msgSnapshot : dataSnapshot.getChildren()) {
+                                FirebaseMessageModel firebaseMessageModel = msgSnapshot.getValue(FirebaseMessageModel.class);
+                                String isChattingTo = (firebaseMessageModel.getSenderName().equals(user.name)) ? db.getProfileNameAndPic(firebaseMessageModel.getReceiverName())[0] : db.getProfileNameAndPic(firebaseMessageModel.getSenderName())[0];
+                                String username = (firebaseMessageModel.getSenderName().equals(user.name)) ? firebaseMessageModel.getReceiverName() : firebaseMessageModel.getSenderName();
+                                SimpleDateFormat formatter = new SimpleDateFormat(getString(R.string.simple_date));
+                                String dateString = formatter.format(new Date(firebaseMessageModel.getCreatedDateLong()));
+                                Chat chat = new Chat(isChattingTo, username, firebaseMessageModel.getText(), db.getProfileNameAndPic(username)[1], dateString, chatKey, firebaseMessageModel.getIsReceived());
+                                for(int i =0; i < allChats.size(); i++){
+                                    if(allChats.get(i).getUsernameOfTheOneBeingSpokenTo().equals(chat.getUsernameOfTheOneBeingSpokenTo()))
+                                        allChats.remove(i);
+                                }
+                                allChats.add(0, chat);
+                            }
+                            myChatsdapter.setAllMyChats(allChats);
+                            myChatsdapter.notifyDataSetChanged();
+                        }
+
+                        if (myChatsdapter.getItemCount() == 0) {
+                            emptyChats.setVisibility(View.VISIBLE);
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+                        progressBar.toggleDialog(false);
+                        Log.i(TAG, databaseError.getMessage());
+                    }
+                });
+
+                messagesRef.child("single").child(allChatKeys.get(i)).limitToLast(1).addValueEventListener(valueEventListeners.get(i));
+            }
+        progressBar.toggleDialog(false);
+    }
+
     private void updateExistingContacts (Cursor c) {
         try{
             while (c.moveToNext()) {
@@ -164,53 +212,6 @@ public class SingleSessionFragment extends Fragment {
             c.close();
         }
 
-    }
-
-    private void setUpMsgEventListeners(){
-        valueEventListeners.clear();
-        allChats.clear();
-        myChatsdapter.clearAllChats ();
-        progressBar.toggleDialog(true);
-            for (int i = 0; i < allChatKeys.size(); i++) {
-                final String chatKey = allChatKeys.get(i);
-
-                valueEventListeners.add(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(DataSnapshot dataSnapshot) {
-
-                        if (dataSnapshot.exists()) {
-                            for (com.google.firebase.database.DataSnapshot msgSnapshot : dataSnapshot.getChildren()) {
-                                FirebaseMessageModel firebaseMessageModel = msgSnapshot.getValue(FirebaseMessageModel.class);
-                                String isChattingTo = (firebaseMessageModel.getSenderName().equals(user.name)) ? db.getProfileNameAndPic(firebaseMessageModel.getReceiverName())[0] : db.getProfileNameAndPic(firebaseMessageModel.getSenderName())[0];
-                                String username = (firebaseMessageModel.getSenderName().equals(user.name)) ? firebaseMessageModel.getReceiverName() : firebaseMessageModel.getSenderName();
-                                SimpleDateFormat formatter = new SimpleDateFormat(getString(R.string.simple_date));
-                                String dateString = formatter.format(new Date(firebaseMessageModel.getCreatedDateLong()));
-                                Chat chat = new Chat(isChattingTo, username, firebaseMessageModel.getText(), db.getProfileNameAndPic(username)[1], dateString, chatKey, firebaseMessageModel.getIsReceived());
-
-                                for(int i =0; i < allChats.size(); i++){
-                                    if(allChats.get(i).getUsernameOfTheOneBeingSpokenTo().equals(chat.getUsernameOfTheOneBeingSpokenTo()))
-                                        allChats.remove(i);
-                                }
-                                allChats.add(0, chat);
-                            }
-                            myChatsdapter.setAllMyChats(allChats);
-                        }
-
-                        if (myChatsdapter.getItemCount() == 0) {
-                            emptyChats.setVisibility(View.VISIBLE);
-                        }
-                    }
-
-                    @Override
-                    public void onCancelled(DatabaseError databaseError) {
-                        progressBar.toggleDialog(false);
-                        Log.i(TAG, databaseError.getMessage());
-                    }
-                });
-
-                messagesRef.child("single").child(allChatKeys.get(i)).limitToLast(1).addValueEventListener(valueEventListeners.get(i));
-            }
-        progressBar.toggleDialog(false);
     }
 
     private void setUpRecyclerView(){

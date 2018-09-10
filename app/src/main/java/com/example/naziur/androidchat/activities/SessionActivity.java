@@ -1,6 +1,8 @@
 package com.example.naziur.androidchat.activities;
 
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.net.ConnectivityManager;
 import android.support.design.widget.TabLayout;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
@@ -13,16 +15,20 @@ import android.widget.Toast;
 
 import com.example.naziur.androidchat.R;
 import com.example.naziur.androidchat.adapter.SessionFragmentPagerAdapter;
+import com.example.naziur.androidchat.fragment.SingleSessionFragment;
+import com.example.naziur.androidchat.utils.NetworkChangeReceiver;
 
-public class SessionActivity extends AppCompatActivity {
-
+public class SessionActivity extends AppCompatActivity implements NetworkChangeReceiver.OnNetworkStateChangeListener {
+    private NetworkChangeReceiver networkChangeReceiver;
+    ViewPager viewPager;
+    SessionFragmentPagerAdapter sessionFragmentPagerAdapter;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_session);
 
-        ViewPager viewPager = (ViewPager) findViewById(R.id.viewpager);
-        SessionFragmentPagerAdapter sessionFragmentPagerAdapter = new SessionFragmentPagerAdapter(getSupportFragmentManager());
+       viewPager = (ViewPager) findViewById(R.id.viewpager);
+        sessionFragmentPagerAdapter = new SessionFragmentPagerAdapter(getSupportFragmentManager());
 
         Toolbar mToolbar = (Toolbar) findViewById(R.id.toolbar);
         mToolbar.setTitle("All Chats");
@@ -32,6 +38,15 @@ public class SessionActivity extends AppCompatActivity {
         TabLayout tabLayout = (TabLayout) findViewById(R.id.sliding_tabs);
         tabLayout.setupWithViewPager(viewPager);
 
+        networkChangeReceiver = new NetworkChangeReceiver();
+        networkChangeReceiver.setOnNetworkChangedListener(this);
+
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        unregisterReceiver(networkChangeReceiver);
     }
 
     @Override
@@ -58,4 +73,22 @@ public class SessionActivity extends AppCompatActivity {
                 return super.onOptionsItemSelected(item);
         }
     }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
+        registerReceiver(networkChangeReceiver, intentFilter);
+    }
+
+    @Override
+    public void onNetworkStateChanged(boolean connected) {
+        if(connected) {
+            sessionFragmentPagerAdapter.getItemPosition(new SingleSessionFragment());
+            sessionFragmentPagerAdapter.notifyDataSetChanged();
+        }
+    }
+
+
 }

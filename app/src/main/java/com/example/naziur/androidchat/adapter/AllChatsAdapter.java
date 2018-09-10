@@ -134,7 +134,6 @@ public class AllChatsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                 lastMsgTv.setTextColor(ContextCompat.getColor(context, R.color.black));
             }
 
-
             Glide.with(context).load(chat.getProfilePic()).apply(new RequestOptions().placeholder(R.drawable.unknown).error(R.drawable.unknown)).into(profPicIv);
         }
 
