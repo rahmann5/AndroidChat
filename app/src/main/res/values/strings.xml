@@ -40,4 +40,6 @@
     <string name="username">Username</string>
     <string name="title_activity_first">FirstActivity</string>
 
+    <string name="media_message">Picture</string>
+
 </resources>

@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_height="wrap_content"
+    android:layout_width="match_parent">
+
+
+   <LinearLayout
+       android:layout_width="match_parent"
+       android:layout_height="wrap_content"
+       android:orientation="vertical">
+
+       <TextView
+           android:id="@+id/date_seperator"
+           android:layout_width="wrap_content"
+           android:layout_height="wrap_content"
+           android:background="@drawable/button_shape"
+           android:text="08/09/2018"
+           android:textColor="@color/white"
+           android:textSize="18sp"
+           android:paddingTop="5dp"
+           android:paddingBottom="5dp"
+           android:paddingLeft="10dp"
+           android:paddingRight="10dp"
+           android:layout_margin="5dp"
+           android:layout_gravity="center"
+           android:visibility="gone"
+           />
+
+       <RelativeLayout
+           android:layout_width="270dp"
+           android:layout_height="270dp"
+           android:background="@drawable/in_coming_speech"
+           android:paddingEnd="6dp"
+           android:paddingRight="6dp"
+           android:paddingStart="16dp"
+           android:paddingLeft="16dp"
+           android:paddingTop="4dp"
+           android:paddingBottom="4dp"
+           android:layout_gravity="start"
+           >
+
+           <ImageView
+               android:id="@+id/receiving_img_cell"
+               android:layout_width="300dp"
+               android:layout_height="300dp"
+               android:src="@drawable/unknown"
+               android:layout_alignParentLeft="true"
+               android:layout_alignParentStart="true"
+               android:scaleType="centerCrop"
+               />
+
+           <TextView
+               android:id="@+id/dateTime"
+               android:layout_width="wrap_content"
+               android:layout_height="wrap_content"
+               android:text="13 May 2017, 1:19 AM"
+               android:textColor="@color/timeTextColor"
+               android:shadowColor="#000000"
+               android:shadowDx="1.5"
+               android:shadowDy="1.3"
+               android:shadowRadius="1.6"
+               android:layout_marginBottom="7dp"
+               android:layout_alignParentBottom="true"
+               android:layout_alignParentRight="true"
+               android:layout_alignParentEnd="true" />
+
+       </RelativeLayout>
+
+
+   </LinearLayout>
+
+</FrameLayout>

@@ -9,6 +9,8 @@ import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.RequestOptions;
 import com.example.naziur.androidchat.R;
 import com.example.naziur.androidchat.models.MessageCell;
 import com.example.naziur.androidchat.utils.Constants;
@@ -39,14 +41,28 @@ public class MessagesListAdapter extends ArrayAdapter<MessageCell> {
         LayoutInflater inflater = ((Activity)context).getLayoutInflater();
 
         if (cellItem[position].getSender()) {
-            convertView = inflater.inflate(R.layout.my_message_cell, parent, false);
+            if (cellItem[position].getMessageType().equals(Constants.MESSAGE_TYPE_TEXT)) {
+                convertView = inflater.inflate(R.layout.my_message_cell, parent, false);
+                setTextMsg(position, convertView);
+            } else if (cellItem[position].getMessageType().equals(Constants.MESSAGE_TYPE_PIC)) {
+                convertView = inflater.inflate(R.layout.my_image_message_cell, parent, false);
+                ImageView msgPic =  (ImageView) convertView.findViewById(R.id.sending_img_cell);
+                putImageUsingGlide(msgPic, cellItem[position].getMessageText());
+            }
 
             ImageView receiveStatusIv = (ImageView) convertView.findViewById(R.id.receive_status);
             if(cellItem[position].getRecieved() == Constants.MESSAGE_RECEIVED)
                 receiveStatusIv.setImageResource(R.drawable.ic_thumb_up_green);
 
         } else {
-            convertView = inflater.inflate(R.layout.receiving_message_cell, parent, false);
+            if (cellItem[position].getMessageType().equals(Constants.MESSAGE_TYPE_TEXT)) {
+                convertView = inflater.inflate(R.layout.receiving_message_cell, parent, false);
+                setTextMsg(position, convertView);
+            } else if (cellItem[position].getMessageType().equals(Constants.MESSAGE_TYPE_PIC)) {
+                convertView = inflater.inflate(R.layout.receiving_image_message_cell, parent, false);
+                ImageView msgPic =  (ImageView) convertView.findViewById(R.id.receiving_img_cell);
+                putImageUsingGlide(msgPic, cellItem[position].getMessageText());
+            }
         }
 
         if(position == 0){
@@ -59,15 +75,22 @@ public class MessagesListAdapter extends ArrayAdapter<MessageCell> {
             dateTime.setVisibility(View.VISIBLE);
         }
 
-
-
-        TextView wish = (TextView) convertView.findViewById(R.id.wishMessage);
-        wish.setText(cellItem[position].getMessageText());
-
         TextView dateTime = (TextView) convertView.findViewById(R.id.dateTime);
         dateTime.setText(cellItem[position].getMessageDateTime());
 
         return convertView;
     }
+
+    private void setTextMsg (int position, View convertView) {
+        TextView wish = (TextView) convertView.findViewById(R.id.wishMessage);
+        wish.setText(cellItem[position].getMessageText());
+    }
+
+    private void putImageUsingGlide (ImageView img, String pic) {
+        Glide.with(getContext()).load(pic)
+                .apply(new RequestOptions().placeholder(R.drawable.placeholder).error(R.drawable.placeholder))
+                .into(img);
+    }
+
 
 }

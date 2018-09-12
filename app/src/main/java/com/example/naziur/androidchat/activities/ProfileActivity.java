@@ -188,17 +188,19 @@ public class ProfileActivity extends AppCompatActivity {
     private void showContacts() {
         progressBar.toggleDialog(true);
         //ArrayAdapter<String> adapterContacts = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, new ArrayList<String>());
-        final List<Contact> allContacts = new ArrayList<>();
+        final List<Contact> allContacts = updateContacts ();
         emptyContactsList = (TextView) findViewById(R.id.no_contacts);
         myContacts = (RecyclerView) findViewById(R.id.profile_contacts_list);
-        MyContactsAdapter contactsAdapter = new MyContactsAdapter(ProfileActivity.this, updateContacts (), null);
+        MyContactsAdapter contactsAdapter = new MyContactsAdapter(ProfileActivity.this, allContacts , null);
         LinearLayoutManager l = new LinearLayoutManager(ProfileActivity.this);
         myContacts.setLayoutManager(l);
         myContacts.setAdapter(contactsAdapter);
 
 
-        if (myContacts.getAdapter() == null || myContacts.getAdapter().getItemCount() == 0) {
+        if (allContacts.isEmpty()) {
             emptyContactsList.setVisibility(View.VISIBLE);
+        } else {
+            emptyContactsList.setVisibility(View.GONE);
         }
 
     }
@@ -273,13 +275,7 @@ public class ProfileActivity extends AppCompatActivity {
                             Toast.makeText(ProfileActivity.this, "Error Uploading File", Toast.LENGTH_SHORT).show();
                             exception.printStackTrace();
                         }
-                    }).addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
-                @Override
-                public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
-                    //@SuppressWarnings("VisibleForTests")
-                    //double progresss = (100.0* taskSnapshot.getBytesTransferred()/ taskSnapshot.getTotalByteCount());
-                }
-            });
+                    });
         } else {
             updateUserInfo(null);
         }
@@ -409,7 +405,7 @@ public class ProfileActivity extends AppCompatActivity {
                 public void onFailure(@NonNull Exception exception) {
                     progressBar.toggleDialog(false);
                     Toast.makeText(ProfileActivity.this, "Error Removing old picture", Toast.LENGTH_SHORT).show();
-                    Log.d(TAG, "onFailure: did not delete file");
+                    Log.i(TAG, "onFailure: did not delete file");
                     exception.printStackTrace();
                 }
             });

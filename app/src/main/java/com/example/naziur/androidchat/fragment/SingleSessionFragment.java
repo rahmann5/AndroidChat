@@ -185,7 +185,7 @@ public class SingleSessionFragment extends Fragment {
                                 String username = (firebaseMessageModel.getSenderName().equals(user.name)) ? firebaseMessageModel.getReceiverName() : firebaseMessageModel.getSenderName();
                                 SimpleDateFormat formatter = new SimpleDateFormat(getString(R.string.simple_date));
                                 String dateString = formatter.format(new Date(firebaseMessageModel.getCreatedDateLong()));
-                                Chat chat = new Chat(isChattingTo, username, firebaseMessageModel.getText(), db.getProfileNameAndPic(username)[1], dateString, chatKey, firebaseMessageModel.getIsReceived());
+                                Chat chat = new Chat(isChattingTo, username, firebaseMessageModel.getText(), db.getProfileNameAndPic(username)[1], dateString, chatKey, firebaseMessageModel.getIsReceived(), firebaseMessageModel.getMediaType());
 
                                 for(int i =0; i < allChats.size(); i++){
                                     if(allChats.get(i).getUsernameOfTheOneBeingSpokenTo().equals(chat.getUsernameOfTheOneBeingSpokenTo()))

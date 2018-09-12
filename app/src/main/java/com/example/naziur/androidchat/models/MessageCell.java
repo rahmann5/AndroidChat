@@ -9,16 +9,19 @@ public class MessageCell {
     String messageDateTime;
     Boolean isSender;
 
+    String messageType;
+
     int isRecieved;
 
     String dateOnly;
 
-    public MessageCell(String messageSender, String messageText, String messageDateTime, Boolean isSender, int isRecieved){
+    public MessageCell(String messageSender, String messageText, String messageDateTime, Boolean isSender, int isRecieved, String messageType){
         this.messageSender = messageSender;
         this.messageText = messageText;
         this.messageDateTime = messageDateTime;
         this.isSender = isSender;
         this.isRecieved = isRecieved;
+        this.messageType = messageType;
     }
     public int getRecieved() {
         return isRecieved;
@@ -62,5 +65,13 @@ public class MessageCell {
 
     public void setSender(Boolean sender) {
         isSender = sender;
+    }
+
+    public String getMessageType() {
+        return messageType;
+    }
+
+    public void setMessageType(String messageType) {
+        this.messageType = messageType;
     }
 }

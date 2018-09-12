@@ -76,4 +76,19 @@
             />
     </LinearLayout>
 
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/action_send_bottom"
+        android:layout_width="35dp"
+        android:layout_height="35dp"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentRight="true"
+        android:layout_above="@+id/footer_section"
+        android:layout_margin="10dp"
+        android:background="@drawable/bottom_border"
+        app:backgroundTint="@color/white"
+        android:scaleType="center"
+        android:src="@android:drawable/ic_menu_more"
+        android:visibility="gone"
+        />
+
 </RelativeLayout>

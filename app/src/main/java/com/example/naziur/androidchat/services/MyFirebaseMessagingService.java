@@ -38,16 +38,15 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
 
         //Calling method to show notification
         if (!Network.isForeground(getApplicationContext())){
-            showNotification(remoteMessage.getNotification().getBody(), remoteMessage.getNotification().getTitle(),
+            showNotification(remoteMessage.getNotification().getBody(),
                     remoteMessage.getNotification().getTag());
         }
 
     }
 
-    private void showNotification(String messageBody, String to ,String dToken) {
+    private void showNotification(String messageBody,String dToken) {
         Intent intent = new Intent(this, MainActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        intent.putExtra("sender", to);
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent,
                 PendingIntent.FLAG_ONE_SHOT);
 
