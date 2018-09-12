@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.ConnectivityManager;
 import android.support.design.widget.TabLayout;
+import android.support.v4.app.Fragment;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -15,12 +16,15 @@ import android.widget.Toast;
 
 import com.example.naziur.androidchat.R;
 import com.example.naziur.androidchat.adapter.SessionFragmentPagerAdapter;
+import com.example.naziur.androidchat.fragment.GroupSessionFragment;
 import com.example.naziur.androidchat.fragment.SingleSessionFragment;
 import com.example.naziur.androidchat.utils.NetworkChangeReceiver;
 
 public class SessionActivity extends AppCompatActivity implements NetworkChangeReceiver.OnNetworkStateChangeListener {
     private NetworkChangeReceiver networkChangeReceiver;
     ViewPager viewPager;
+    private Menu menu;
+
     SessionFragmentPagerAdapter sessionFragmentPagerAdapter;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,6 +42,29 @@ public class SessionActivity extends AppCompatActivity implements NetworkChangeR
         TabLayout tabLayout = (TabLayout) findViewById(R.id.sliding_tabs);
         tabLayout.setupWithViewPager(viewPager);
 
+        viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+
+            @Override
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+
+            }
+
+            @Override
+            public void onPageSelected(int position) {
+                Fragment fragment =(Fragment)sessionFragmentPagerAdapter.getRegisteredFragment(position);
+                if(fragment instanceof GroupSessionFragment)
+                    menu.findItem(R.id.action_group).setVisible(true);
+                else
+                    menu.findItem(R.id.action_group).setVisible(false);
+
+            }
+
+            @Override
+            public void onPageScrollStateChanged(int state) {
+
+            }
+        });
+
         networkChangeReceiver = new NetworkChangeReceiver();
         networkChangeReceiver.setOnNetworkChangedListener(this);
 
@@ -51,8 +78,11 @@ public class SessionActivity extends AppCompatActivity implements NetworkChangeR
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
+        this.menu = menu;
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.sessions_menu, menu);
+        MenuItem item = menu.findItem(R.id.action_group);
+        item.setVisible(false);
         return true;
     }
 
@@ -68,6 +98,9 @@ public class SessionActivity extends AppCompatActivity implements NetworkChangeR
                 return true;
             case R.id.settings:
                 Toast.makeText(this, "Settings", Toast.LENGTH_SHORT).show();
+                return true;
+            case R.id.action_group:
+                startActivity(new Intent(SessionActivity.this, GroupCreatorActivity.class));
                 return true;
             default:
                 return super.onOptionsItemSelected(item);

@@ -6,6 +6,7 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CheckBox;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -98,22 +99,37 @@ public class MyContactsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
 
         private TextView usernameTv, profileTv;
         private CircleImageView profPicIv;
-
+        private CheckBox chooserCb;
         public MyContactViewHolder(View itemView) {
             super(itemView);
             usernameTv = (TextView) itemView.findViewById(R.id.username);
             profileTv = (TextView) itemView.findViewById(R.id.prof_name);
             profPicIv = (CircleImageView) itemView.findViewById(R.id.prof_pic);
+
         }
 
         public void bind (final Contact contact, final int position, final OnItemClickListener listener, Context context) {
+            if(context.getClass().getSimpleName().equals("GroupCreatorActivity")){
+                chooserCb = (CheckBox) itemView.findViewById(R.id.chooser);
+            }
+
             if (listener != null ) {
                 itemView.setOnClickListener(new View.OnClickListener() {
                     @Override
-                    public void onClick(View view) {listener.onItemClick(contact, position);
+                    public void onClick(View view) {
+                        if(chooserCb != null){
+                            if(chooserCb.isChecked())
+                                chooserCb.setChecked(false);
+                            else
+                                chooserCb.setChecked(true);
+                        }
+
+                        listener.onItemClick(contact, position);
                     }
                 });
             }
+
+
             usernameTv.setText(contact.getContact().getUsername());
             profileTv.setText(contact.getContact().getProfileName());
             Glide.with(context).load(contact.getContact().getProfilePic()).apply(new RequestOptions().placeholder(R.drawable.placeholder).error(R.drawable.unknown)).into(profPicIv);
