@@ -50,7 +50,8 @@ public class ErrorDialogFragment extends DialogFragment {
                 .setNegativeButton("Exit", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
                         dialog.dismiss();
-                        System.exit(1);
+                        //System.exit(1);
+                        getActivity().finish();
                     }
                 });;
        return builder.create();

@@ -1,6 +1,7 @@
 package com.example.naziur.androidchat.fragment;
 
 
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
@@ -194,6 +195,7 @@ public class SingleSessionFragment extends Fragment {
                                 allChats.add(0, chat);
                             }
                             myChatsdapter.setAllMyChats(allChats);
+                            myChatsdapter.notifyDataSetChanged();
                         }
 
                         if (myChatsdapter.getItemCount() == 0) {
