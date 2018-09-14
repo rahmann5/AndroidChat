@@ -1,7 +1,6 @@
 package com.example.naziur.androidchat.fragment;
 
 
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
@@ -178,7 +177,6 @@ public class SingleSessionFragment extends Fragment {
                 valueEventListeners.add(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
-
                         if (dataSnapshot.exists()) {
                             for (com.google.firebase.database.DataSnapshot msgSnapshot : dataSnapshot.getChildren()) {
                                 FirebaseMessageModel firebaseMessageModel = msgSnapshot.getValue(FirebaseMessageModel.class);
@@ -197,10 +195,12 @@ public class SingleSessionFragment extends Fragment {
                             myChatsdapter.setAllMyChats(allChats);
                             myChatsdapter.notifyDataSetChanged();
                         }
-
                         if (myChatsdapter.getItemCount() == 0) {
                             emptyChats.setVisibility(View.VISIBLE);
+                        } else {
+                            emptyChats.setVisibility(View.GONE);
                         }
+
                     }
 
                     @Override
@@ -213,6 +213,9 @@ public class SingleSessionFragment extends Fragment {
                 messagesRef.child("single").child(allChatKeys.get(i)).limitToLast(1).addValueEventListener(valueEventListeners.get(i));
             }
         progressBar.toggleDialog(false);
+        if (myChatsdapter.getItemCount() == 0) {
+            emptyChats.setVisibility(View.VISIBLE);
+        }
     }
 
     private void setUpRecyclerView(){
@@ -290,6 +293,8 @@ public class SingleSessionFragment extends Fragment {
                         snapshot.getRef().child("chatKeys").removeValue();
                     else
                         snapshot.getRef().child("chatKeys").setValue(updatedKeys);
+
+
                 }
             }
 

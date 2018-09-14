@@ -1,15 +1,19 @@
 package com.example.naziur.androidchat.activities;
 
+import android.Manifest;
 import android.app.Dialog;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.AppCompatImageButton;
@@ -101,7 +105,6 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
     private ActionBar actionBar;
     private FirebaseUserModel friend, me;
 
-    public static ChatActivity chattingActivity;
     private String chatKey;
 
     @Override
@@ -119,8 +122,6 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
         createCustomActionBar();
         database = FirebaseDatabase.getInstance();
         usersRef = database.getReference("users");
-
-        chattingActivity = this;
 
         listView = (ListView) findViewById(R.id.chattingList);
 
@@ -142,12 +143,14 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
                 MessageCell c = (MessageCell) listView.getItemAtPosition(i);
                 if (c.getMessageType().equals(Constants.MESSAGE_TYPE_PIC)) {
-                    ImageViewDialogFragment imageViewDialog = ImageViewDialogFragment.newInstance(
-                            c.getMessageText(),
-                            Constants.ACTION_DOWNLOAD,
-                            android.R.drawable.ic_menu_upload);
-                    imageViewDialog.setCancelable(false);
-                    imageViewDialog.show(getSupportFragmentManager(), "ImageViewDialogFragment");
+                    if (Network.isInternetAvailable(ChatActivity.this, true)) {
+                        ImageViewDialogFragment imageViewDialog = ImageViewDialogFragment.newInstance(
+                                c.getMessageText(),
+                                Constants.ACTION_DOWNLOAD,
+                                android.R.drawable.ic_menu_upload);
+                        imageViewDialog.setCancelable(false);
+                        imageViewDialog.show(getSupportFragmentManager(), "ImageViewDialogFragment");
+                    }
                 } else if (c.getMessageType().equals(Constants.MESSAGE_TYPE_TEXT)) {
                     ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
                     ClipData clip = ClipData.newPlainText("message", c.getMessageText());
@@ -174,14 +177,14 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
         progressBar = new ProgressDialog(this, R.layout.progress_dialog, true);
         progressBar.toggleDialog(true);
 
-        final com.google.firebase.database.ValueEventListener commentValueEventListener = new com.google.firebase.database.ValueEventListener() {
+        final ValueEventListener commentValueEventListener = new ValueEventListener() {
 
             @Override
-            public void onDataChange(com.google.firebase.database.DataSnapshot dataSnapshot) {
+            public void onDataChange(DataSnapshot dataSnapshot) {
 
                 messages.clear();
 
-                for (com.google.firebase.database.DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
+                for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
                     //System.out.println("Child: " + postSnapshot);
                     //Getting the data from snapshot
                     FirebaseMessageModel firebaseMessageModel = postSnapshot.getValue(FirebaseMessageModel.class);
@@ -379,7 +382,7 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
             JSONObject notificationObject = new JSONObject();
             notificationObject.put("click_action", ".MainActivity");
             notificationObject.put("body", Constants.generateMediaText(this, type, wishMessage));
-            notificationObject.put("title", user.name);
+            notificationObject.put("title", user.profileName);
             notificationObject.put("tag", user.deviceId);
             params.put("data", payload);
             params.put("notification", notificationObject);
@@ -469,6 +472,7 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
                     .load(R.drawable.unknown)
                     .into(((CircleImageView) actionBar.getCustomView().findViewById(R.id.profile_icon)));
             ErrorDialogFragment errorDialog = ErrorDialogFragment.newInstance(errorMsg);
+            errorDialog.setCancelable(false);
             errorDialog.show(getSupportFragmentManager(), "ErrorDialogFragment");
         }
         db.close();
@@ -571,8 +575,8 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
 
     public void hideKeyboard() {
         try  {
-            InputMethodManager inputManager = (InputMethodManager) chattingActivity.getSystemService(Context.INPUT_METHOD_SERVICE);
-            inputManager.hideSoftInputFromWindow(chattingActivity.getCurrentFocus().getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
+            InputMethodManager inputManager = (InputMethodManager) this.getSystemService(Context.INPUT_METHOD_SERVICE);
+            inputManager.hideSoftInputFromWindow(this.getCurrentFocus().getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
         } catch (Exception e) {
             Log.i(TAG, "Exception while hiding keyboard");
         }
@@ -668,6 +672,9 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
 
     @Override
     public void onActionPressed(String action, final Dialog dialog, final ProgressBar progressBar) {
+
+        if (!Network.isInternetAvailable(this, true)) return;
+
         if (action.equals(Constants.ACTION_SEND)) {
             if (ImageViewDialogFragment.imageFile != null) {
                 Uri imgUri = Uri.fromFile(ImageViewDialogFragment.imageFile);
@@ -741,10 +748,32 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
             }
         } else if (action.equals(Constants.ACTION_DOWNLOAD)) {
             if (ImageViewDialogFragment.imageFileString != null) {
-                StorageReference downloadUrl = FirebaseStorage.getInstance().getReferenceFromUrl(ImageViewDialogFragment.imageFileString);
+                if (isStoragePermissionGranted()) {
+                    Network.downloadImageToPhone(this, ImageViewDialogFragment.imageFileString);
+                    dialog.dismiss();
+                }
             }
         }
 
+    }
+
+    public  boolean isStoragePermissionGranted() {
+        if (Build.VERSION.SDK_INT >= 23) {
+            if (checkSelfPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                    == PackageManager.PERMISSION_GRANTED) {
+                Log.i(TAG,"Permission is granted");
+                return true;
+            } else {
+                Toast.makeText(ChatActivity.this, "Please allow permission to write to storage.", Toast.LENGTH_SHORT).show();
+                Log.i(TAG,"Permission is revoked");
+                //ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
+                return false;
+            }
+        }
+        else { //permission is automatically granted on sdk<23 upon installation
+            Log.i(TAG,"Permission is granted");
+            return true;
+        }
     }
 
     private void removeFailedImageUpload (String uri) {

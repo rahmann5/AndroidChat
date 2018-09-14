@@ -179,8 +179,7 @@
                     android:text="No Contacts"
                     android:layout_below="@+id/title_contact_list"
                     android:layout_centerInParent="true"
-                    android:padding="10dp"
-                    android:visibility="gone"/>
+                    android:padding="10dp" />
 
             </RelativeLayout>
 
