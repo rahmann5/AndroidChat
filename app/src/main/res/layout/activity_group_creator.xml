@@ -9,7 +9,8 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@color/colorPrimaryDark"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:paddingBottom="10dp">
 
         <TextView
             android:id="@+id/login_title"
@@ -24,11 +25,12 @@
             android:textStyle="bold" />
 
         <RelativeLayout
+            android:id="@+id/form_container"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:layout_below="@+id/login_title"
-            android:layout_marginLeft="30dp"
-            android:layout_marginRight="30dp"
+            android:layout_marginLeft="20dp"
+            android:layout_marginRight="20dp"
             android:layout_marginTop="70dp"
             android:background="#fff"
             android:elevation="4dp"
@@ -43,7 +45,8 @@
 
                 <android.support.design.widget.TextInputLayout
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content">
+                    android:layout_height="wrap_content"
+                    android:focusableInTouchMode="true">
 
                     <EditText
                         android:id="@+id/group_name"
@@ -71,7 +74,7 @@
 
                     <android.support.v7.widget.RecyclerView
                         android:id="@+id/chat_groups_list"
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:visibility="gone" />
 
@@ -81,13 +84,14 @@
                         android:layout_height="wrap_content"
                         android:layout_centerInParent="true"
                         android:padding="10dp"
-                        android:text="No Groups" />
+                        android:text="No contact found" />
 
                 </RelativeLayout>
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="5dp"
                     android:weightSum="1">
 
                     <android.support.design.widget.TextInputLayout
@@ -99,7 +103,7 @@
                             android:id="@+id/user_not_in_contacts"
                             android:layout_width="fill_parent"
                             android:layout_height="wrap_content"
-                            android:drawableLeft="@android:drawable/ic_menu_share"
+                            android:drawableLeft="@android:drawable/ic_menu_search"
                             android:drawableTint="@color/profile_save_button"
                             android:hint="Enter Username"
                             android:inputType="textEmailAddress"
@@ -118,6 +122,22 @@
                         android:src="@drawable/ic_add_contact" />
                 </LinearLayout>
 
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="5dp"
+                    android:layout_marginTop="5dp"
+                    android:text="Chosen Members so far:"
+                    android:textColor="@color/cardDividerColor"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <android.support.v7.widget.RecyclerView
+                    android:id="@+id/chosen_group_list"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    />
+
                 <Button
                     android:id="@+id/make_group_btn"
                     android:layout_width="fill_parent"
@@ -133,7 +153,7 @@
         </RelativeLayout>
 
         <de.hdodenhof.circleimageview.CircleImageView
-            android:id="@+id/user_profile_photo"
+            android:id="@+id/group_photo"
             android:layout_width="100dp"
             android:layout_height="100dp"
             android:layout_below="@+id/login_title"
@@ -142,6 +162,19 @@
             android:layout_marginTop="16dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:elevation="4dp"
-            android:src="@drawable/unknown" />
+            android:src="@drawable/ic_group_unknown" />
+
+        <de.hdodenhof.circleimageview.CircleImageView
+            android:id="@+id/refresh"
+            android:layout_width="35dp"
+            android:layout_height="35dp"
+            android:layout_gravity="center_vertical"
+            android:background="@drawable/header_icon_round"
+            android:src="@android:drawable/ic_popup_sync"
+            android:elevation="4dp"
+            android:layout_alignBottom="@+id/group_photo"
+            android:layout_alignLeft="@+id/group_photo"
+            android:layout_alignStart="@+id/group_photo"
+             />
     </RelativeLayout>
 </ScrollView>

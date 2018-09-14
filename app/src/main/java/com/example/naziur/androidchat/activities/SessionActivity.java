@@ -52,11 +52,12 @@ public class SessionActivity extends AppCompatActivity implements NetworkChangeR
             @Override
             public void onPageSelected(int position) {
                 Fragment fragment =(Fragment)sessionFragmentPagerAdapter.getRegisteredFragment(position);
-                if(fragment instanceof GroupSessionFragment)
-                    menu.findItem(R.id.action_group).setVisible(true);
-                else
-                    menu.findItem(R.id.action_group).setVisible(false);
-
+                if(menu != null) {
+                    if (fragment instanceof GroupSessionFragment)
+                        menu.findItem(R.id.action_group).setVisible(true);
+                    else
+                        menu.findItem(R.id.action_group).setVisible(false);
+                }
             }
 
             @Override

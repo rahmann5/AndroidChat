@@ -8,6 +8,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
@@ -99,7 +100,6 @@ public class MyContactsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
 
         private TextView usernameTv, profileTv;
         private CircleImageView profPicIv;
-        private CheckBox chooserCb;
         public MyContactViewHolder(View itemView) {
             super(itemView);
             usernameTv = (TextView) itemView.findViewById(R.id.username);
@@ -108,22 +108,11 @@ public class MyContactsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
 
         }
 
-        public void bind (final Contact contact, final int position, final OnItemClickListener listener, Context context) {
-            if(context.getClass().getSimpleName().equals("GroupCreatorActivity")){
-                chooserCb = (CheckBox) itemView.findViewById(R.id.chooser);
-            }
-
+        public void bind (final Contact contact, final int position, final OnItemClickListener listener, final Context context) {
             if (listener != null ) {
                 itemView.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
-                        if(chooserCb != null){
-                            if(chooserCb.isChecked())
-                                chooserCb.setChecked(false);
-                            else
-                                chooserCb.setChecked(true);
-                        }
-
                         listener.onItemClick(contact, position);
                     }
                 });

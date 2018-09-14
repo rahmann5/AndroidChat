@@ -35,6 +35,9 @@
     <!-- Main Activity -->
     <string name="wait">Please wait...</string>
 
+    <string name="selected">Select</string>
+    <string name="unselected">Unselect</string>
+
     <string name="add_contact">Add</string>
     <string name="cancel_contact">Cancel</string>
     <string name="username">Username</string>
