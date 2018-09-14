@@ -124,16 +124,11 @@ public class AllChatsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
             profileTv.setText(chat.getSpeakingTo());
             dateTimeTv.setText(chat.getTimeOfMsg());
             lastMsgTv.setText(Constants.generateMediaText(context, chat.getMsgType(), chat.getLastMsgInThisChat()));
-            if (user.name.equals(chat.getUsernameOfTheOneBeingSpokenTo())) {
-                if (chat.getIsSeen() == Constants.MESSAGE_SENT){
-                    lastMsgTv.setTextColor(ContextCompat.getColor(context, R.color.red));
-                } else {
-                    lastMsgTv.setTextColor(ContextCompat.getColor(context, R.color.black));
-                }
-            }else {
+            if (chat.getIsSeen() == Constants.MESSAGE_SENT){
+                lastMsgTv.setTextColor(ContextCompat.getColor(context, R.color.red));
+            } else {
                 lastMsgTv.setTextColor(ContextCompat.getColor(context, R.color.black));
             }
-
             Glide.with(context).load(chat.getProfilePic()).apply(new RequestOptions().placeholder(R.drawable.unknown).error(R.drawable.unknown)).into(profPicIv);
         }
 

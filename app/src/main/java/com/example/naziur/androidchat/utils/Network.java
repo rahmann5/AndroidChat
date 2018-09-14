@@ -10,6 +10,7 @@ import android.util.Log;
 import android.net.NetworkInfo;
 import android.widget.Toast;
 
+import com.example.naziur.androidchat.activities.ChatActivity;
 import com.example.naziur.androidchat.models.Contact;
 
 import java.io.File;
@@ -78,6 +79,14 @@ public class Network {
             }
         }
         return false;
+    }
+
+    public static boolean isInForegroundAndInChatScreen(Context context){
+        if(isForeground(context)) {
+            System.out.println(context.getClass().getSimpleName() + " is being compared to " + ChatActivity.class.getSimpleName());
+            return context.getClass().getSimpleName().equals(ChatActivity.class.getSimpleName());
+        } else
+            return false;
     }
 
 

@@ -27,6 +27,7 @@ import com.example.naziur.androidchat.models.Chat;
 import com.example.naziur.androidchat.models.FirebaseMessageModel;
 import com.example.naziur.androidchat.models.FirebaseUserModel;
 import com.example.naziur.androidchat.models.User;
+import com.example.naziur.androidchat.utils.Constants;
 import com.example.naziur.androidchat.utils.Network;
 import com.example.naziur.androidchat.utils.ProgressDialog;
 import com.google.firebase.database.DataSnapshot;
@@ -190,7 +191,10 @@ public class SingleSessionFragment extends Fragment {
                                     if(allChats.get(i).getUsernameOfTheOneBeingSpokenTo().equals(chat.getUsernameOfTheOneBeingSpokenTo()))
                                         allChats.remove(i);
                                 }
-                                allChats.add(0, chat);
+                                if(chat.getIsSeen() == Constants.MESSAGE_SENT)
+                                    allChats.add(0, chat);
+                                else
+                                    allChats.add(chat);
                             }
                             myChatsdapter.setAllMyChats(allChats);
                             myChatsdapter.notifyDataSetChanged();
