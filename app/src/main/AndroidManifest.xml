@@ -76,7 +76,8 @@
             android:resource="@color/colorPrimaryDark" />
 
         <activity android:name=".activities.GroupCreatorActivity" />
-        <activity android:name=".activities.GroupChatActivity"></activity>
+        <activity android:name=".activities.GroupChatActivity" />
+        <activity android:name=".activities.NotificationTryActivity"></activity>
     </application>
 
 </manifest>

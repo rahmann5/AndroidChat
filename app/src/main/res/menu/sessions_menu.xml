@@ -2,6 +2,8 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
+
+
     <item android:id="@+id/my_contacts"
         android:title="Contacts" />
 
@@ -12,9 +14,16 @@
         android:title="Settings" />
 
     <item
+        android:id="@+id/action_notification"
+        android:orderInCategory="200"
+        android:title="notification"
+        app:showAsAction="always"
+        android:icon="@drawable/ic_action_notification"/>
+
+    <item
         android:id="@+id/action_group"
         android:orderInCategory="200"
         android:title="create group"
-        app:showAsAction="ifRoom"
+        app:showAsAction="always"
         android:icon="@drawable/ic_friend"/>
 </menu>

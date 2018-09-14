@@ -100,6 +100,8 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
     DatabaseReference messagesRef;
     DatabaseReference usersRef;
 
+    private ValueEventListener commentValueEventListener;
+
     private ProgressDialog progressBar;
 
     private ActionBar actionBar;
@@ -177,7 +179,7 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
         progressBar = new ProgressDialog(this, R.layout.progress_dialog, true);
         progressBar.toggleDialog(true);
 
-        final ValueEventListener commentValueEventListener = new ValueEventListener() {
+        commentValueEventListener = new ValueEventListener() {
 
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -236,14 +238,16 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
                         if (!me.getChatKeys().equals("") && !friend.getChatKeys().equals("")) { // both with keys but maybe not same keys
                             String[] allMyKeys  = me.getChatKeys().split(",");
                             List<String> allFriendKeys  = Arrays.asList(friend.getChatKeys().split(","));
+                            boolean found = false;
                             for(String key : allMyKeys) {
                                 if (allFriendKeys.contains(key)) { // both make existing keys
-                                    messagesRef = database.getReference("messages")
-                                            .child("single")
-                                            .child(key);
-                                    chatKey = key;
+                                    found = true;
+                                    assignMessageEventListener(key);
                                     break;
                                 }
+                            }
+                            if (!found) {
+                                verifyUserChatKeys(friend, me);
                             }
 
                         } else if (me.getChatKeys().equals("") && !friend.getChatKeys().equals("")) { // me without key but friend with key but not sure same key
@@ -256,15 +260,8 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
                             createMessageRefWithNewKey ();
                         }
 
-                        if (messagesRef == null) {
-                            createMessageRefWithNewKey ();
-                        }
-
-                        //Value event listener for realtime data update
-                        messagesRef.addValueEventListener(commentValueEventListener);
-
                     } else {
-                        System.out.println("ME is null");
+                        Log.i(TAG, "ME IS NULL");
                         finish();
                     }
 
@@ -361,6 +358,16 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
 
     }
 
+    private void assignMessageEventListener (String key) {
+        messagesRef = database.getReference("messages")
+                .child("single")
+                .child(key);
+        chatKey = key;
+        //Value event listener for realtime data update
+        messagesRef.addValueEventListener(commentValueEventListener);
+    }
+
+
     private AsyncHttpClient createAsyncClient () {
 
         AsyncHttpClient client = new AsyncHttpClient();
@@ -448,10 +455,7 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
 
     private void createMessageRefWithNewKey () {
         String key = makeChatKey(me, friend);
-        messagesRef = database.getReference("messages")
-                .child("single")
-                .child(key);
-        chatKey = key;
+        assignMessageEventListener(key);
     }
 
     private void loadLocalData (String errorMsg) {
@@ -485,11 +489,7 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
             String username1 = key.split("-")[0];
             String username2 = key.split("-")[1];
             if (username1.equals(withoutKeys.getUsername()) || username2.equals(withoutKeys.getUsername())) {
-                String keyFinal = addChatKey(withoutKeys, key);
-                messagesRef = database.getReference("messages")
-                        .child("single")
-                        .child(keyFinal);
-                chatKey = keyFinal;
+                assignMessageEventListener(addChatKey(withoutKeys, key));
                 break;
             }
         }

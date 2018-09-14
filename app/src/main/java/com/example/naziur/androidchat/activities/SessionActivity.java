@@ -100,6 +100,9 @@ public class SessionActivity extends AppCompatActivity implements NetworkChangeR
             case R.id.settings:
                 Toast.makeText(this, "Settings", Toast.LENGTH_SHORT).show();
                 return true;
+            case R.id.action_notification:
+                startActivity(new Intent(SessionActivity.this, NotificationTryActivity.class));
+                return true;
             case R.id.action_group:
                 startActivity(new Intent(SessionActivity.this, GroupCreatorActivity.class));
                 return true;
