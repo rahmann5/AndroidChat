@@ -38,6 +38,7 @@ public class ImageViewDialogFragment extends DialogFragment {
 
     public static ImageViewDialogFragment newInstance (File f, String a, int icon) {
         imageFile = f;
+        imageFileString = null;
         action = a;
         actionIcon = icon;
         return new ImageViewDialogFragment();
@@ -45,6 +46,7 @@ public class ImageViewDialogFragment extends DialogFragment {
 
     public static ImageViewDialogFragment newInstance (String f, String a, int icon) {
         imageFileString = f;
+        imageFile = null;
         action = a;
         actionIcon = icon;
         return new ImageViewDialogFragment();

@@ -16,6 +16,7 @@ public class FirebaseUserModel {
     String profilePic = "";
     String status = "";
     String chatKeys = "";
+    String groupKeys = "";
 
     public FirebaseUserModel() {
       /*Blank default constructor essential for Firebase*/
@@ -35,6 +36,14 @@ public class FirebaseUserModel {
 
     public void setChatKeys(String chatKeys) {
         this.chatKeys = chatKeys;
+    }
+
+    public String getGroupChatKeys() {
+        return groupKeys;
+    }
+
+    public void setGroupChatKeys(String groupKeys) {
+        this.groupKeys = groupKeys;
     }
 
     public String getDeviceId() {

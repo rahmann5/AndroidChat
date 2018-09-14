@@ -75,7 +75,8 @@
             android:name="com.google.firebase.messaging.default_notification_color"
             android:resource="@color/colorPrimaryDark" />
 
-        <activity android:name=".activities.GroupCreatorActivity"/>
+        <activity android:name=".activities.GroupCreatorActivity" />
+        <activity android:name=".activities.GroupChatActivity"></activity>
     </application>
 
 </manifest>

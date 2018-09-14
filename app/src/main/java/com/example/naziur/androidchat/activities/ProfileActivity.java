@@ -148,7 +148,7 @@ public class ProfileActivity extends AppCompatActivity {
         saveButton = (AppCompatButton) findViewById(R.id.save_profile_btn);
 
         showContacts();
-        //showGroups(); do inside showContacts for before hiding progress dialog
+        showGroups(); //do inside showContacts for before hiding progress dialog
 
         editToggle.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -177,7 +177,6 @@ public class ProfileActivity extends AppCompatActivity {
     }
 
     private void showGroups() {
-        ArrayAdapter<String> adapterGroup = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, new ArrayList<String>());
         emptyGroupsList = (TextView) findViewById(R.id.no_groups);
         myGroups = (RecyclerView) findViewById(R.id.profile_groups_list);
         emptyGroupsList.setVisibility(View.VISIBLE);
@@ -188,20 +187,13 @@ public class ProfileActivity extends AppCompatActivity {
     private void showContacts() {
         progressBar.toggleDialog(true);
         //ArrayAdapter<String> adapterContacts = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, new ArrayList<String>());
-        final List<Contact> allContacts = updateContacts ();
         emptyContactsList = (TextView) findViewById(R.id.no_contacts);
+        final List<Contact> allContacts = updateContacts ();
         myContacts = (RecyclerView) findViewById(R.id.profile_contacts_list);
         MyContactsAdapter contactsAdapter = new MyContactsAdapter(ProfileActivity.this, allContacts , null);
         LinearLayoutManager l = new LinearLayoutManager(ProfileActivity.this);
         myContacts.setLayoutManager(l);
         myContacts.setAdapter(contactsAdapter);
-
-
-        if (allContacts.isEmpty()) {
-            emptyContactsList.setVisibility(View.VISIBLE);
-        } else {
-            emptyContactsList.setVisibility(View.GONE);
-        }
 
     }
 
@@ -226,6 +218,9 @@ public class ProfileActivity extends AppCompatActivity {
                                                 Log.i(TAG, "Failed to update local data for : " + firebaseUserModel.getUsername());
                                             }
                                             allContacts.add(new Contact(firebaseUserModel));
+                                            if (emptyContactsList.getVisibility() != View.GONE) {
+                                                emptyContactsList.setVisibility(View.GONE);
+                                            }
                                         }
 
                                     }
@@ -242,6 +237,7 @@ public class ProfileActivity extends AppCompatActivity {
                     firebaseUserModel.setProfileName(c.getString(c.getColumnIndex(MyContactsContract.MyContactsContractEntry.COLUMN_PROFILE)));
                     firebaseUserModel.setProfilePic(c.getString(c.getColumnIndex(MyContactsContract.MyContactsContractEntry.COLUMN_PROFILE_PIC)));
                     allContacts.add(new Contact(firebaseUserModel));
+                    emptyContactsList.setVisibility(View.GONE);
                 }
             }
 

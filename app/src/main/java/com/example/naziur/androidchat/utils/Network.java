@@ -81,10 +81,16 @@ public class Network {
     }
 
 
-    private static void downloadImageToPhone (Context context) {
-        String DIR_NAME = "Android_Chat";
-        String filename = "filename.jpg";
-        String downloadUrlOfImage = "YOUR_LINK_THAT_POINTS_IMG_ON_WEBSITE";
+    public static void downloadImageToPhone (Context context, String downloadUrlOfImage) {
+        String DIR_NAME = "Android Chat";
+        String filename = "img_"+System.currentTimeMillis()+".jpg";
+        
+        //external storage availability check
+        if (!Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState())) {
+            Toast.makeText(context, "External Storage not mounted", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         File direct =
                 new File(Environment
                         .getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
@@ -93,7 +99,7 @@ public class Network {
 
         if (!direct.exists()) {
             direct.mkdir();
-            Log.d(LOG_TAG, "dir created for first time");
+            Log.i(LOG_TAG, "dir created for first time");
         }
 
         DownloadManager dm = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
