@@ -77,7 +77,7 @@
 
         <activity android:name=".activities.GroupCreatorActivity" />
         <activity android:name=".activities.GroupChatActivity" />
-        <activity android:name=".activities.NotificationTryActivity"></activity>
+        <activity android:name=".activities.NotificationActivity"></activity>
     </application>
 
 </manifest>

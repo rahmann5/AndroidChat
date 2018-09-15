@@ -18,9 +18,15 @@ import com.example.naziur.androidchat.R;
 import com.example.naziur.androidchat.adapter.SessionFragmentPagerAdapter;
 import com.example.naziur.androidchat.fragment.GroupSessionFragment;
 import com.example.naziur.androidchat.fragment.SingleSessionFragment;
+import com.example.naziur.androidchat.models.User;
 import com.example.naziur.androidchat.utils.NetworkChangeReceiver;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 public class SessionActivity extends AppCompatActivity implements NetworkChangeReceiver.OnNetworkStateChangeListener {
+    private User user = User.getInstance();
     private NetworkChangeReceiver networkChangeReceiver;
     ViewPager viewPager;
     private Menu menu;
@@ -82,8 +88,25 @@ public class SessionActivity extends AppCompatActivity implements NetworkChangeR
         this.menu = menu;
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.sessions_menu, menu);
-        MenuItem item = menu.findItem(R.id.action_group);
-        item.setVisible(false);
+        MenuItem groupItem = menu.findItem(R.id.action_group);
+        final MenuItem notificationItem = menu.findItem(R.id.action_notification);
+        groupItem.setVisible(false);
+
+        // could be improved with non-single event value listener in the case of receiving first notification
+        FirebaseDatabase.getInstance().getReference("Notification").child(user.name).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if (dataSnapshot.exists()) {
+                    notificationItem.setIcon(R.drawable.ic_action_alert_notification);
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                // log silent error
+            }
+        });
+
         return true;
     }
 
@@ -101,7 +124,7 @@ public class SessionActivity extends AppCompatActivity implements NetworkChangeR
                 Toast.makeText(this, "Settings", Toast.LENGTH_SHORT).show();
                 return true;
             case R.id.action_notification:
-                startActivity(new Intent(SessionActivity.this, NotificationTryActivity.class));
+                startActivity(new Intent(SessionActivity.this, NotificationActivity.class));
                 return true;
             case R.id.action_group:
                 startActivity(new Intent(SessionActivity.this, GroupCreatorActivity.class));
