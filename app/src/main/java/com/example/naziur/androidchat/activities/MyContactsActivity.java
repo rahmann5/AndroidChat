@@ -256,4 +256,5 @@ public class MyContactsActivity extends AppCompatActivity implements AddContactD
                 break;
         }
     }
+
 }

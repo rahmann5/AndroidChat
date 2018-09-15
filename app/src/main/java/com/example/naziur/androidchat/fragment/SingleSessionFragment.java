@@ -34,7 +34,9 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.MutableData;
 import com.google.firebase.database.Query;
+import com.google.firebase.database.Transaction;
 import com.google.firebase.database.ValueEventListener;
 
 import java.text.SimpleDateFormat;
@@ -247,8 +249,6 @@ public class SingleSessionFragment extends Fragment {
         recyclerView.setLayoutManager(mLayoutManager);
         recyclerView.setAdapter(myChatsdapter);
 
-
-
     }
 
     private AlertDialog createDialog (final Chat chat, final int position) {
@@ -288,25 +288,31 @@ public class SingleSessionFragment extends Fragment {
     private void deleteChat(Chat chat){
         allChatKeys.remove(chat.getChatKey());
         final String updatedKeys = getChatKeysAsString();
-        Query pendingTasks = usersRef.orderByChild("username").equalTo(user.name);
-        pendingTasks.addListenerForSingleValueEvent(new ValueEventListener() {
+        DatabaseReference pendingTasks = usersRef.orderByChild("username").equalTo(user.name).getRef();
+        pendingTasks.runTransaction(new Transaction.Handler() {
             @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                for (DataSnapshot snapshot: dataSnapshot.getChildren()) {
-                    if(updatedKeys.equals(""))
-                        snapshot.getRef().child("chatKeys").removeValue();
-                    else
-                        snapshot.getRef().child("chatKeys").setValue(updatedKeys);
+            public Transaction.Result doTransaction(MutableData mutableData) {
+                for(MutableData data : mutableData.getChildren()){
+                    FirebaseUserModel firebaseUserModel = data.getValue(FirebaseUserModel.class);
+                    if(firebaseUserModel == null)
+                        return Transaction.success(mutableData);
 
+                    if(firebaseUserModel.getUsername().equals(user.name)){
+                        firebaseUserModel.setChatKeys(updatedKeys);
+                        data.setValue(firebaseUserModel);
+                    }
 
                 }
+
+                return Transaction.success(mutableData);
             }
 
             @Override
-            public void onCancelled(DatabaseError databaseError) {
-                Toast.makeText(getActivity(), "Failed to delete chat try again later.", Toast.LENGTH_SHORT).show();
-                Log.i(TAG, databaseError.getMessage());
+            public void onComplete(DatabaseError databaseError, boolean b, DataSnapshot dataSnapshot) {
+                if(databaseError != null)
+                    Log.i(TAG, "Transaction:onComplete:" + databaseError);
             }
+
         });
     }
 
