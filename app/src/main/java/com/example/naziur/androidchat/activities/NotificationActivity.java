@@ -45,6 +45,7 @@ public class NotificationActivity extends AppCompatActivity implements Notificat
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_notification);
+        setTitle("Notifications");
         notificationRef = FirebaseDatabase.getInstance().getReference("notifications").child(user.name);
         LinearLayoutManager mLayoutManager = new LinearLayoutManager(this);
 
