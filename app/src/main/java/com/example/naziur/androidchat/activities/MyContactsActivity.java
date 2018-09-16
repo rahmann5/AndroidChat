@@ -363,12 +363,43 @@ public class MyContactsActivity extends AppCompatActivity implements AddContactD
                     if (invite) {
                         createNotification(c, chatKey);
                     } else {
-                        progressBar.toggleDialog(false);
-                        startChatActivity(chatKey);
+                        removeMyPendingNotifications(c, chatKey);
                     }
                 } else {
                     progressBar.toggleDialog(false);
                     Toast.makeText(MyContactsActivity.this, "Error has occurred creating connection", Toast.LENGTH_LONG).show();
+                    Log.i(TAG, databaseError.getMessage());
+                }
+            }
+        });
+    }
+
+    private void removeMyPendingNotifications(final Contact contact, final String chatKey) {
+        DatabaseReference notificationRef = FirebaseDatabase.getInstance().getReference("notifications").child(user.name);
+        notificationRef.orderByChild("sender").equalTo(contact.getContact().getUsername()).getRef().runTransaction(new Transaction.Handler() {
+            @Override
+            public Transaction.Result doTransaction(MutableData mutableData) {
+                for (MutableData data : mutableData.getChildren()) {
+                    Notification notification = data.getValue(Notification.class);
+                    if (notification == null) return Transaction.success(mutableData);
+
+                    if (contact.getContact().getUsername().equals(notification.getSender())) {
+                        notification = null;
+                    }
+
+                    data.setValue(notification);
+                }
+
+                 return Transaction.success(mutableData);
+            }
+
+            @Override
+            public void onComplete(DatabaseError databaseError, boolean b, DataSnapshot dataSnapshot) {
+                progressBar.toggleDialog(false);
+                if (databaseError == null) {
+                    startChatActivity(chatKey);
+                } else {
+                    Toast.makeText(MyContactsActivity.this, "Failed to remove pending invite notification", Toast.LENGTH_LONG).show();
                     Log.i(TAG, databaseError.getMessage());
                 }
             }

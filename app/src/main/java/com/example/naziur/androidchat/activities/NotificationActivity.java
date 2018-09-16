@@ -16,6 +16,7 @@ import android.widget.Toast;
 
 import com.example.naziur.androidchat.R;
 import com.example.naziur.androidchat.adapter.NotificationAdapter;
+import com.example.naziur.androidchat.models.FirebaseUserModel;
 import com.example.naziur.androidchat.models.Notification;
 import com.example.naziur.androidchat.models.User;
 import com.example.naziur.androidchat.utils.Network;
@@ -23,6 +24,8 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.MutableData;
+import com.google.firebase.database.Transaction;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
@@ -131,9 +134,75 @@ public class NotificationActivity extends AppCompatActivity implements Notificat
     @Override
     public void onButtonClicked(Notification notification, int pos, boolean accept) {
         if (accept) {
-            System.out.println("ACCEPT");
+            acceptInvite (notification);
         } else {
-            System.out.println("REJECT");
+            rejectInvite (notification);
         }
+    }
+
+    private void acceptInvite (final Notification gNotification) {
+        DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users");
+        userRef.orderByChild("username").equalTo(user.name).getRef().runTransaction(new Transaction.Handler() {
+            @Override
+            public Transaction.Result doTransaction(MutableData mutableData) {
+                for (MutableData data : mutableData.getChildren()) {
+                    FirebaseUserModel userModel = data.getValue(FirebaseUserModel.class);
+                    if (userModel == null) return Transaction.success(mutableData);
+
+                    String currentKeys = userModel.getChatKeys();
+                    if (currentKeys.equals("")) {
+                        currentKeys = gNotification.getChatKey();
+                    } else {
+                        currentKeys = currentKeys + "," + gNotification.getChatKey();
+                    }
+
+                    userModel.setChatKeys(currentKeys);
+                    data.setValue(userModel);
+
+                }
+
+                return Transaction.success(mutableData);
+            }
+
+            @Override
+            public void onComplete(DatabaseError databaseError, boolean b, DataSnapshot dataSnapshot) {
+                if (databaseError == null) {
+                    rejectInvite(gNotification);
+                } else {
+                    Toast.makeText(NotificationActivity.this, "Failed to remove pending invite notification", Toast.LENGTH_LONG).show();
+                    Log.i(TAG, databaseError.getMessage());
+                }
+            }
+        });
+    }
+
+    private void rejectInvite (final Notification gNotification) {
+        DatabaseReference notificationRef = FirebaseDatabase.getInstance().getReference("notifications").child(user.name);
+        notificationRef.orderByChild("sender").equalTo(gNotification.getSender()).getRef().runTransaction(new Transaction.Handler() {
+            @Override
+            public Transaction.Result doTransaction(MutableData mutableData) {
+                for (MutableData data : mutableData.getChildren()) {
+                    Notification notification = data.getValue(Notification.class);
+                    if (notification == null) return Transaction.success(mutableData);
+
+                    if (gNotification.getSender().equals(notification.getSender())) {
+                        notification = null;
+                    }
+
+                    data.setValue(notification);
+                }
+
+                return Transaction.success(mutableData);
+            }
+
+            @Override
+            public void onComplete(DatabaseError databaseError, boolean b, DataSnapshot dataSnapshot) {
+
+                if (databaseError != null) {
+                    Toast.makeText(NotificationActivity.this, "Failed to remove pending invite notification", Toast.LENGTH_LONG).show();
+                    Log.i(TAG, databaseError.getMessage());
+                }
+            }
+        });
     }
 }
