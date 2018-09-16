@@ -9,7 +9,10 @@ public class Notification {
     private String sender;
     private String chatKey;
 
-    public Notification () {}
+    public Notification(String sender, String chatKey) {
+        this.sender = sender;
+        this.chatKey = chatKey;
+    }
 
     public String getSender() {
         return sender;

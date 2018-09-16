@@ -40,6 +40,7 @@ import com.example.naziur.androidchat.models.Chat;
 import com.example.naziur.androidchat.models.FirebaseMessageModel;
 import com.example.naziur.androidchat.models.FirebaseUserModel;
 import com.example.naziur.androidchat.models.MessageCell;
+import com.example.naziur.androidchat.models.Notification;
 import com.example.naziur.androidchat.models.User;
 import com.example.naziur.androidchat.utils.Constants;
 import com.example.naziur.androidchat.fragment.ErrorDialogFragment;
@@ -100,7 +101,7 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
 
     FirebaseDatabase database;
     DatabaseReference messagesRef;
-    DatabaseReference usersRef;
+    DatabaseReference usersRef, notificationRef;
 
     private ValueEventListener commentValueEventListener;
 
@@ -126,12 +127,14 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
         createCustomActionBar();
         database = FirebaseDatabase.getInstance();
         usersRef = database.getReference("users");
+        notificationRef = database.getReference("notifications").child(friend.getUsername());
 
         listView = (ListView) findViewById(R.id.chattingList);
 
         textComment = (EditText) findViewById(R.id.comment_text);
         btnSend = (CircleImageView) findViewById(R.id.send_button);
         btnMedia = (CircleImageView) findViewById(R.id.media_button);
+        final CircleImageView btnInvite = (CircleImageView) findViewById(R.id.send_invite_button);
         sendBottom = (FloatingActionButton) findViewById(R.id.action_send_bottom);
 
         sendBottom.setOnClickListener(new View.OnClickListener() {
@@ -239,11 +242,14 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
                     if (me != null) {
                         String myKey = findChatKey(me, friend);
                         String friendKey = findChatKey(friend, me);
-
+                        btnInvite.setVisibility(View.GONE);
+                        btnSend.setVisibility(View.VISIBLE);
                         if (myKey.equals(friendKey)) {
                             assignMessageEventListener(myKey);
                         } else if (friendKey.equals("")) {
                             // change send button to be able to send notification instead
+                            btnInvite.setVisibility(View.VISIBLE);
+                            btnSend.setVisibility(View.GONE);
                         }
 
                     } else {
@@ -263,6 +269,46 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
         } else {
             loadLocalData("Please connect to the internet.");
         }
+        final String myChatKey = findChatKey(me, friend);
+        btnInvite.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (!Network.isInternetAvailable(ChatActivity.this, true)) {
+                    return;
+                } else {
+                    btnInvite.setEnabled(false);
+                    notificationRef.orderByChild("chatKey").equalTo(myChatKey).addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(DataSnapshot dataSnapshot) {
+                            if (!dataSnapshot.exists()) {
+                                DatabaseReference newRef = notificationRef.push();
+                                newRef.setValue(new Notification(me.getUsername(), myChatKey)).addOnSuccessListener(new OnSuccessListener<Void>() {
+                                    @Override
+                                    public void onSuccess(Void aVoid) {
+                                        Log.i(TAG, "Successfully added notification to server");
+                                        startActivity(new Intent(ChatActivity.this, SessionActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
+                                        finish();
+                                        btnInvite.setEnabled(true);
+                                    }
+                                }).addOnFailureListener(new OnFailureListener() {
+                                    @Override
+                                    public void onFailure(@NonNull Exception e) {
+                                        btnInvite.setEnabled(true);
+                                        Log.i(TAG, "Failed to add notification to server one may already exist");
+                                    }
+                                });
+                            }
+                        }
+
+                        @Override
+                        public void onCancelled(DatabaseError databaseError) {
+                            btnInvite.setEnabled(true);
+                            Log.i(TAG, "Error checking notification table in firebase server");
+                        }
+                    });
+                }
+            }
+        });
 
 
         btnMedia.setOnClickListener(new View.OnClickListener() {
@@ -286,62 +332,88 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
                     // send text as wish
                     progressBar.toggleDialog(true);
 
-                    DatabaseReference newRef = messagesRef.push();
-                    newRef.setValue(makeNewMessageNode(Constants.MESSAGE_TYPE_TEXT,wishMessage), new DatabaseReference.CompletionListener() {
+                    usersRef.orderByChild("username").equalTo(friend.getUsername()).addListenerForSingleValueEvent(new ValueEventListener() {
                         @Override
-                        public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
-
-                            if (databaseError != null) {
-                                // show message failed to send (icon)
-                                btnSend.setEnabled(true);
-                                progressBar.toggleDialog(false);
-                                Log.i(TAG, databaseError.getMessage());
-                            } else {
-                                textComment.setText("");
-
-                                if (friend != null) {
-
-                                    try {
-                                        StringEntity entity = generateEntity(Constants.MESSAGE_TYPE_TEXT, wishMessage);
-                                        if (entity == null){
-                                            Toast.makeText(ChatActivity.this, "Failed to make notification", Toast.LENGTH_SHORT).show();
-                                            return;
-                                        }
-
-                                        createAsyncClient().post(getApplicationContext(), url, entity, RequestParams.APPLICATION_JSON, new TextHttpResponseHandler() {
-                                            @Override
-                                            public void onFailure(int statusCode, cz.msebera.android.httpclient.Header[] headers, String responseString, Throwable throwable) {
-                                                btnSend.setEnabled(true);
-                                                progressBar.toggleDialog(false);
-                                                Log.i(TAG, responseString);
-                                            }
-
-                                            @Override
-                                            public void onSuccess(int statusCode, cz.msebera.android.httpclient.Header[] headers, String responseString) {
-                                                btnSend.setEnabled(true);
-                                                progressBar.toggleDialog(false);
-                                                Log.i(TAG, responseString);
-                                            }
-                                        });
-
-                                    } catch (Exception e) {
-                                        btnSend.setEnabled(true);
+                        public void onDataChange(DataSnapshot dataSnapshot) {
+                            if(dataSnapshot.exists()){
+                                for(DataSnapshot snapshot : dataSnapshot.getChildren()){
+                                    FirebaseUserModel firebaseUserModel = snapshot.getValue(FirebaseUserModel.class);
+                                    List<String> list = Arrays.asList(firebaseUserModel.getChatKeys().split(","));
+                                    if(list.contains(myChatKey))
+                                        sendMessage(wishMessage);
+                                    else {
+                                        Toast.makeText(getApplicationContext(), "Recipient may have deleted this chat, so message could not be sent", Toast.LENGTH_SHORT).show();
+                                        btnInvite.setVisibility(View.VISIBLE);
+                                        btnSend.setVisibility(View.GONE);
                                     }
-                                } else {
-                                    btnSend.setEnabled(true);
                                 }
-
                             }
                         }
-                    });
 
-                    messagesRef.removeEventListener(commentValueEventListener);
-                    messagesRef.addValueEventListener(commentValueEventListener);
+                        @Override
+                        public void onCancelled(DatabaseError databaseError) {
+                            Log.i(TAG, "Could not check if friend had chat key before sending message, sending is aborted");
+                        }
+                    });
 
                 }
             }
         });
 
+    }
+
+    private void sendMessage(final String wishMessage){
+        DatabaseReference newRef = messagesRef.push();
+        newRef.setValue(makeNewMessageNode(Constants.MESSAGE_TYPE_TEXT,wishMessage), new DatabaseReference.CompletionListener() {
+            @Override
+            public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
+
+                if (databaseError != null) {
+                    // show message failed to send (icon)
+                    btnSend.setEnabled(true);
+                    progressBar.toggleDialog(false);
+                    Log.i(TAG, databaseError.getMessage());
+                } else {
+                    textComment.setText("");
+
+                    if (friend != null) {
+
+                        try {
+                            StringEntity entity = generateEntity(Constants.MESSAGE_TYPE_TEXT, wishMessage);
+                            if (entity == null){
+                                Toast.makeText(ChatActivity.this, "Failed to make notification", Toast.LENGTH_SHORT).show();
+                                return;
+                            }
+
+                            createAsyncClient().post(getApplicationContext(), url, entity, RequestParams.APPLICATION_JSON, new TextHttpResponseHandler() {
+                                @Override
+                                public void onFailure(int statusCode, cz.msebera.android.httpclient.Header[] headers, String responseString, Throwable throwable) {
+                                    btnSend.setEnabled(true);
+                                    progressBar.toggleDialog(false);
+                                    Log.i(TAG, responseString);
+                                }
+
+                                @Override
+                                public void onSuccess(int statusCode, cz.msebera.android.httpclient.Header[] headers, String responseString) {
+                                    btnSend.setEnabled(true);
+                                    progressBar.toggleDialog(false);
+                                    Log.i(TAG, responseString);
+                                }
+                            });
+
+                        } catch (Exception e) {
+                            btnSend.setEnabled(true);
+                        }
+                    } else {
+                        btnSend.setEnabled(true);
+                    }
+
+                }
+            }
+        });
+
+        messagesRef.removeEventListener(commentValueEventListener);
+        messagesRef.addValueEventListener(commentValueEventListener);
     }
 
     private String findChatKey (FirebaseUserModel userModel, FirebaseUserModel withUser) {
