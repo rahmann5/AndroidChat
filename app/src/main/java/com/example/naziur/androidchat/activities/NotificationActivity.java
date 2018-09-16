@@ -200,6 +200,7 @@ public class NotificationActivity extends AppCompatActivity implements Notificat
                     }
 
                     data.setValue(notification);
+                    break;
                 }
 
                 return Transaction.success(mutableData);
