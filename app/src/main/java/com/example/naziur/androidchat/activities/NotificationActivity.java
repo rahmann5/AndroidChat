@@ -1,5 +1,6 @@
 package com.example.naziur.androidchat.activities;
 
+import android.content.Intent;
 import android.support.constraint.solver.widgets.Snapshot;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -49,6 +50,8 @@ public class NotificationActivity extends AppCompatActivity implements Notificat
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_notification);
         setTitle("Notifications");
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setDisplayShowHomeEnabled(true);
         notificationRef = FirebaseDatabase.getInstance().getReference("notifications").child(user.name);
         LinearLayoutManager mLayoutManager = new LinearLayoutManager(this);
 
@@ -115,6 +118,10 @@ public class NotificationActivity extends AppCompatActivity implements Notificat
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
+            case android.R.id.home :
+                finish();
+                break;
+
             case R.id.action_settings :
 
                 break;
@@ -136,7 +143,7 @@ public class NotificationActivity extends AppCompatActivity implements Notificat
         if (accept) {
             acceptInvite (notification);
         } else {
-            rejectInvite (notification);
+            rejectInvite (notification, false);
         }
     }
 
@@ -167,7 +174,7 @@ public class NotificationActivity extends AppCompatActivity implements Notificat
             @Override
             public void onComplete(DatabaseError databaseError, boolean b, DataSnapshot dataSnapshot) {
                 if (databaseError == null) {
-                    rejectInvite(gNotification);
+                    rejectInvite(gNotification, true);
                 } else {
                     Toast.makeText(NotificationActivity.this, "Failed to remove pending invite notification", Toast.LENGTH_LONG).show();
                     Log.i(TAG, databaseError.getMessage());
@@ -176,7 +183,7 @@ public class NotificationActivity extends AppCompatActivity implements Notificat
         });
     }
 
-    private void rejectInvite (final Notification gNotification) {
+    private void rejectInvite (final Notification gNotification, final boolean home) {
         DatabaseReference notificationRef = FirebaseDatabase.getInstance().getReference("notifications").child(user.name);
         notificationRef.orderByChild("sender").equalTo(gNotification.getSender()).getRef().runTransaction(new Transaction.Handler() {
             @Override
@@ -201,6 +208,12 @@ public class NotificationActivity extends AppCompatActivity implements Notificat
                 if (databaseError != null) {
                     Toast.makeText(NotificationActivity.this, "Failed to remove pending invite notification", Toast.LENGTH_LONG).show();
                     Log.i(TAG, databaseError.getMessage());
+                } else {
+                    if(home) {
+                        Intent i = new Intent(NotificationActivity.this, ChatActivity.class);
+                        i.putExtra("chatKey", gNotification.getChatKey());
+                        startActivity(i);
+                    }
                 }
             }
         });
