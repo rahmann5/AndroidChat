@@ -385,10 +385,10 @@ public class MyContactsActivity extends AppCompatActivity implements AddContactD
 
                     if (contact.getContact().getUsername().equals(notification.getSender())) {
                         notification = null;
-                        break;
                     }
 
                     data.setValue(notification);
+                    break;
                 }
 
                  return Transaction.success(mutableData);
