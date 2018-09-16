@@ -9,7 +9,9 @@ public class Notification {
     private String sender;
     private String chatKey;
 
-    public Notification () {}
+    public Notification() {
+
+    }
 
     public String getSender() {
         return sender;

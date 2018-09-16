@@ -73,6 +73,19 @@
             android:clickable="true"
             android:background="?selectableItemBackgroundBorderless"
             />
+
+        <de.hdodenhof.circleimageview.CircleImageView
+            android:layout_gravity="top"
+            android:id="@+id/send_invite_button"
+            android:layout_width="35dp"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_rotate_90_degrees_ccw"
+            android:layout_marginLeft="2dp"
+            android:layout_marginStart="2dp"
+            android:clickable="true"
+            android:background="?selectableItemBackgroundBorderless"
+            android:visibility="gone"
+            />
     </LinearLayout>
 
     <android.support.design.widget.FloatingActionButton
