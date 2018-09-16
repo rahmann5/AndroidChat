@@ -94,9 +94,8 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
     ListView listView;
 
     EditText textComment;
-    CircleImageView btnSend, btnMedia;
+    CircleImageView btnSend, btnMedia, btnInvite;
     FloatingActionButton sendBottom;
-
     List<FirebaseMessageModel> messages = new ArrayList<FirebaseMessageModel>();
 
     FirebaseDatabase database;
@@ -136,7 +135,7 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
         textComment = (EditText) findViewById(R.id.comment_text);
         btnSend = (CircleImageView) findViewById(R.id.send_button);
         btnMedia = (CircleImageView) findViewById(R.id.media_button);
-        final CircleImageView btnInvite = (CircleImageView) findViewById(R.id.send_invite_button);
+        btnInvite = (CircleImageView) findViewById(R.id.send_invite_button);
         sendBottom = (FloatingActionButton) findViewById(R.id.action_send_bottom);
 
         sendBottom.setOnClickListener(new View.OnClickListener() {
@@ -290,8 +289,9 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
                                     if(list.contains(chatKey)){
                                         btnInvite.setVisibility(View.GONE);
                                         btnSend.setVisibility(View.VISIBLE);
+                                        btnInvite.setEnabled(true);
                                     } else {
-                                        sendInviteNotification(btnInvite);
+                                        sendInviteNotification();
                                     }
                                 }
                             }
@@ -341,6 +341,7 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
                                     else {
                                         textComment.setText("");
                                         progressBar.toggleDialog(false);
+                                        btnInvite.setEnabled(true);
                                         Toast.makeText(getApplicationContext(), "Recipient may have deleted this chat, so message could not be sent", Toast.LENGTH_SHORT).show();
                                         btnInvite.setVisibility(View.VISIBLE);
                                         btnSend.setVisibility(View.GONE);
@@ -361,7 +362,7 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
 
     }
 
-    private void sendInviteNotification(final CircleImageView btnInvite){
+    private void sendInviteNotification(){
         notificationRef.orderByChild("chatKey").equalTo(chatKey).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -374,9 +375,9 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
                         @Override
                         public void onSuccess(Void aVoid) {
                             Log.i(TAG, "Successfully added notification to server");
+                            btnInvite.setEnabled(true);
                             startActivity(new Intent(ChatActivity.this, SessionActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
                             finish();
-                            btnInvite.setEnabled(true);
                         }
                     }).addOnFailureListener(new OnFailureListener() {
                         @Override
