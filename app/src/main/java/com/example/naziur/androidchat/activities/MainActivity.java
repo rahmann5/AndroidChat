@@ -96,9 +96,9 @@ public class MainActivity extends AppCompatActivity {
         Intent intent = null;
         Bundle extra = getIntent().getExtras();
         if (extra != null) {
-            if (extra.getString("sender") != null) {
+            if (extra.getString("chatKey") != null) {
                 intent = new Intent(this, ChatActivity.class);
-                intent.putExtra("username", extra.getString("sender"));
+                intent.putExtra("chatKey", extra.getString("chatKey"));
             } else if (extra.getString("notification") != null) {
                 intent = new Intent(this, NotificationActivity.class);
                 intent.putExtra("notification", extra.getString("notification"));
