@@ -93,7 +93,7 @@ public class SessionActivity extends AppCompatActivity implements NetworkChangeR
         groupItem.setVisible(false);
 
         // could be improved with non-single event value listener in the case of receiving first notification
-        FirebaseDatabase.getInstance().getReference("Notification").child(user.name).addListenerForSingleValueEvent(new ValueEventListener() {
+        FirebaseDatabase.getInstance().getReference("notifications").child(user.name).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if (dataSnapshot.exists()) {
