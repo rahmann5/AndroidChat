@@ -246,9 +246,8 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
                         String friendKey = findChatKey(friend, me);
                         btnInvite.setVisibility(View.GONE);
                         btnSend.setVisibility(View.VISIBLE);
-                        if (myKey.equals(friendKey)) {
-                            assignMessageEventListener(myKey);
-                        } else if (friendKey.equals("")) {
+                        assignMessageEventListener(chatKey);
+                        if (friendKey.equals("")) {
                             progressBar.toggleDialog(false);
                             // change send button to be able to send notification instead
                             btnInvite.setVisibility(View.VISIBLE);
@@ -340,6 +339,8 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
                                     if(list.contains(chatKey))
                                         sendMessage(wishMessage);
                                     else {
+                                        textComment.setText("");
+                                        progressBar.toggleDialog(false);
                                         Toast.makeText(getApplicationContext(), "Recipient may have deleted this chat, so message could not be sent", Toast.LENGTH_SHORT).show();
                                         btnInvite.setVisibility(View.VISIBLE);
                                         btnSend.setVisibility(View.GONE);

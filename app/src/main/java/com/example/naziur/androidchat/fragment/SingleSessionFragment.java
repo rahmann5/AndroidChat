@@ -229,8 +229,8 @@ public class SingleSessionFragment extends Fragment {
             @Override
             public void onItemClick(Chat chat, int pos) {
                 Intent chatActivity = new Intent(getActivity(), ChatActivity.class);
-                String username = chat.getUsernameOfTheOneBeingSpokenTo();
-                chatActivity.putExtra("username", username);
+                String chatKey = chat.getChatKey();
+                chatActivity.putExtra("chatKey", chatKey);
                 startActivity(chatActivity);
             }
 
