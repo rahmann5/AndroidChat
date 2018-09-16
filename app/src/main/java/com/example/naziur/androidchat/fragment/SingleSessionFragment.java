@@ -271,8 +271,8 @@ public class SingleSessionFragment extends Fragment {
 
                             case 1 : // chat with contact
                                 Intent chatActivity = new Intent(getActivity(), ChatActivity.class);
-                                String username = chat.getUsernameOfTheOneBeingSpokenTo();
-                                chatActivity.putExtra("username", username);
+                                String chatKey = chat.getChatKey();
+                                chatActivity.putExtra("chatKey", chatKey);
                                 startActivity(chatActivity);
                                 break;
 

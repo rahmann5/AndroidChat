@@ -249,6 +249,7 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
                         if (myKey.equals(friendKey)) {
                             assignMessageEventListener(myKey);
                         } else if (friendKey.equals("")) {
+                            progressBar.toggleDialog(false);
                             // change send button to be able to send notification instead
                             btnInvite.setVisibility(View.VISIBLE);
                             btnSend.setVisibility(View.GONE);
@@ -256,6 +257,7 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
 
                     } else {
                         Log.i(TAG, "ME IS NULL");
+                        progressBar.toggleDialog(false);
                         finish();
                     }
 
@@ -436,92 +438,6 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
         return lChatKey ;
     }
 
-    private void setKeyUsingPostTransaction (final String key, FirebaseUserModel target) {
-        usersRef.orderByChild("username").equalTo(target.getUsername()).getRef().runTransaction(new Transaction.Handler() {
-            @Override
-            public Transaction.Result doTransaction(MutableData mutableData) {
-                FirebaseUserModel firebaseUserModel = mutableData.getValue(FirebaseUserModel.class);
-
-                if (firebaseUserModel == null) return Transaction.success(mutableData);
-
-                if (firebaseUserModel.getChatKeys().equals("")) {
-                    firebaseUserModel.setChatKeys(key);
-                } else {
-                    firebaseUserModel.setChatKeys(firebaseUserModel.getChatKeys() + "," + key);
-                }
-
-                mutableData.setValue(firebaseUserModel);
-
-                return Transaction.success(mutableData);
-            }
-
-            @Override
-            public void onComplete(DatabaseError databaseError, boolean b, DataSnapshot dataSnapshot) {
-
-            }
-        });
-
-    }
-
-    // HERE
-    private void verifyUserChatKeys (FirebaseUserModel withKeys, FirebaseUserModel withoutKeys) {
-        String[] allKeys  = withKeys.getChatKeys().split(",");
-        for(String key : allKeys) {
-            String username1 = key.split("-")[0];
-            String username2 = key.split("-")[1];
-            if (username1.equals(withoutKeys.getUsername()) || username2.equals(withoutKeys.getUsername())) {
-                assignMessageEventListener(addChatKey(withoutKeys, key));
-                break;
-            }
-        }
-    }
-
-
-    private String addChatKey (FirebaseUserModel user, String key) {
-        stringVerification(user, key);
-        return key;
-    }
-
-    private String makeChatKey (FirebaseUserModel sender, FirebaseUserModel receiver) {
-        String key = sender.getUsername() + "-" + receiver.getUsername();
-        stringVerification(sender, key);
-        stringVerification(receiver, key);
-        return key;
-    }
-
-    private void stringVerification(final FirebaseUserModel addKeyTo, final String key) {
-        try {
-            usersRef.orderByChild("username").equalTo(addKeyTo.getUsername()).addListenerForSingleValueEvent(new ValueEventListener() {
-                @Override
-                public void onDataChange(DataSnapshot dataSnapshot) {
-                    for (DataSnapshot snapshot: dataSnapshot.getChildren()) {
-                        if (addKeyTo.getChatKeys().equals("")) {
-                            snapshot.getRef().child("chatKeys").setValue(key);
-                        } else {
-                            snapshot.getRef().child("chatKeys").setValue(addKeyTo.getChatKeys() + "," + key);
-                        }
-                    }
-                }
-
-                @Override
-                public void onCancelled(DatabaseError databaseError) {
-                    Log.i(TAG, databaseError.getMessage());
-                }
-            });
-
-        } catch (Exception e) {
-            Log.i(TAG,"FAILED " + addKeyTo.getUsername());
-            e.printStackTrace();
-        }
-
-    }
-
-    private void createMessageRefWithNewKey () {
-        String key = makeChatKey(me, friend);
-        assignMessageEventListener(key);
-    }
-
-
     private void assignMessageEventListener (String key) {
         messagesRef = database.getReference("messages")
                 .child("single")
@@ -568,8 +484,6 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
         return  firebaseMessageModel;
     }
 
-
-
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -607,8 +521,6 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
 
         });
     }
-
-
 
     private void loadLocalData (String errorMsg) {
         progressBar.toggleDialog(false);
@@ -897,6 +809,5 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
             }
         });
     }
-
 
 }
