@@ -280,38 +280,30 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
                     return;
                 } else {
                     btnInvite.setEnabled(false);
-                    notificationRef.orderByChild("chatKey").equalTo(chatKey).addListenerForSingleValueEvent(new ValueEventListener() {
+
+                    usersRef.orderByChild("username").equalTo(friend.getUsername()).addListenerForSingleValueEvent(new ValueEventListener() {
                         @Override
                         public void onDataChange(DataSnapshot dataSnapshot) {
-                            if (!dataSnapshot.exists()) {
-                                DatabaseReference newRef = notificationRef.push();
-                                Notification notificationObj = new Notification();
-                                notificationObj.setSender(me.getUsername());
-                                notificationObj.setChatKey(chatKey);
-                                newRef.setValue(notificationObj).addOnSuccessListener(new OnSuccessListener<Void>() {
-                                    @Override
-                                    public void onSuccess(Void aVoid) {
-                                        Log.i(TAG, "Successfully added notification to server");
-                                        startActivity(new Intent(ChatActivity.this, SessionActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
-                                        finish();
-                                        btnInvite.setEnabled(true);
+                            if(dataSnapshot.exists()){
+                                for(DataSnapshot snapshot : dataSnapshot.getChildren()){
+                                    FirebaseUserModel firebaseUserModel = snapshot.getValue(FirebaseUserModel.class);
+                                    List<String> list = Arrays.asList(firebaseUserModel.getChatKeys().split(","));
+                                    if(list.contains(chatKey)){
+                                        btnInvite.setVisibility(View.GONE);
+                                        btnSend.setVisibility(View.VISIBLE);
+                                    } else {
+                                        sendInviteNotification(btnInvite);
                                     }
-                                }).addOnFailureListener(new OnFailureListener() {
-                                    @Override
-                                    public void onFailure(@NonNull Exception e) {
-                                        btnInvite.setEnabled(true);
-                                        Log.i(TAG, "Failed to add notification to server one may already exist");
-                                    }
-                                });
+                                }
                             }
                         }
 
                         @Override
                         public void onCancelled(DatabaseError databaseError) {
-                            btnInvite.setEnabled(true);
-                            Log.i(TAG, "Error checking notification table in firebase server");
+                            Log.i(TAG, "Could not check if friend had chat key before sending message, sending is aborted");
                         }
                     });
+
                 }
             }
         });
@@ -366,6 +358,41 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
             }
         });
 
+    }
+
+    private void sendInviteNotification(final CircleImageView btnInvite){
+        notificationRef.orderByChild("chatKey").equalTo(chatKey).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if (!dataSnapshot.exists()) {
+                    DatabaseReference newRef = notificationRef.push();
+                    Notification notificationObj = new Notification();
+                    notificationObj.setSender(me.getUsername());
+                    notificationObj.setChatKey(chatKey);
+                    newRef.setValue(notificationObj).addOnSuccessListener(new OnSuccessListener<Void>() {
+                        @Override
+                        public void onSuccess(Void aVoid) {
+                            Log.i(TAG, "Successfully added notification to server");
+                            startActivity(new Intent(ChatActivity.this, SessionActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
+                            finish();
+                            btnInvite.setEnabled(true);
+                        }
+                    }).addOnFailureListener(new OnFailureListener() {
+                        @Override
+                        public void onFailure(@NonNull Exception e) {
+                            btnInvite.setEnabled(true);
+                            Log.i(TAG, "Failed to add notification to server one may already exist");
+                        }
+                    });
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                btnInvite.setEnabled(true);
+                Log.i(TAG, "Error checking notification table in firebase server");
+            }
+        });
     }
 
     private void sendMessage(final String wishMessage){
