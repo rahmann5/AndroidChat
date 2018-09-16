@@ -93,12 +93,18 @@ public class MainActivity extends AppCompatActivity {
 
     public void moveToSessionScreen() {
         //Intent intent = new Intent(this, ChatActivity.class);
-        Intent intent;
+        Intent intent = null;
         Bundle extra = getIntent().getExtras();
-        if (extra != null && extra.getString("sender") != null) {
-            intent = new Intent(this, ChatActivity.class);
-            intent.putExtra("username", extra.getString("sender"));
-        } else {
+        if (extra != null) {
+            if (extra.getString("sender") != null) {
+                intent = new Intent(this, ChatActivity.class);
+                intent.putExtra("username", extra.getString("sender"));
+            } else if (extra.getString("notification") != null) {
+                intent = new Intent(this, NotificationActivity.class);
+                intent.putExtra("notification", extra.getString("notification"));
+            }
+        }
+        if (intent == null) {
             intent = new Intent(this, SessionActivity.class);
             System.out.println("No Extra");
         }

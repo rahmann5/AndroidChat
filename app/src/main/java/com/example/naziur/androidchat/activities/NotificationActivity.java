@@ -111,18 +111,14 @@ public class NotificationActivity extends AppCompatActivity implements Notificat
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            case R.id.action_fake :
-                createFakeNotification ();
+            case R.id.action_settings :
+
                 break;
 
         }
         return super.onOptionsItemSelected(item);
     }
 
-    private void createFakeNotification () {
-
-        //notificationRef.setValue()
-    }
 
     @Override
     protected void onDestroy() {

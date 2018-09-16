@@ -10,6 +10,8 @@ import com.example.naziur.androidchat.R;
 
 public class Constants {
 
+    public static final String NOTIFICATION_URL = "https://fcm.googleapis.com/fcm/send";
+
     public static final int MESSAGE_SENT = 0;
     public static final int MESSAGE_RECEIVED = 1;
     public static final int MESSAGE_ERROR = 2;

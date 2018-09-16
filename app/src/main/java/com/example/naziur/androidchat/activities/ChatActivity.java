@@ -89,7 +89,7 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
     private static final String TAG = "ChatActivity";
     private static final int REQUEST_CODE_GALLERY_CAMERA = 0;
     User user = User.getInstance();
-    private String url = "https://fcm.googleapis.com/fcm/send";
+
     ListView listView;
 
     EditText textComment;
@@ -308,7 +308,7 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
                                             return;
                                         }
 
-                                        createAsyncClient().post(getApplicationContext(), url, entity, RequestParams.APPLICATION_JSON, new TextHttpResponseHandler() {
+                                        Network.createAsyncClient().post(getApplicationContext(), Constants.NOTIFICATION_URL , entity, RequestParams.APPLICATION_JSON, new TextHttpResponseHandler() {
                                             @Override
                                             public void onFailure(int statusCode, cz.msebera.android.httpclient.Header[] headers, String responseString, Throwable throwable) {
                                                 btnSend.setEnabled(true);
@@ -456,15 +456,7 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
     }
 
 
-    private AsyncHttpClient createAsyncClient () {
 
-        AsyncHttpClient client = new AsyncHttpClient();
-
-        //client.addHeader(HttpHeaders.AUTHORIZATION, "key=AIzaSyCl-lEfl7Rx9ZcDEyXX4sSpXhJYMS6PHfk");
-        client.addHeader(HttpHeaders.AUTHORIZATION, "key=AAAAQmgvFoU:APA91bF8shJboV6QDRVUvy-8ZKhZ6c1eri8a6zlkSPLDosvPZ-MegfsPEOGeKUhoxmtMq3d11bzeOEWWIupjCuKW3rgbwmqZ8LqumrK_ldWYT_ipDExdy4J2OWnhYwvb9Y6pIx8vOWD8");
-        client.addHeader(HttpHeaders.CONTENT_TYPE, RequestParams.APPLICATION_JSON);
-        return client;
-    }
 
     private StringEntity generateEntity (String type, String wishMessage) {
         JSONObject params = new JSONObject();
@@ -747,7 +739,7 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
                                         Toast.makeText(ChatActivity.this, "Failed to make notification", Toast.LENGTH_SHORT).show();
                                         return;
                                     }
-                                    createAsyncClient().post(getApplicationContext(), url, entity, RequestParams.APPLICATION_JSON, new TextHttpResponseHandler() {
+                                    Network.createAsyncClient().post(getApplicationContext(), Constants.NOTIFICATION_URL, entity, RequestParams.APPLICATION_JSON, new TextHttpResponseHandler() {
                                         @Override
                                         public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
                                             ChatActivity.this.progressBar.toggleDialog(false);

@@ -70,7 +70,7 @@ public class NotificationAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         }
 
         void bind(final Notification notification, final int position, final OnItemClickListener listener, Context context) {
-            notificationMsg.setText(notification.getSender() + " would like to invite you to a chat.");
+            notificationMsg.setText(notification.getSender() + ": " + context.getResources().getString(R.string.invitation_message));
 
             accept.setOnClickListener(new View.OnClickListener() {
                 @Override

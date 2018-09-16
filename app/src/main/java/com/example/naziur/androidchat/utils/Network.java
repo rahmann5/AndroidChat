@@ -12,9 +12,13 @@ import android.widget.Toast;
 
 import com.example.naziur.androidchat.activities.ChatActivity;
 import com.example.naziur.androidchat.models.Contact;
+import com.loopj.android.http.AsyncHttpClient;
+import com.loopj.android.http.RequestParams;
 
 import java.io.File;
 import java.util.List;
+
+import cz.msebera.android.httpclient.HttpHeaders;
 
 /**
  * Created by Hamidur on 07/09/2018.
@@ -123,5 +127,15 @@ public class Network {
                         File.separator + DIR_NAME + File.separator + filename);
 
         dm.enqueue(request);
+    }
+
+    public static AsyncHttpClient createAsyncClient () {
+
+        AsyncHttpClient client = new AsyncHttpClient();
+
+        //client.addHeader(HttpHeaders.AUTHORIZATION, "key=AIzaSyCl-lEfl7Rx9ZcDEyXX4sSpXhJYMS6PHfk");
+        client.addHeader(HttpHeaders.AUTHORIZATION, "key=AAAAQmgvFoU:APA91bF8shJboV6QDRVUvy-8ZKhZ6c1eri8a6zlkSPLDosvPZ-MegfsPEOGeKUhoxmtMq3d11bzeOEWWIupjCuKW3rgbwmqZ8LqumrK_ldWYT_ipDExdy4J2OWnhYwvb9Y6pIx8vOWD8");
+        client.addHeader(HttpHeaders.CONTENT_TYPE, RequestParams.APPLICATION_JSON);
+        return client;
     }
 }
