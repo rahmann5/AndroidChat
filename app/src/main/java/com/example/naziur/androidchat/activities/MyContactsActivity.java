@@ -284,10 +284,10 @@ public class MyContactsActivity extends AppCompatActivity implements AddContactD
                         // both have same key
                         if (!contactChatKey.equals("") && !currentUserChatKey.equals("") && currentUserChatKey.equals(contactChatKey)) { // both have chat keys
                             progressBar.toggleDialog(false);
-                            startChatActivity(contact.getContact().getUsername(), "BOTH HAVE KEYS");
+                            startChatActivity(contact.getContact().getUsername());
                         } else if (!currentUserChatKey.equals("") && contactChatKey.equals("")) { // only user has key
                             progressBar.toggleDialog(false);
-                            startChatActivity(contact.getContact().getUsername(), "FRIEND HAS KEYS");
+                            startChatActivity(contact.getContact().getUsername());
                         } else if (currentUserChatKey.equals("") && !contactChatKey.equals("")) { // only contact has key
                             updateChatKeyFromContact(contact, contactChatKey, false);
                         } else { // neither has keys
@@ -310,12 +310,11 @@ public class MyContactsActivity extends AppCompatActivity implements AddContactD
         });
     }
 
-    private void startChatActivity (String targetUsername, String by) {
-        Log.i(TAG, "startChatActivity with " + by);
-        //Intent chatIntent = new Intent(MyContactsActivity.this, ChatActivity.class);
-        //chatIntent.putExtra("username", targetUsername);
-       // startActivity(chatIntent);
-        //finish();
+    private void startChatActivity (String targetUsername) {
+        Intent chatIntent = new Intent(MyContactsActivity.this, ChatActivity.class);
+        chatIntent.putExtra("username", targetUsername);
+        startActivity(chatIntent);
+        finish();
     }
 
     private String findChatKey (FirebaseUserModel userModel, FirebaseUserModel withUser) {
@@ -365,7 +364,7 @@ public class MyContactsActivity extends AppCompatActivity implements AddContactD
                         createNotification(c, chatKey);
                     } else {
                         progressBar.toggleDialog(false);
-                        startChatActivity(c.getContact().getUsername(), "NOTIFICATION ALREADY EXISTS");
+                        startChatActivity(c.getContact().getUsername());
                     }
                 } else {
                     progressBar.toggleDialog(false);
@@ -382,19 +381,19 @@ public class MyContactsActivity extends AppCompatActivity implements AddContactD
         notificationRef.orderByChild("sender").equalTo(user.name).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                boolean found = false;
+                boolean invite = true;
                 if (dataSnapshot.exists()) {
                     for (DataSnapshot notiSnapshot : dataSnapshot.getChildren()) {
                         Notification notification = notiSnapshot.getValue(Notification.class);
                         if (notification.getSender().equals(user.name)) {
-                            found = true;
+                            invite = false;
                             break;
                         }
                     }
                 }
 
                 String newChatKey = user.name + "-" + contact.getContact().getUsername();
-                updateChatKeyFromContact(contact, newChatKey , found);
+                updateChatKeyFromContact(contact, newChatKey , invite);
             }
 
             @Override
@@ -419,7 +418,7 @@ public class MyContactsActivity extends AppCompatActivity implements AddContactD
                 if (entity == null){
                     progressBar.toggleDialog(false);
                     Toast.makeText(MyContactsActivity.this, "Failed to make background notification", Toast.LENGTH_SHORT).show();
-                    startChatActivity(c.getContact().getUsername(), "FAILED TO MAKE BACKGROUND NOTIFICATION ERROR WITH ENTITY");
+                    startChatActivity(c.getContact().getUsername());
                     return;
                 }
 
@@ -429,14 +428,14 @@ public class MyContactsActivity extends AppCompatActivity implements AddContactD
                         progressBar.toggleDialog(false);
                         Toast.makeText(MyContactsActivity.this, "Error sending background notification", Toast.LENGTH_SHORT).show();
                         Log.i(TAG, responseString);
-                        startChatActivity(c.getContact().getUsername(), "FAILED TO MAKE BACKGROUND NOTIFICATION");
+                        startChatActivity(c.getContact().getUsername());
                     }
 
                     @Override
                     public void onSuccess(int statusCode, Header[] headers, String responseString) {
                         progressBar.toggleDialog(false);
                         Log.i(TAG, responseString);
-                        startChatActivity(c.getContact().getUsername(), "SUCCESSFULLY MADE BACKGROUND NOTIFICATION");
+                        startChatActivity(c.getContact().getUsername());
                     }
                 });
             }
@@ -446,7 +445,7 @@ public class MyContactsActivity extends AppCompatActivity implements AddContactD
             public void onFailure(@NonNull Exception e) {
                 progressBar.toggleDialog(false);
                 Toast.makeText(MyContactsActivity.this, "Failed to make a notification", Toast.LENGTH_SHORT).show();
-                startChatActivity(c.getContact().getUsername(), "FAILED TO CREATE NOTIFICATION");
+                startChatActivity(c.getContact().getUsername());
             }
         });
     }
