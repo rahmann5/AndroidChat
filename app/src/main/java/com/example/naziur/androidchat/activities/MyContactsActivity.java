@@ -341,7 +341,6 @@ public class MyContactsActivity extends AppCompatActivity implements AddContactD
                    FirebaseUserModel currentUser = data.getValue(FirebaseUserModel.class);
                    if (currentUser == null) return Transaction.success(mutableData);
                    if (currentUser.getUsername().equals(user.name)) {
-
                        String currentKeys = currentUser.getChatKeys();
                        if (currentKeys.equals("")) {
                            currentKeys = chatKey;
@@ -351,6 +350,7 @@ public class MyContactsActivity extends AppCompatActivity implements AddContactD
 
                        currentUser.setChatKeys(currentKeys);
                        data.setValue(currentUser);
+                       break;
                    }
                }
 
@@ -385,6 +385,7 @@ public class MyContactsActivity extends AppCompatActivity implements AddContactD
 
                     if (contact.getContact().getUsername().equals(notification.getSender())) {
                         notification = null;
+                        break;
                     }
 
                     data.setValue(notification);

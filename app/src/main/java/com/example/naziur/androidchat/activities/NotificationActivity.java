@@ -156,15 +156,18 @@ public class NotificationActivity extends AppCompatActivity implements Notificat
                     FirebaseUserModel userModel = data.getValue(FirebaseUserModel.class);
                     if (userModel == null) return Transaction.success(mutableData);
 
-                    String currentKeys = userModel.getChatKeys();
-                    if (currentKeys.equals("")) {
-                        currentKeys = gNotification.getChatKey();
-                    } else {
-                        currentKeys = currentKeys + "," + gNotification.getChatKey();
-                    }
+                    if (userModel.getUsername().equals(user.name)) {
+                        String currentKeys = userModel.getChatKeys();
+                        if (currentKeys.equals("")) {
+                            currentKeys = gNotification.getChatKey();
+                        } else {
+                            currentKeys = currentKeys + "," + gNotification.getChatKey();
+                        }
 
-                    userModel.setChatKeys(currentKeys);
-                    data.setValue(userModel);
+                        userModel.setChatKeys(currentKeys);
+                        data.setValue(userModel);
+                        break;
+                    }
 
                 }
 
