@@ -118,8 +118,10 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
         setContentView(R.layout.activity_chat);
         Bundle extra = getIntent().getExtras();
         if (extra != null) {
+            chatKey = extra.getString("chatKey");
+            String [] usernamesInKey = chatKey.split("-");
             friend = new FirebaseUserModel();
-            friend.setUsername(extra.getString("username"));
+            friend.setUsername(usernamesInKey[0].equals(user.name)? usernamesInKey[1] : usernamesInKey[0]);
         } else {
             Toast.makeText(this, "Error occurred", Toast.LENGTH_LONG).show();
             finish();
@@ -269,7 +271,6 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
         } else {
             loadLocalData("Please connect to the internet.");
         }
-        final String myChatKey = findChatKey(me, friend);
         btnInvite.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -277,14 +278,14 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
                     return;
                 } else {
                     btnInvite.setEnabled(false);
-                    notificationRef.orderByChild("chatKey").equalTo(myChatKey).addListenerForSingleValueEvent(new ValueEventListener() {
+                    notificationRef.orderByChild("chatKey").equalTo(chatKey).addListenerForSingleValueEvent(new ValueEventListener() {
                         @Override
                         public void onDataChange(DataSnapshot dataSnapshot) {
                             if (!dataSnapshot.exists()) {
                                 DatabaseReference newRef = notificationRef.push();
                                 Notification notificationObj = new Notification();
                                 notificationObj.setSender(me.getUsername());
-                                notificationObj.setChatKey(myChatKey);
+                                notificationObj.setChatKey(chatKey);
                                 newRef.setValue(notificationObj).addOnSuccessListener(new OnSuccessListener<Void>() {
                                     @Override
                                     public void onSuccess(Void aVoid) {
@@ -342,7 +343,7 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
                                 for(DataSnapshot snapshot : dataSnapshot.getChildren()){
                                     FirebaseUserModel firebaseUserModel = snapshot.getValue(FirebaseUserModel.class);
                                     List<String> list = Arrays.asList(firebaseUserModel.getChatKeys().split(","));
-                                    if(list.contains(myChatKey))
+                                    if(list.contains(chatKey))
                                         sendMessage(wishMessage);
                                     else {
                                         Toast.makeText(getApplicationContext(), "Recipient may have deleted this chat, so message could not be sent", Toast.LENGTH_SHORT).show();
@@ -525,7 +526,6 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
         messagesRef = database.getReference("messages")
                 .child("single")
                 .child(key);
-        chatKey = key;
         //Value event listener for realtime data update
         messagesRef.addValueEventListener(commentValueEventListener);
     }
@@ -540,7 +540,7 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
         try {
             params.put("to", friend.getDeviceToken());
             JSONObject payload = new JSONObject();
-            payload.put("sender", user.name); // used for extra intent in main activity
+            payload.put("chatKey", chatKey); // used for extra intent in main activity
             JSONObject notificationObject = new JSONObject();
             notificationObject.put("click_action", ".MainActivity");
             notificationObject.put("body", Constants.generateMediaText(this, type, wishMessage));
