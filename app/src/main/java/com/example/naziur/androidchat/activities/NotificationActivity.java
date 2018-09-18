@@ -192,14 +192,10 @@ public class NotificationActivity extends AppCompatActivity implements Notificat
     }
 
     private String removeAnyDuplicateKey (String[] myKeys, String keyToAdd ,String searchDup) {
-        String newKeys = "";
+        String newKeys = keyToAdd;
         for (String key : myKeys) {
             if (!key.equals(searchDup)) {
-                if (newKeys.equals("")) {
-                    newKeys = key;
-                } else {
-                    newKeys += "," + key;
-                }
+                newKeys += "," + key;
             }
         }
 
