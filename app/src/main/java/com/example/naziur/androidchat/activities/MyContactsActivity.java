@@ -274,8 +274,8 @@ public class MyContactsActivity extends AppCompatActivity implements AddContactD
 
     private void checkKeyExists (final Contact contact) {
         progressBar.toggleDialog(true);
-        // get users latest chat keys
-        userRef.orderByChild("username").equalTo(user.name).addListenerForSingleValueEvent(new ValueEventListener() {
+        // get users and contacts latest chat keys (needs to be optimised)
+        userRef.orderByChild("username").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 FirebaseUserModel currentUser = null;
@@ -290,7 +290,7 @@ public class MyContactsActivity extends AppCompatActivity implements AddContactD
                     if (currentUser != null && contactUser != null) break;
                 }
 
-                if (currentUser != null || contactUser != null) {
+                if (currentUser != null && contactUser != null) {
                     contact.setContact(contactUser);
                     String currentUserChatKey = findChatKey(currentUser, contact.getContact()); // check user contains chat key with chosen contact
                     String contactChatKey = findChatKey(contact.getContact(), currentUser); // check chosen contact contains chat key with user

@@ -188,7 +188,7 @@ public class NotificationActivity extends AppCompatActivity implements Notificat
 
     private String generateOppositeKey (String currentKey) {
         String [] keys = currentKey.split("-");
-        return keys[1] + keys[0];
+        return keys[1] + "-" + keys[0];
     }
 
     private String removeAnyDuplicateKey (String[] myKeys, String searchDup) {
