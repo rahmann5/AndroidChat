@@ -5,6 +5,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.LinearLayoutManager;
@@ -30,6 +31,8 @@ import com.example.naziur.androidchat.models.User;
 import com.example.naziur.androidchat.utils.Constants;
 import com.example.naziur.androidchat.utils.Network;
 import com.example.naziur.androidchat.utils.ProgressDialog;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -38,6 +41,8 @@ import com.google.firebase.database.MutableData;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.Transaction;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -278,7 +283,8 @@ public class SingleSessionFragment extends Fragment {
                                 break;
 
                             case 2 : // delete Chat
-                                deleteChat(chat);
+                                if (Network.isInternetAvailable(getActivity(), true));
+                                    deleteChat(chat);
                                 break;
                         }
                     }
@@ -287,9 +293,9 @@ public class SingleSessionFragment extends Fragment {
     }
 
     private void deleteChat(final Chat chat){
+        progressBar.toggleDialog(true);
         allChatKeys.remove(chat.getChatKey());
         final String updatedKeys = getChatKeysAsString();
-
         usersRef.orderByChild("username").equalTo(chat.getUsernameOfTheOneBeingSpokenTo()).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -299,9 +305,9 @@ public class SingleSessionFragment extends Fragment {
                         if(firebaseUserModel.getUsername().equals(chat.getUsernameOfTheOneBeingSpokenTo())){
                             List<String> allKeys = Arrays.asList(firebaseUserModel.getChatKeys().split(","));
                             if(allKeys.contains(chat.getChatKey()))
-                                performDeletionOfChat(updatedKeys, false);
+                                performDeletionOfChat(updatedKeys, chat.getChatKey(),false);
                             else
-                                performDeletionOfChat(updatedKeys, true);
+                                performDeletionOfChat(updatedKeys, chat.getChatKey(), true);
                         }
                     }
                 }
@@ -309,12 +315,13 @@ public class SingleSessionFragment extends Fragment {
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
+                progressBar.toggleDialog(false);
                 Log.i(TAG, "Failed to check if other user in the chat also deleted the chat, aborted deletion of chat");
             }
         });
     }
 
-    private void performDeletionOfChat(final String updatedKeys, final boolean deleteMsgs){
+    private void performDeletionOfChat(final String updatedKeys, final String chatKey ,final boolean deleteMsgs){
         DatabaseReference pendingTasks = usersRef.orderByChild("username").equalTo(user.name).getRef();
         pendingTasks.runTransaction(new Transaction.Handler() {
             @Override
@@ -329,10 +336,6 @@ public class SingleSessionFragment extends Fragment {
                         data.setValue(firebaseUserModel);
                     }
 
-                    if(deleteMsgs){
-
-                    }
-
                 }
 
                 return Transaction.success(mutableData);
@@ -340,8 +343,14 @@ public class SingleSessionFragment extends Fragment {
 
             @Override
             public void onComplete(DatabaseError databaseError, boolean b, DataSnapshot dataSnapshot) {
-                if(databaseError != null)
+                if(databaseError != null) {
                     Log.i(TAG, "Transaction:onComplete:" + databaseError);
+                    progressBar.toggleDialog(false);
+                } else {
+                    if(deleteMsgs){
+                        collectAllRemovableImagesForMessages (chatKey);
+                    }
+                }
             }
 
         });
@@ -395,10 +404,74 @@ public class SingleSessionFragment extends Fragment {
         return keys;
     }
 
+    private void collectAllRemovableImagesForMessages (final String chatKey) {
+        final List<String> imageUri = new ArrayList<>();
+        messagesRef
+                .child("single").child(chatKey).equalTo(Constants.MESSAGE_TYPE_PIC)
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        for (DataSnapshot data : dataSnapshot.getChildren()) {
+                            FirebaseMessageModel model = data.getValue(FirebaseMessageModel.class);
+                            if (model.getMediaType().equals(Constants.MESSAGE_TYPE_PIC)) {
+                                imageUri.add(model.getText());
+                            } else {
+                                break;
+                            }
+                        }
+                        Log.i(TAG, "Number of images found "  + imageUri.size());
+                        deleteUploadImages(imageUri, chatKey);
 
-    @Override
-    public void onStart() {
-        super.onStart();
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+                        progressBar.toggleDialog(false);
+                        //Toast.makeText(getActivity(), "Failed to obtain reference to all previous messages", Toast.LENGTH_SHORT).show();
+                        Log.i(TAG, "Failed to obtain reference to all previous messages " + databaseError.getMessage());
+                    }
+                });
+
+
+       /* */
+    }
+
+    private void cleanDeleteAllMessages (String chatKey) {
+        messagesRef.child("single").child(chatKey).setValue(null).addOnSuccessListener(new OnSuccessListener<Void>() {
+            @Override
+            public void onSuccess(Void aVoid) {
+                Log.i(TAG, "Successfully removed all messages");
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                Log.i(TAG, "Failed to removed all messages");
+            }
+        });
+    }
+
+    private void deleteUploadImages (final List<String> allUris, final String chatKey) {
+        if (!allUris.isEmpty()) {
+            String uri = allUris.remove(0);
+            StorageReference photoRef = FirebaseStorage.getInstance().getReferenceFromUrl(uri);
+            photoRef.delete().addOnSuccessListener(new OnSuccessListener<Void>() {
+                @Override
+                public void onSuccess(Void aVoid) {
+                deleteUploadImages(allUris, chatKey);
+                Log.i(TAG, "onSuccess: removed image from failed database update");
+                }
+            }).addOnFailureListener(new OnFailureListener() {
+                @Override
+                public void onFailure(@NonNull Exception e) {
+                Log.i(TAG, "onFailure: did not delete file in storage");
+                // store that image uri in a log to remove manually
+                e.printStackTrace();
+                }
+            });
+        } else {
+            cleanDeleteAllMessages(chatKey);
+            progressBar.toggleDialog(false);
+        }
 
     }
 

@@ -53,6 +53,25 @@ public class SessionActivity extends AppCompatActivity implements NetworkChangeR
         TabLayout tabLayout = (TabLayout) findViewById(R.id.sliding_tabs);
         tabLayout.setupWithViewPager(viewPager);
 
+        notificationListener = new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if (menu != null) {
+                    final MenuItem notificationItem = menu.findItem(R.id.action_notification);
+                    if (dataSnapshot.exists()) {
+                        notificationItem.setIcon(R.drawable.ic_action_alert_notification);
+                    } else {
+                        notificationItem.setIcon(R.drawable.ic_action_notification);
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                Log.i(TAG, databaseError.getMessage());
+            }
+        };
+
         viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
 
             @Override
@@ -94,24 +113,7 @@ public class SessionActivity extends AppCompatActivity implements NetworkChangeR
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.sessions_menu, menu);
         MenuItem groupItem = menu.findItem(R.id.action_group);
-        final MenuItem notificationItem = menu.findItem(R.id.action_notification);
         groupItem.setVisible(false);
-
-        notificationListener = new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                if (dataSnapshot.exists()) {
-                    notificationItem.setIcon(R.drawable.ic_action_alert_notification);
-                } else {
-                    notificationItem.setIcon(R.drawable.ic_action_notification);
-                }
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-                Log.i(TAG, databaseError.getMessage());
-            }
-        };
 
 
         return true;
