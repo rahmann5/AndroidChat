@@ -258,7 +258,9 @@ public class MyContactsActivity extends AppCompatActivity implements AddContactD
                 break;
 
             case 1 : // chat with contact
-                checkKeyExists(c);
+                if (Network.isInternetAvailable(MyContactsActivity.this, true)) {
+                   checkKeyExists(c);
+                }
                 break;
             case 2 : // delete contact
                 if (db.removeContact(c.getContact().getUsername()) > 0) {

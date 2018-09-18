@@ -9,6 +9,7 @@ import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -22,14 +23,18 @@ import com.example.naziur.androidchat.models.User;
 import com.example.naziur.androidchat.utils.NetworkChangeReceiver;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 public class SessionActivity extends AppCompatActivity implements NetworkChangeReceiver.OnNetworkStateChangeListener {
+    private static final String TAG = "SessionActivity";
     private User user = User.getInstance();
     private NetworkChangeReceiver networkChangeReceiver;
     ViewPager viewPager;
     private Menu menu;
+    private ValueEventListener notificationListener;
+    private DatabaseReference notificationRef;
 
     SessionFragmentPagerAdapter sessionFragmentPagerAdapter;
     @Override
@@ -92,20 +97,22 @@ public class SessionActivity extends AppCompatActivity implements NetworkChangeR
         final MenuItem notificationItem = menu.findItem(R.id.action_notification);
         groupItem.setVisible(false);
 
-        // could be improved with non-single event value listener in the case of receiving first notification
-        FirebaseDatabase.getInstance().getReference("notifications").child(user.name).addListenerForSingleValueEvent(new ValueEventListener() {
+        notificationListener = new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if (dataSnapshot.exists()) {
                     notificationItem.setIcon(R.drawable.ic_action_alert_notification);
+                } else {
+                    notificationItem.setIcon(R.drawable.ic_action_notification);
                 }
             }
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
-                // log silent error
+                Log.i(TAG, databaseError.getMessage());
             }
-        });
+        };
+
 
         return true;
     }
@@ -137,9 +144,22 @@ public class SessionActivity extends AppCompatActivity implements NetworkChangeR
     @Override
     protected void onResume() {
         super.onResume();
+
+        notificationRef = FirebaseDatabase.getInstance().getReference("notifications").child(user.name);
+        // could be improved with non-single event value listener in the case of receiving first notification
+        notificationRef.addValueEventListener(notificationListener);
+
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
         registerReceiver(networkChangeReceiver, intentFilter);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (notificationRef != null)
+            notificationRef.removeEventListener(notificationListener);
+
     }
 
     @Override
