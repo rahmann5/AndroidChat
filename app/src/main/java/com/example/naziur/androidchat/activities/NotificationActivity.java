@@ -161,7 +161,7 @@ public class NotificationActivity extends AppCompatActivity implements Notificat
                         if (currentKeys.equals("")) {
                             currentKeys = gNotification.getChatKey();
                         } else {
-                            currentKeys = currentKeys + "," + gNotification.getChatKey();
+                            currentKeys = removeAnyDuplicateKey(userModel.getChatKeys().split(","), generateOppositeKey(gNotification.getChatKey()));
                         }
 
                         userModel.setChatKeys(currentKeys);
@@ -184,6 +184,26 @@ public class NotificationActivity extends AppCompatActivity implements Notificat
                 }
             }
         });
+    }
+
+    private String generateOppositeKey (String currentKey) {
+        String [] keys = currentKey.split("-");
+        return keys[1] + keys[0];
+    }
+
+    private String removeAnyDuplicateKey (String[] myKeys, String searchDup) {
+        String newKeys = "";
+        for (String key : myKeys) {
+            if (!key.equals(searchDup)) {
+                if (newKeys.equals("")) {
+                    newKeys = key;
+                } else {
+                    newKeys += "," + key;
+                }
+            }
+        }
+
+        return newKeys;
     }
 
     private void rejectInvite (final Notification gNotification, final boolean home) {

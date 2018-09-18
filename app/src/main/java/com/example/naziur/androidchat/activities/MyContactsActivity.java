@@ -278,29 +278,44 @@ public class MyContactsActivity extends AppCompatActivity implements AddContactD
         userRef.orderByChild("username").equalTo(user.name).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
+                FirebaseUserModel currentUser = null;
+                FirebaseUserModel contactUser = null;
                 for (DataSnapshot userSnapShot : dataSnapshot.getChildren()) {
-                    FirebaseUserModel currentUser = userSnapShot.getValue(FirebaseUserModel.class);
-                    if (currentUser.getUsername().equals(user.name)) { // if user matched
-                        String currentUserChatKey = findChatKey(currentUser, contact.getContact()); // check user contains chat key with chosen contact
-                        String contactChatKey = findChatKey(contact.getContact(), currentUser); // check chosen contact contains chat key with user
-                        // both have same key
-                        if (!contactChatKey.equals("") && !currentUserChatKey.equals("") && currentUserChatKey.equals(contactChatKey)) { // both have chat keys
-                            progressBar.toggleDialog(false);
-                            startChatActivity(contactChatKey);
-                        } else if (!currentUserChatKey.equals("") && contactChatKey.equals("")) { // only user has key
-                            progressBar.toggleDialog(false);
-                            startChatActivity(currentUserChatKey);
-                        } else if (currentUserChatKey.equals("") && !contactChatKey.equals("")) { // only contact has key
-                            updateChatKeyFromContact(contact, contactChatKey, false);
-                        } else { // neither has keys
-                            createKeyAndSendInvitation (contact);
-                        }
-                        break;
-                    } else {
-                        Toast.makeText(MyContactsActivity.this, "Could not match to user", Toast.LENGTH_LONG).show();
-                        progressBar.toggleDialog(false);
+                    FirebaseUserModel model = userSnapShot.getValue(FirebaseUserModel.class);
+                    if(model.getUsername().equals(user.name)) {
+                        currentUser = model;
+                    } else if (model.getUsername().equals(contact.getContact().getUsername())) {
+                        contactUser = model;
                     }
+                    if (currentUser != null && contactUser != null) break;
                 }
+
+                if (currentUser != null || contactUser != null) {
+                    contact.setContact(contactUser);
+                    String currentUserChatKey = findChatKey(currentUser, contact.getContact()); // check user contains chat key with chosen contact
+                    String contactChatKey = findChatKey(contact.getContact(), currentUser); // check chosen contact contains chat key with user
+                    // both have same key
+                    if (!contactChatKey.equals("") && !currentUserChatKey.equals("") && currentUserChatKey.equals(contactChatKey)) { // both have chat keys
+                        progressBar.toggleDialog(false);
+                        startChatActivity(contactChatKey);
+                    } else if (!currentUserChatKey.equals("") && contactChatKey.equals("")) { // only user has key
+                        progressBar.toggleDialog(false);
+                        startChatActivity(currentUserChatKey);
+                    } else if (currentUserChatKey.equals("") && !contactChatKey.equals("")) { // only contact has key
+                        updateChatKeyFromContact(contact, contactChatKey, false);
+                    } else { // neither has keys or maybe opposite of each others key
+                        if (contactChatKey.equals("") && currentUserChatKey.equals("")) {
+                            createKeyAndSendInvitation(contact);
+                        } else {
+                            checkForInvitationClash(contact, currentUserChatKey);
+                        }
+                    }
+                } else {
+                    Toast.makeText(MyContactsActivity.this, "Error finding user information", Toast.LENGTH_LONG).show();
+                    progressBar.toggleDialog(false);
+                }
+
+
             }
 
             @Override
@@ -409,25 +424,29 @@ public class MyContactsActivity extends AppCompatActivity implements AddContactD
         });
     }
 
-    private void createKeyAndSendInvitation (final Contact contact) {
-        // check for any same pending notification
-        DatabaseReference notificationRef = FirebaseDatabase.getInstance().getReference("notifications").child(contact.getContact().getUsername());
-        notificationRef.orderByChild("sender").equalTo(user.name).addListenerForSingleValueEvent(new ValueEventListener() {
+
+    private void checkForInvitationClash (final Contact contact, final String chatKey) {
+        DatabaseReference notificationRef = FirebaseDatabase.getInstance().getReference("notifications").child(user.name);
+        notificationRef.orderByChild("sender").equalTo(contact.getContact().getUsername()).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                boolean invite = true;
+                boolean invite = false;
                 if (dataSnapshot.exists()) {
                     for (DataSnapshot notiSnapshot : dataSnapshot.getChildren()) {
                         Notification notification = notiSnapshot.getValue(Notification.class);
-                        if (notification.getSender().equals(user.name)) {
-                            invite = false;
+                        if (notification.getSender().equals(contact.getContact().getUsername())) {
+                            invite = true;
                             break;
                         }
                     }
                 }
 
-                String newChatKey = user.name + "-" + contact.getContact().getUsername();
-                updateChatKeyFromContact(contact, newChatKey , invite);
+                if (invite) {
+                    startActivity(new Intent(MyContactsActivity.this, NotificationActivity.class));
+                } else {
+                    startChatActivity(chatKey);
+                }
+
             }
 
             @Override
@@ -437,6 +456,11 @@ public class MyContactsActivity extends AppCompatActivity implements AddContactD
                 Log.i(TAG, databaseError.getMessage() );
             }
         });
+    }
+
+    private void createKeyAndSendInvitation (final Contact contact) {
+        String newChatKey = user.name + "-" + contact.getContact().getUsername();
+        updateChatKeyFromContact(contact, newChatKey , true);
 
     }
 
