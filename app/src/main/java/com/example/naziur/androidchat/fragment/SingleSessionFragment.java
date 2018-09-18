@@ -41,6 +41,7 @@ import com.google.firebase.database.ValueEventListener;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -285,9 +286,35 @@ public class SingleSessionFragment extends Fragment {
         return builder.create();
     }
 
-    private void deleteChat(Chat chat){
+    private void deleteChat(final Chat chat){
         allChatKeys.remove(chat.getChatKey());
         final String updatedKeys = getChatKeysAsString();
+
+        usersRef.orderByChild("username").equalTo(chat.getUsernameOfTheOneBeingSpokenTo()).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if(dataSnapshot.exists()){
+                    for(DataSnapshot data : dataSnapshot.getChildren()){
+                        FirebaseUserModel firebaseUserModel = data.getValue(FirebaseUserModel.class);
+                        if(firebaseUserModel.getUsername().equals(chat.getUsernameOfTheOneBeingSpokenTo())){
+                            List<String> allKeys = Arrays.asList(firebaseUserModel.getChatKeys().split(","));
+                            if(allKeys.contains(chat.getChatKey()))
+                                performDeletionOfChat(updatedKeys, false);
+                            else
+                                performDeletionOfChat(updatedKeys, true);
+                        }
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                Log.i(TAG, "Failed to check if other user in the chat also deleted the chat, aborted deletion of chat");
+            }
+        });
+    }
+
+    private void performDeletionOfChat(final String updatedKeys, final boolean deleteMsgs){
         DatabaseReference pendingTasks = usersRef.orderByChild("username").equalTo(user.name).getRef();
         pendingTasks.runTransaction(new Transaction.Handler() {
             @Override
@@ -300,6 +327,10 @@ public class SingleSessionFragment extends Fragment {
                     if(firebaseUserModel.getUsername().equals(user.name)){
                         firebaseUserModel.setChatKeys(updatedKeys);
                         data.setValue(firebaseUserModel);
+                    }
+
+                    if(deleteMsgs){
+
                     }
 
                 }
