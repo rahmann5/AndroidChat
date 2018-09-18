@@ -407,44 +407,41 @@ public class SingleSessionFragment extends Fragment {
     private void collectAllRemovableImagesForMessages (final String chatKey) {
         final List<String> imageUri = new ArrayList<>();
         messagesRef
-                .child("single").child(chatKey).equalTo(Constants.MESSAGE_TYPE_PIC)
-                .addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(DataSnapshot dataSnapshot) {
-                        for (DataSnapshot data : dataSnapshot.getChildren()) {
-                            FirebaseMessageModel model = data.getValue(FirebaseMessageModel.class);
-                            if (model.getMediaType().equals(Constants.MESSAGE_TYPE_PIC)) {
-                                imageUri.add(model.getText());
-                            } else {
-                                break;
-                            }
+            .child("single").child(chatKey).orderByChild("mediaType")
+            .addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    for (DataSnapshot data : dataSnapshot.getChildren()) {
+                        FirebaseMessageModel model = data.getValue(FirebaseMessageModel.class);
+                        if (model.getMediaType().equals(Constants.MESSAGE_TYPE_PIC)) {
+                            imageUri.add(model.getText());
                         }
-                        Log.i(TAG, "Number of images found "  + imageUri.size());
-                        deleteUploadImages(imageUri, chatKey);
-
                     }
+                    Log.i(TAG, "Number of images found "  + imageUri.size());
+                    deleteUploadImages(imageUri, chatKey);
 
-                    @Override
-                    public void onCancelled(DatabaseError databaseError) {
-                        progressBar.toggleDialog(false);
-                        //Toast.makeText(getActivity(), "Failed to obtain reference to all previous messages", Toast.LENGTH_SHORT).show();
-                        Log.i(TAG, "Failed to obtain reference to all previous messages " + databaseError.getMessage());
-                    }
-                });
+                }
 
-
-       /* */
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
+                    //Toast.makeText(getActivity(), "Failed to obtain reference to all previous messages", Toast.LENGTH_SHORT).show();
+                    Log.i(TAG, "Failed to obtain reference to all previous messages " + databaseError.getMessage());
+                    cleanDeleteAllMessages(chatKey);
+                }
+            });
     }
 
     private void cleanDeleteAllMessages (String chatKey) {
         messagesRef.child("single").child(chatKey).setValue(null).addOnSuccessListener(new OnSuccessListener<Void>() {
             @Override
             public void onSuccess(Void aVoid) {
+                progressBar.toggleDialog(false);
                 Log.i(TAG, "Successfully removed all messages");
             }
         }).addOnFailureListener(new OnFailureListener() {
             @Override
             public void onFailure(@NonNull Exception e) {
+                progressBar.toggleDialog(false);
                 Log.i(TAG, "Failed to removed all messages");
             }
         });
@@ -470,7 +467,6 @@ public class SingleSessionFragment extends Fragment {
             });
         } else {
             cleanDeleteAllMessages(chatKey);
-            progressBar.toggleDialog(false);
         }
 
     }
