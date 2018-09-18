@@ -38,11 +38,11 @@ public class FirebaseUserModel {
         this.chatKeys = chatKeys;
     }
 
-    public String getGroupChatKeys() {
+    public String getGroupKeys() {
         return groupKeys;
     }
 
-    public void setGroupChatKeys(String groupKeys) {
+    public void setGroupKeys(String groupKeys) {
         this.groupKeys = groupKeys;
     }
 

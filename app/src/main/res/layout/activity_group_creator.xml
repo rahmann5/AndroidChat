@@ -28,7 +28,7 @@
             android:id="@+id/form_container"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@+id/login_title"
+            android:layout_below="@id/login_title"
             android:layout_marginLeft="20dp"
             android:layout_marginRight="20dp"
             android:layout_marginTop="70dp"
@@ -156,7 +156,7 @@
             android:id="@+id/group_photo"
             android:layout_width="100dp"
             android:layout_height="100dp"
-            android:layout_below="@+id/login_title"
+            android:layout_below="@id/login_title"
             android:layout_centerHorizontal="true"
             android:layout_gravity="center_vertical"
             android:layout_marginTop="16dp"
@@ -172,9 +172,9 @@
             android:background="@drawable/header_icon_round"
             android:src="@android:drawable/ic_popup_sync"
             android:elevation="4dp"
-            android:layout_alignBottom="@+id/group_photo"
-            android:layout_alignLeft="@+id/group_photo"
-            android:layout_alignStart="@+id/group_photo"
+            android:layout_alignBottom="@id/group_photo"
+            android:layout_alignLeft="@id/group_photo"
+            android:layout_alignStart="@id/group_photo"
              />
     </RelativeLayout>
 </ScrollView>

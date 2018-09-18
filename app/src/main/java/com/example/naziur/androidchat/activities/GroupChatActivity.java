@@ -77,22 +77,21 @@ public class GroupChatActivity extends AppCompatActivity {
         createCustomActionBar ();
         // assuming that user is guaranteed member of group
         if (Network.isInternetAvailable(this, true)) {
-            database.getReference("groups").orderByChild("groupKey").equalTo(groupKey).addListenerForSingleValueEvent(new ValueEventListener() {
+            database.getReference("groups").orderByChild(groupKey).equalTo(groupKey).addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
                 public void onDataChange(DataSnapshot dataSnapshot) {
-                    for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
-                        FirebaseGroupModel groupModel = postSnapshot.getValue(FirebaseGroupModel.class);
-                        if (groupModel.getGroupKey().equals(groupKey)) {
+
+                        if (dataSnapshot.getKey().equals(groupKey)) {
+                            FirebaseGroupModel groupModel = dataSnapshot.getValue(FirebaseGroupModel.class);
                             ((TextView) actionBar.getCustomView().findViewById(R.id.profile_name)).setText(groupModel.getTitle());
                             Glide.with(getApplicationContext())
                                     .load(groupModel.getPic())
                                     .apply(new RequestOptions().placeholder(R.drawable.placeholder).error(R.drawable.unknown))
                                     .into(((CircleImageView) actionBar.getCustomView().findViewById(R.id.profile_icon)));
-                            break;
+
+                        } else {
+                            System.out.println("Key found is " + dataSnapshot.getKey());
                         }
-                    }
-
-
 
                 }
 

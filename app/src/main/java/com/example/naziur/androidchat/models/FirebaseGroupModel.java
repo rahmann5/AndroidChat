@@ -8,8 +8,8 @@ public class FirebaseGroupModel {
 
     String title = "";
     String pic = "";
-    String groupKey = "";
     String admin = "";
+    String members = "";
 
     public FirebaseGroupModel () {
         /*Blank default constructor essential for Firebase*/
@@ -31,19 +31,19 @@ public class FirebaseGroupModel {
         this.pic = pic;
     }
 
-    public String getGroupKey() {
-        return groupKey;
-    }
-
-    public void setGroupKey(String groupKey) {
-        this.groupKey = groupKey;
-    }
-
     public String getAdmin() {
         return admin;
     }
 
     public void setAdmin(String admin) {
         this.admin = admin;
+    }
+
+    public String getMembers() {
+        return members;
+    }
+
+    public void setMembers(String members) {
+        this.members = members;
     }
 }

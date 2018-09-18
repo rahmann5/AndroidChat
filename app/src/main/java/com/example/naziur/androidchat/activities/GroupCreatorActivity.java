@@ -32,12 +32,15 @@ import com.example.naziur.androidchat.models.FirebaseUserModel;
 import com.example.naziur.androidchat.models.Group;
 import com.example.naziur.androidchat.models.User;
 import com.example.naziur.androidchat.utils.Network;
+import com.example.naziur.androidchat.utils.ProgressDialog;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.MutableData;
+import com.google.firebase.database.Transaction;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
@@ -67,7 +70,7 @@ public class GroupCreatorActivity extends AppCompatActivity {
     private File myImageFile;
     private User user = User.getInstance();
     private CircleImageView groupImage;
-
+    private ProgressDialog progressBar;
     public interface OnItemClickListener {
         void onItemClick (String user, int pos);
     }
@@ -89,6 +92,7 @@ public class GroupCreatorActivity extends AppCompatActivity {
         CircleImageView refreshImage = (CircleImageView) findViewById(R.id.refresh);
         final EditText groupNameEt = (EditText) findViewById(R.id.group_name);
         final EditText searchedUsernameEt = (EditText) findViewById(R.id.user_not_in_contacts);
+        progressBar = new ProgressDialog(GroupCreatorActivity.this, R.layout.progress_dialog, true);
         ImageButton searchAddUserBtn = (ImageButton) findViewById(R.id.search_add_contact);
         Button createGroupBtn = (Button) findViewById(R.id.make_group_btn);
         ContactDBHelper contactDbHelper = new ContactDBHelper(this);
@@ -192,7 +196,8 @@ public class GroupCreatorActivity extends AppCompatActivity {
                     return;
                 }
 
-                if(membersSelectdFromContacts.size() > 0 || newUsersNotInContacts.size() > 1){
+                if(membersSelectdFromContacts.size() > 0 || newUsersNotInContacts.size() > 0){
+                    progressBar.toggleDialog(true);
                     if(myImageFile == null){
                         createGroupNode(title, "");
                     } else {
@@ -216,7 +221,7 @@ public class GroupCreatorActivity extends AppCompatActivity {
 
     private void uploadImageThenCreateNode(final String title) {
         Uri fileUri = Uri.fromFile(myImageFile);
-        StorageReference fileRef = mStorageRef.child("group/" + fileUri.getLastPathSegment());
+        StorageReference fileRef = mStorageRef.child("groupProf/"+ fileUri.getLastPathSegment());
 
         fileRef.putFile(fileUri)
                 .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
@@ -227,11 +232,14 @@ public class GroupCreatorActivity extends AppCompatActivity {
                         Uri downloadUrl = taskSnapshot.getDownloadUrl();
                         if(downloadUrl != null)
                             createGroupNode(title, downloadUrl.toString());
+                        else
+                            progressBar.toggleDialog(false);
                     }
                 })
                 .addOnFailureListener(new OnFailureListener() {
                     @Override
                     public void onFailure(@NonNull Exception exception) {
+                        progressBar.toggleDialog(false);
                         Toast.makeText(GroupCreatorActivity.this, "Error Uploading File", Toast.LENGTH_SHORT).show();
                         exception.printStackTrace();
                     }
@@ -241,18 +249,56 @@ public class GroupCreatorActivity extends AppCompatActivity {
 
     private void createGroupNode(String title, String imgUrl){
         final String uniqueID = UUID.randomUUID().toString()+System.currentTimeMillis();
-        DatabaseReference newRef = groupRef.push();
+        DatabaseReference newRef = groupRef.child(uniqueID).push();
         FirebaseGroupModel firebaseGroupModel = new FirebaseGroupModel();
         firebaseGroupModel.setTitle(title);
-        firebaseGroupModel.setGroupKey(uniqueID);
         firebaseGroupModel.setAdmin(user.name);
         firebaseGroupModel.setPic(imgUrl);
+        firebaseGroupModel.setMembers(getAllMembersAsString());
         newRef.setValue(firebaseGroupModel, new DatabaseReference.CompletionListener() {
             @Override
             public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
                 if(databaseError != null){
+                    progressBar.toggleDialog(false);
                     Toast.makeText(GroupCreatorActivity.this, "Error Uploading to Database", Toast.LENGTH_SHORT).show();
                     Log.e(TAG, databaseError.toString());
+                } else {
+                    updateUsersGroupKeys(uniqueID);
+                }
+            }
+        });
+    }
+
+    private void updateUsersGroupKeys(final String uniqueID) {
+
+        userRef.orderByChild("username").equalTo(user.name).getRef().runTransaction(new Transaction.Handler() {
+            @Override
+            public Transaction.Result doTransaction(MutableData mutableData) {
+                for(MutableData data : mutableData.getChildren()){
+                    FirebaseUserModel firebaseUserModel = data.getValue(FirebaseUserModel.class);
+                    if(firebaseUserModel == null)
+                        return Transaction.success(mutableData);
+
+                    if(firebaseUserModel.getUsername().equals(user.name)){
+                        if(firebaseUserModel.getGroupKeys().equals(""))
+                            firebaseUserModel.setGroupKeys(uniqueID);
+                        else
+                            firebaseUserModel.setGroupKeys(firebaseUserModel.getGroupKeys()+", " + uniqueID);
+
+                        data.setValue(firebaseUserModel);
+                    }
+
+                }
+
+                return Transaction.success(mutableData);
+            }
+
+            @Override
+            public void onComplete(DatabaseError databaseError, boolean b, DataSnapshot dataSnapshot) {
+                progressBar.toggleDialog(false);
+                if(databaseError != null){
+                    Log.i(TAG, "Could not update users group keys, adding was aborted");
+                    Log.e(TAG, databaseError.getMessage());
                 } else {
                     moveToGroupChatActivity(uniqueID);
                 }
@@ -260,9 +306,25 @@ public class GroupCreatorActivity extends AppCompatActivity {
         });
     }
 
+    private String getAllMembersAsString(){
+        String members = "";
+        List<String> allMembers = getAllMembersTogether();
+        int i = 0;
+        for(String user : allMembers){
+            members += user;
+
+            if(i < allMembers.size()-1){
+                members += ", ";
+            }
+            i++;
+        }
+
+        return members;
+    }
+
     private void moveToGroupChatActivity(String id){
-        Intent intent = new Intent();
-        intent.putExtra("groupId", id);
+        Intent intent = new Intent(this, GroupChatActivity.class);
+        intent.putExtra("group_uid", id);
         intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         startActivity(intent);
     }
