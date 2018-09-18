@@ -161,7 +161,7 @@ public class NotificationActivity extends AppCompatActivity implements Notificat
                         if (currentKeys.equals("")) {
                             currentKeys = gNotification.getChatKey();
                         } else {
-                            currentKeys = removeAnyDuplicateKey(userModel.getChatKeys().split(","), generateOppositeKey(gNotification.getChatKey()));
+                            currentKeys = removeAnyDuplicateKey(userModel.getChatKeys().split(","), gNotification.getChatKey() ,generateOppositeKey(gNotification.getChatKey()));
                         }
 
                         userModel.setChatKeys(currentKeys);
@@ -191,7 +191,7 @@ public class NotificationActivity extends AppCompatActivity implements Notificat
         return keys[1] + "-" + keys[0];
     }
 
-    private String removeAnyDuplicateKey (String[] myKeys, String searchDup) {
+    private String removeAnyDuplicateKey (String[] myKeys, String keyToAdd ,String searchDup) {
         String newKeys = "";
         for (String key : myKeys) {
             if (!key.equals(searchDup)) {
