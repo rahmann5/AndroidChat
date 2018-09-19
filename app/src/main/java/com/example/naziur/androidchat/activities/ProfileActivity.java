@@ -199,11 +199,13 @@ public class ProfileActivity extends AppCompatActivity {
 
     private List<Contact> updateContacts () {
         final List<Contact> allContacts = new ArrayList<>();
-        Cursor c = db.getAllMyContacts(null);
+        final Cursor c = db.getAllMyContacts(null);
         boolean hasInternet = Network.isInternetAvailable(this, true);
         try {
             while (c.moveToNext()) {
                 final String friendUsername = c.getString(c.getColumnIndex(MyContactsContract.MyContactsContractEntry.COLUMN_USERNAME));
+                final String friendProfileName = c.getString(c.getColumnIndex(MyContactsContract.MyContactsContractEntry.COLUMN_PROFILE));
+                final String friendProfilePic = c.getString(c.getColumnIndex(MyContactsContract.MyContactsContractEntry.COLUMN_PROFILE_PIC));
 
                 if (hasInternet) {
                     userRef.orderByChild("username").equalTo(friendUsername)
@@ -222,21 +224,22 @@ public class ProfileActivity extends AppCompatActivity {
                                                 emptyContactsList.setVisibility(View.GONE);
                                             }
                                         }
-
+                                    } else {
+                                        allContacts.add(new Contact(makeOfflineFirebaseObj(friendUsername, friendProfileName, friendProfilePic), "", false));
                                     }
                                 }
 
                                 @Override
                                 public void onCancelled(DatabaseError databaseError) {
+                                    if (allContacts.isEmpty())
+                                        emptyContactsList.setVisibility(View.VISIBLE);
+                                    else
+                                        emptyContactsList.setVisibility(View.GONE);
                                     Log.i(TAG, "Failed to connect to real time database for: " + friendUsername + " reason: " + databaseError.getMessage());
                                 }
                             });
                 } else {
-                    FirebaseUserModel firebaseUserModel = new FirebaseUserModel();
-                    firebaseUserModel.setUsername(friendUsername);
-                    firebaseUserModel.setProfileName(c.getString(c.getColumnIndex(MyContactsContract.MyContactsContractEntry.COLUMN_PROFILE)));
-                    firebaseUserModel.setProfilePic(c.getString(c.getColumnIndex(MyContactsContract.MyContactsContractEntry.COLUMN_PROFILE_PIC)));
-                    allContacts.add(new Contact(firebaseUserModel));
+                    allContacts.add(new Contact(makeOfflineFirebaseObj(friendUsername, friendProfileName, friendProfilePic), "", false));
                     emptyContactsList.setVisibility(View.GONE);
                 }
             }
@@ -247,6 +250,14 @@ public class ProfileActivity extends AppCompatActivity {
             c.close();
         }
         return allContacts;
+    }
+
+    private FirebaseUserModel makeOfflineFirebaseObj (String friendUsername, String profileName, String profilePic) {
+        FirebaseUserModel firebaseUserModel = new FirebaseUserModel();
+        firebaseUserModel.setUsername(friendUsername);
+        firebaseUserModel.setProfileName(profileName);
+        firebaseUserModel.setProfilePic(profilePic);
+        return firebaseUserModel;
     }
 
     private void uploadImageToCloud () {

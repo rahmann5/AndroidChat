@@ -109,6 +109,8 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
     private ActionBar actionBar;
     private FirebaseUserModel friend, me;
 
+    private Menu menu;
+
     private String chatKey;
 
     @Override
@@ -236,12 +238,19 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
                         }
 
                         if (me != null && !friend.getDeviceToken().equals("")) {
+                            if (menu != null) menu.findItem(R.id.view_details).setVisible(true);
                             break;
                         }
                     }
 
+                    // account no longer exists
+                    if (friend.getDeviceToken().equals("")) {
+                        ((CircleImageView) actionBar.getCustomView().findViewById(R.id.profile_icon)).setVisibility(View.GONE);
+                        ((TextView) actionBar.getCustomView().findViewById(R.id.profile_name)).setText(friend.getUsername());
+                    }
+
                     if (me != null) {
-                        String myKey = findChatKey(me, friend);
+                        //String myKey = findChatKey(me, friend);
                         String friendKey = findChatKey(friend, me);
                         btnInvite.setVisibility(View.GONE);
                         btnSend.setVisibility(View.VISIBLE);
@@ -578,6 +587,7 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
+        this.menu = menu;
         getMenuInflater().inflate(R.menu.chat_menu, menu);
         return true;
     }

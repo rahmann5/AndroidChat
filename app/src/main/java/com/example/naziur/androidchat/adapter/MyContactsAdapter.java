@@ -2,6 +2,7 @@ package com.example.naziur.androidchat.adapter;
 
 import android.content.Context;
 import android.database.Cursor;
+import android.os.Build;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -57,20 +58,6 @@ public class MyContactsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
         return new MyContactViewHolder(view);
     }
 
-    private void readCursorData (Cursor c) {
-        allMyContacts = new ArrayList<>();
-        try{
-            while (c.moveToNext()) {
-                FirebaseUserModel fbModel = new FirebaseUserModel();
-                fbModel.setUsername(c.getString(c.getColumnIndex(MyContactsContract.MyContactsContractEntry.COLUMN_USERNAME)));
-                fbModel.setProfileName(c.getString(c.getColumnIndex(MyContactsContract.MyContactsContractEntry.COLUMN_PROFILE)));
-                // need one for profile picture
-                allMyContacts.add(new Contact(fbModel));
-            }
-        } finally {
-            c.close();
-        }
-    }
 
     private void setAllMyContacts(List<Contact> contacts){
         allMyContacts = contacts;
@@ -98,12 +85,14 @@ public class MyContactsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
 
     private static class MyContactViewHolder extends RecyclerView.ViewHolder {
 
-        private TextView usernameTv, profileTv;
+        private TextView usernameTv, profileTv, activeTv;
         private CircleImageView profPicIv;
+
         public MyContactViewHolder(View itemView) {
             super(itemView);
             usernameTv = (TextView) itemView.findViewById(R.id.username);
             profileTv = (TextView) itemView.findViewById(R.id.prof_name);
+            activeTv = (TextView) itemView.findViewById(R.id.active);
             profPicIv = (CircleImageView) itemView.findViewById(R.id.prof_pic);
 
         }
@@ -118,10 +107,30 @@ public class MyContactsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
                 });
             }
 
-
             usernameTv.setText(contact.getContact().getUsername());
             profileTv.setText(contact.getContact().getProfileName());
+            if (contact.isActive()) {
+                activeTv.setText(context.getResources().getString(R.string.contact_active));
+                setTextColor(activeTv, R.color.green, context);
+            } else {
+                activeTv.setText(context.getResources().getString(R.string.contact_inactive));
+                setTextColor(activeTv, R.color.red, context);
+                contact.getContact().setProfilePic("");
+            }
+
             Glide.with(context).load(contact.getContact().getProfilePic()).apply(new RequestOptions().placeholder(R.drawable.placeholder).error(R.drawable.unknown)).into(profPicIv);
         }
+
+        private void setTextColor (TextView textView, int res, Context context) {
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                textView.setTextColor(context.getColor(res));
+            } else {
+                textView.setTextColor(context.getResources().getColor(res));
+            }
+        }
     }
+
+
+
 }
