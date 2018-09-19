@@ -9,6 +9,7 @@ public class FirebaseGroupModel {
     String title = "";
     String pic = "";
     String admin = "";
+    String groupKey = "";
     String members = "";
 
     public FirebaseGroupModel () {
@@ -46,4 +47,13 @@ public class FirebaseGroupModel {
     public void setMembers(String members) {
         this.members = members;
     }
+
+    public String getGroupKey() {
+        return groupKey;
+    }
+
+    public void setGroupKey(String groupKey) {
+        this.groupKey = groupKey;
+    }
+
 }

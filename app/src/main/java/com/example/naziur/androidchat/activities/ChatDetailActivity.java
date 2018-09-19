@@ -63,7 +63,7 @@ public class ChatDetailActivity extends AppCompatActivity {
         if (Network.isInternetAvailable(this, true))
             getUsersInformationOnline();
         else if (!Network.isInternetAvailable(this, true) && isInContacts) {
-            getUsersInformationOffline();
+            getUsersInformationOffline(false);
         } else {
             finish();
         }
@@ -153,12 +153,17 @@ public class ChatDetailActivity extends AppCompatActivity {
         }
     }
 
-    private void getUsersInformationOffline () {
-        String[] profileAndPic= db.getProfileNameAndPic(user.getUsername());
-        user.setProfileName(profileAndPic[0]);
-        user.setProfilePic(profileAndPic[1]);
-        user.setStatus(getResources().getString(R.string.status_available));
-        putUserData();
+    private void getUsersInformationOffline (boolean notExistsInServer) {
+        if(isInContacts) {
+            String[] profileAndPic = db.getProfileNameAndPic(user.getUsername());
+            user.setProfileName(profileAndPic[0]);
+            user.setProfilePic(profileAndPic[1]);
+            user.setStatus(getResources().getString(R.string.status_available));
+            putUserData();
+        } else if(notExistsInServer){
+            Toast.makeText(this, "This user may not exist anymore", Toast.LENGTH_SHORT);
+            finish();
+        }
     }
 
     private void getUsersInformationOnline() {
@@ -166,13 +171,17 @@ public class ChatDetailActivity extends AppCompatActivity {
         userRef.orderByChild("username").equalTo(user.getUsername()).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                for (com.google.firebase.database.DataSnapshot userSnapshot : dataSnapshot.getChildren()) {
-                    FirebaseUserModel firebaseUserModel = userSnapshot.getValue(FirebaseUserModel.class);
-                    if (user.getUsername().equals(user.getUsername())){
-                        user = firebaseUserModel;
-                        putUserData();
+                if(dataSnapshot.exists()) {
+                    for (com.google.firebase.database.DataSnapshot userSnapshot : dataSnapshot.getChildren()) {
+                        FirebaseUserModel firebaseUserModel = userSnapshot.getValue(FirebaseUserModel.class);
+                        if (user.getUsername().equals(user.getUsername())) {
+                            user = firebaseUserModel;
+                            putUserData();
 
+                        }
                     }
+                } else {
+                    getUsersInformationOffline(true);
                 }
                 progressBar.toggleDialog(false);
             }

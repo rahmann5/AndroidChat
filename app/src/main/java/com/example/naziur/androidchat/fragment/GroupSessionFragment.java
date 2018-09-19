@@ -16,6 +16,7 @@ import com.example.naziur.androidchat.R;
 import com.example.naziur.androidchat.adapter.AllChatsAdapter;
 import com.example.naziur.androidchat.database.ContactDBHelper;
 import com.example.naziur.androidchat.models.Chat;
+import com.example.naziur.androidchat.models.FirebaseGroupModel;
 import com.example.naziur.androidchat.models.FirebaseUserModel;
 import com.example.naziur.androidchat.models.User;
 import com.example.naziur.androidchat.utils.Network;
@@ -44,7 +45,8 @@ public class GroupSessionFragment extends Fragment {
     private TextView emptyChats;
     private User user = User.getInstance();
     private List<String> allGroupKeys;
-    private List<Chat> allGroups;
+    private List<Chat> allChats;
+    private List<FirebaseGroupModel> allGroups;
     private ContactDBHelper db;
     private ProgressDialog progressBar;
     private List<ValueEventListener> grpValueEventListeners;
@@ -60,11 +62,12 @@ public class GroupSessionFragment extends Fragment {
         // Inflate the layout for this fragment
         View rootView = inflater.inflate(R.layout.fragment_group_session, container, false);
         grpValueEventListeners = new ArrayList<>();
+        allChats = new ArrayList<>();
         allGroups = new ArrayList<>();
         allGroupKeys = new ArrayList<>();
         database = FirebaseDatabase.getInstance();
         usersRef = database.getReference("users");
-        usersRef = database.getReference("groups");
+        groupsRef = database.getReference("groups");
         messagesRef = database.getReference("messages");
         emptyChats = (TextView) rootView.findViewById(R.id.no_chats);
         recyclerView = rootView.findViewById(R.id.all_group_chats_list);
@@ -87,6 +90,7 @@ public class GroupSessionFragment extends Fragment {
     }
 
     private void fetchUsersGroupKeys(){
+        //progressBar.toggleDialog(true);
         if (!Network.isInternetAvailable(getActivity(), true) && myChatsdapter.getItemCount() == 0) {
             emptyChats.setVisibility(View.VISIBLE);
             return;
@@ -105,7 +109,7 @@ public class GroupSessionFragment extends Fragment {
                             if(!key.equals(""))
                                 allGroupKeys.add(key);
                         }
-                        setUpGrpEventListeners();
+                        //setUpGrpEventListeners();
                         break;
                     }
                 }
@@ -114,7 +118,7 @@ public class GroupSessionFragment extends Fragment {
             @Override
             public void onCancelled(DatabaseError databaseError) {
                 progressBar.toggleDialog(false);
-                Log.i(TAG, databaseError.getMessage());
+                Log.i(TAG, "fetchUsersGroupKeys: "+databaseError.getMessage());
             }
         };
 
@@ -122,7 +126,38 @@ public class GroupSessionFragment extends Fragment {
     }
 
     private void setUpGrpEventListeners() {
+        if(allGroupKeys.size() > 0){
+            allGroups.clear();
+            for(int i = 0 ; i < allGroupKeys.size(); i++){
+                final String currentGroupKey = allGroupKeys.get(i);
+                ValueEventListener valueEventListener = new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        if (dataSnapshot.exists()) {
+                            for (com.google.firebase.database.DataSnapshot grpSnapshot : dataSnapshot.getChildren()) {
+                                FirebaseGroupModel firebaseGroupModel = grpSnapshot.getValue(FirebaseGroupModel.class);
+                                if(firebaseGroupModel.getGroupKey().equals(currentGroupKey))
+                                    allGroups.add(firebaseGroupModel);
+                            }
+                        }
+                        setUpGrpMSgEventListeners();
+                    }
 
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+                        progressBar.toggleDialog(false);
+                        Log.i(TAG, "setUpGrpEventListeners: "+databaseError.getMessage());
+                    }
+                };
+
+                grpValueEventListeners.add(valueEventListener);
+                groupsRef.orderByChild("groupKey").equalTo(allGroupKeys.get(i)).addValueEventListener(valueEventListener);
+            }
+        }
+    }
+
+    private void setUpGrpMSgEventListeners(){
+        System.out.println("Found " + allGroups.size() + " groups for this user");
     }
 
     private void setUpAdapterWithRecyclerView(){
@@ -149,4 +184,14 @@ public class GroupSessionFragment extends Fragment {
         recyclerView.setAdapter(myChatsdapter);
     }
 
+    @Override
+    public void onStop() {
+
+        if (userListener != null) {
+            usersRef.removeEventListener(userListener);
+        }
+
+        super.onStop();
+
+    }
 }
