@@ -249,11 +249,12 @@ public class GroupCreatorActivity extends AppCompatActivity {
 
     private void createGroupNode(String title, String imgUrl){
         final String uniqueID = UUID.randomUUID().toString()+System.currentTimeMillis();
-        DatabaseReference newRef = groupRef.child(uniqueID).push();
+        DatabaseReference newRef = groupRef.push();
         FirebaseGroupModel firebaseGroupModel = new FirebaseGroupModel();
         firebaseGroupModel.setTitle(title);
         firebaseGroupModel.setAdmin(user.name);
         firebaseGroupModel.setPic(imgUrl);
+        firebaseGroupModel.setGroupKey(uniqueID);
         firebaseGroupModel.setMembers(getAllMembersAsString());
         newRef.setValue(firebaseGroupModel, new DatabaseReference.CompletionListener() {
             @Override
@@ -271,15 +272,16 @@ public class GroupCreatorActivity extends AppCompatActivity {
 
     private void updateUsersGroupKeys(final String uniqueID) {
 
-        userRef.orderByChild("username").equalTo(user.name).getRef().runTransaction(new Transaction.Handler() {
+        userRef.orderByChild("username").getRef().runTransaction(new Transaction.Handler() {
             @Override
             public Transaction.Result doTransaction(MutableData mutableData) {
+                List<String> allMembers = getAllMembersTogether();
                 for(MutableData data : mutableData.getChildren()){
                     FirebaseUserModel firebaseUserModel = data.getValue(FirebaseUserModel.class);
                     if(firebaseUserModel == null)
                         return Transaction.success(mutableData);
 
-                    if(firebaseUserModel.getUsername().equals(user.name)){
+                    if(firebaseUserModel.getUsername().equals(user.name) || allMembers.contains(firebaseUserModel.getUsername())){
                         if(firebaseUserModel.getGroupKeys().equals(""))
                             firebaseUserModel.setGroupKeys(uniqueID);
                         else
