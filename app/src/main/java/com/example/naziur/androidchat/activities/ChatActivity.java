@@ -238,7 +238,6 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
                         }
 
                         if (me != null && !friend.getDeviceToken().equals("")) {
-                            if (menu != null) menu.findItem(R.id.view_details).setVisible(true);
                             break;
                         }
                     }

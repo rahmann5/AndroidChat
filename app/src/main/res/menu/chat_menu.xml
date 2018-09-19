@@ -3,7 +3,6 @@
     <item
         android:id="@+id/view_details"
         android:title="View Details"
-        android:visible="false"
         />
 
 </menu>
