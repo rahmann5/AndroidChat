@@ -101,26 +101,28 @@ public class MyContactsActivity extends AppCompatActivity implements AddContactD
     }
 
     private void setUpList () {
-
-        Cursor c = db.getAllMyContacts(null);
-        if (c != null && c.getCount() > 0) {
-            myContactsAdapter = new MyContactsAdapter(this, updateExistingContacts(c), setUpListener ());
-            emptyState.setVisibility(View.GONE);
-        } else {
-            Log.i(TAG, "Found no items");
-            emptyState.setVisibility(View.VISIBLE);
-            myContactsAdapter = new MyContactsAdapter(this, setUpListener());
-        }
         LinearLayoutManager mLayoutManager = new LinearLayoutManager(this);
         myContactsRecycler.setLayoutManager(mLayoutManager);
         DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(this,
                 mLayoutManager.getOrientation());
         myContactsRecycler.addItemDecoration(dividerItemDecoration);
-        myContactsRecycler.setAdapter(myContactsAdapter);
+
+        Cursor c = db.getAllMyContacts(null);
+
+        if (c != null && c.getCount() > 0) {
+            updateExistingContacts(c);
+            emptyState.setVisibility(View.GONE);
+        } else {
+            Log.i(TAG, "Found no items");
+            emptyState.setVisibility(View.VISIBLE);
+            myContactsAdapter = new MyContactsAdapter(this, setUpListener());
+            myContactsRecycler.setAdapter(myContactsAdapter);
+        }
+
+
     }
 
-    private List<Contact> updateExistingContacts (Cursor c) {
-        progressBar.toggleDialog(true);
+    private List<Contact> updateExistingContacts (final Cursor c) {
         final List<Contact> contacts = new ArrayList<>();
         boolean hasInternet = Network.isInternetAvailable(this, true);
         try{
@@ -145,24 +147,36 @@ public class MyContactsActivity extends AppCompatActivity implements AddContactD
                                         break;
                                     }
                                 }
+                            } else {
+                                contacts.add(new Contact(fbModel, "", false));
                             }
 
+                            myContactsAdapter = new MyContactsAdapter(MyContactsActivity.this, contacts ,setUpListener());
+                            myContactsRecycler.setAdapter(myContactsAdapter);
                         }
 
                         @Override
                         public void onCancelled(DatabaseError databaseError) {
-                            progressBar.toggleDialog(false);
+                            if (contacts.isEmpty())
+                                emptyState.setVisibility(View.VISIBLE);
+                            else
+                                emptyState.setVisibility(View.GONE);
+
                             Log.i(TAG, databaseError.getMessage());
                         }
                     });
                 } else {
                     fbModel.setProfilePic(c.getString(c.getColumnIndex(MyContactsContract.MyContactsContractEntry.COLUMN_PROFILE_PIC)));
-                    contacts.add(new Contact(fbModel));
+                    contacts.add(new Contact(fbModel, "", false));
                 }
 
             }
         } finally {
-            if (!hasInternet) Toast.makeText(this, "Data maybe outdated", Toast.LENGTH_LONG).show();
+            if (!hasInternet){
+                Toast.makeText(this, "Data maybe outdated", Toast.LENGTH_LONG).show();
+                myContactsAdapter = new MyContactsAdapter(MyContactsActivity.this, contacts ,setUpListener());
+                myContactsRecycler.setAdapter(myContactsAdapter);
+            }
             progressBar.toggleDialog(false);
             c.close();
         }
@@ -258,7 +272,7 @@ public class MyContactsActivity extends AppCompatActivity implements AddContactD
                 break;
 
             case 1 : // chat with contact
-                if (Network.isInternetAvailable(MyContactsActivity.this, true)) {
+                if (Network.isInternetAvailable(MyContactsActivity.this, true) && c.isActive()) {
                    checkKeyExists(c);
                 }
                 break;

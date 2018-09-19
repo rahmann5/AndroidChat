@@ -8,19 +8,22 @@ public class Contact {
 
     private FirebaseUserModel contact;
     private String lastMsg;
+    private boolean isActive;
 
     public Contact () {
 
     }
 
-    public Contact (FirebaseUserModel contact, String lastMsg) {
+    public Contact (FirebaseUserModel contact, String lastMsg, boolean isActive) {
         this.contact = contact;
         this.lastMsg = lastMsg;
+        this.isActive = isActive;
     }
 
     public Contact (FirebaseUserModel contact) {
         this.contact = contact;
         this.lastMsg = "";
+        isActive = true;
     }
 
     public FirebaseUserModel getContact() {
@@ -38,4 +41,9 @@ public class Contact {
     public void setLastMsg(String lastMsg) {
         this.lastMsg = lastMsg;
     }
+
+    public boolean isActive() {
+        return isActive;
+    }
+
 }

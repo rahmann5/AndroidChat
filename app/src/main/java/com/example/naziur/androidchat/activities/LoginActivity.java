@@ -52,8 +52,9 @@ public class LoginActivity extends AppCompatActivity {
     public void btnLoginTapped(View view) {
         final String strUsername = editTextUsername.getText().toString().trim();
         final String strProfileName = editTextProfileName.getText().toString().trim();
-        if (strUsername.isEmpty()) {
-            Toast.makeText(this, "Please enter unique username", Toast.LENGTH_LONG).show();
+
+        if (strUsername.isEmpty() && strUsername.matches("[a-zA-Z0-9]*")) {
+            Toast.makeText(this, "The username cannot be empty and made of only numbers and letters", Toast.LENGTH_LONG).show();
         } else {
 
             if (!Network.isInternetAvailable(this, true)) {
