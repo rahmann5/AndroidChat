@@ -304,12 +304,15 @@ public class SingleSessionFragment extends Fragment {
                         FirebaseUserModel firebaseUserModel = data.getValue(FirebaseUserModel.class);
                         if(firebaseUserModel.getUsername().equals(chat.getUsernameOfTheOneBeingSpokenTo())){
                             List<String> allKeys = Arrays.asList(firebaseUserModel.getChatKeys().split(","));
-                            if(allKeys.contains(chat.getChatKey()))
+                            if(allKeys.contains(chat.getChatKey())) // not complete delete
                                 performDeletionOfChat(updatedKeys, chat.getChatKey(),false);
-                            else
+                            else // a complete delete
                                 performDeletionOfChat(updatedKeys, chat.getChatKey(), true);
                         }
                     }
+                } else {
+                    // if friend account deleted
+                    performDeletionOfChat(updatedKeys, chat.getChatKey(), true);
                 }
             }
 
