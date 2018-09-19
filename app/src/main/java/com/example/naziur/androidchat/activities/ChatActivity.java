@@ -341,38 +341,46 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
                     // send text as wish
                     progressBar.toggleDialog(true);
 
-                    usersRef.orderByChild("username").equalTo(friend.getUsername()).addListenerForSingleValueEvent(new ValueEventListener() {
-                        @Override
-                        public void onDataChange(DataSnapshot dataSnapshot) {
-                            if(dataSnapshot.exists()){
-                                for(DataSnapshot snapshot : dataSnapshot.getChildren()){
-                                    FirebaseUserModel firebaseUserModel = snapshot.getValue(FirebaseUserModel.class);
-                                    List<String> list = Arrays.asList(firebaseUserModel.getChatKeys().split(","));
-                                    if(list.contains(chatKey))
-                                        sendMessage(wishMessage);
-                                    else {
-                                        textComment.setText("");
-                                        progressBar.toggleDialog(false);
-                                        btnInvite.setEnabled(true);
-                                        Toast.makeText(getApplicationContext(), "Recipient may have deleted this chat, so message could not be sent", Toast.LENGTH_SHORT).show();
-                                        btnInvite.setVisibility(View.VISIBLE);
-                                        btnSend.setVisibility(View.GONE);
-                                        btnMedia.setEnabled(false);
-                                    }
-                                }
-                            }
-                        }
-
-                        @Override
-                        public void onCancelled(DatabaseError databaseError) {
-                            Log.i(TAG, "Could not check if friend had chat key before sending message, sending is aborted");
-                        }
-                    });
-
+                    checkIfFriendStillHasKeyThenDoAction(0, wishMessage, null, null);
                 }
             }
         });
 
+    }
+
+    private void checkIfFriendStillHasKeyThenDoAction(final int actionType, final String wishMessage, final Dialog dialog, final ProgressBar pBar){
+        usersRef.orderByChild("username").equalTo(friend.getUsername()).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if(dataSnapshot.exists()){
+                    for(DataSnapshot snapshot : dataSnapshot.getChildren()){
+                        FirebaseUserModel firebaseUserModel = snapshot.getValue(FirebaseUserModel.class);
+                        List<String> list = Arrays.asList(firebaseUserModel.getChatKeys().split(","));
+                        if(list.contains(chatKey)) {
+                            if(actionType == 0)
+                                sendMessage(wishMessage);
+                            else if (actionType == 1)
+                                sendImageAndMessage(dialog, pBar);
+                        }else {
+                            textComment.setText("");
+                            progressBar.toggleDialog(false);
+                            btnInvite.setEnabled(true);
+                            Toast.makeText(getApplicationContext(), "Recipient may have deleted this chat, so message could not be sent", Toast.LENGTH_SHORT).show();
+                            btnInvite.setVisibility(View.VISIBLE);
+                            btnSend.setVisibility(View.GONE);
+                            btnMedia.setEnabled(false);
+                            if(dialog != null)
+                                dialog.dismiss();
+                        }
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                Log.i(TAG, "Could not check if friend had chat key before sending message, sending is aborted");
+            }
+        });
     }
 
     private void sendInviteNotification(){
@@ -734,76 +742,7 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
         if (!Network.isInternetAvailable(this, true)) return;
 
         if (action.equals(Constants.ACTION_SEND)) {
-            if (ImageViewDialogFragment.imageFile != null) {
-                Uri imgUri = Uri.fromFile(ImageViewDialogFragment.imageFile);
-                StorageReference mStorageRef = FirebaseStorage.getInstance()
-                        .getReference().child("single/" + chatKey + "/pictures/" + imgUri.getLastPathSegment());
-                mStorageRef.putFile(imgUri).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-                    @Override
-                    public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                        Handler handler = new Handler();
-                        handler.postDelayed(new Runnable() {
-                            @Override
-                            public void run() {
-                                progressBar.setProgress(0);
-                            }
-                        }, 5000);
-                        dialog.dismiss();
-                        ChatActivity.this.progressBar.toggleDialog(true);
-
-                        DatabaseReference newRef = messagesRef.push();
-                        @SuppressWarnings("VisibleForTests")
-                        final Uri downloadUrl = taskSnapshot.getDownloadUrl();
-                        newRef.setValue(makeNewMessageNode(Constants.MESSAGE_TYPE_PIC, downloadUrl.toString()), new DatabaseReference.CompletionListener() {
-
-                            @Override
-                            public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
-                                if (databaseError != null) {
-                                    // remove image from storage
-                                    removeFailedImageUpload(downloadUrl.toString());
-                                    // show message failed to send (icon)
-                                    Log.i(TAG, databaseError.getMessage());
-                                } else {
-                                    StringEntity entity = generateEntity(Constants.MESSAGE_TYPE_PIC, downloadUrl.toString());
-                                    if (entity == null){
-                                        Toast.makeText(ChatActivity.this, "Failed to make notification", Toast.LENGTH_SHORT).show();
-                                        return;
-                                    }
-                                    Network.createAsyncClient().post(getApplicationContext(), Constants.NOTIFICATION_URL, entity, RequestParams.APPLICATION_JSON, new TextHttpResponseHandler() {
-                                        @Override
-                                        public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
-                                            ChatActivity.this.progressBar.toggleDialog(false);
-                                            Log.i(TAG, responseString);
-                                        }
-
-                                        @Override
-                                        public void onSuccess(int statusCode, Header[] headers, String responseString) {
-                                            ChatActivity.this.progressBar.toggleDialog(false);
-                                            Log.i(TAG, responseString);
-                                        }
-                                    });
-                                }
-                            }
-
-
-                        });
-                    }
-                }).addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        Toast.makeText(ChatActivity.this, "Image Upload Failed", Toast.LENGTH_SHORT ).show();
-                        dialog.dismiss();
-                    }
-                }).addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
-                    @Override
-                    public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
-                        @SuppressWarnings("VisibleForTests")
-                        double progresss = (100.0* taskSnapshot.getBytesTransferred()/ taskSnapshot.getTotalByteCount());
-                        progressBar.setProgress((int)progresss);
-                    }
-                });
-
-            }
+            checkIfFriendStillHasKeyThenDoAction(1, "", dialog, progressBar);
         } else if (action.equals(Constants.ACTION_DOWNLOAD)) {
             if (ImageViewDialogFragment.imageFileString != null) {
                 if (isStoragePermissionGranted()) {
@@ -813,6 +752,79 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
             }
         }
 
+    }
+
+    private void sendImageAndMessage(final Dialog dialog, final ProgressBar progressBar){
+        if (ImageViewDialogFragment.imageFile != null) {
+            Uri imgUri = Uri.fromFile(ImageViewDialogFragment.imageFile);
+            StorageReference mStorageRef = FirebaseStorage.getInstance()
+                    .getReference().child("single/" + chatKey + "/pictures/" + imgUri.getLastPathSegment());
+            mStorageRef.putFile(imgUri).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                @Override
+                public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                    Handler handler = new Handler();
+                    handler.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            progressBar.setProgress(0);
+                        }
+                    }, 5000);
+                    dialog.dismiss();
+                    ChatActivity.this.progressBar.toggleDialog(true);
+
+                    DatabaseReference newRef = messagesRef.push();
+                    @SuppressWarnings("VisibleForTests")
+                    final Uri downloadUrl = taskSnapshot.getDownloadUrl();
+                    newRef.setValue(makeNewMessageNode(Constants.MESSAGE_TYPE_PIC, downloadUrl.toString()), new DatabaseReference.CompletionListener() {
+
+                        @Override
+                        public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
+                            if (databaseError != null) {
+                                // remove image from storage
+                                removeFailedImageUpload(downloadUrl.toString());
+                                // show message failed to send (icon)
+                                Log.i(TAG, databaseError.getMessage());
+                            } else {
+                                StringEntity entity = generateEntity(Constants.MESSAGE_TYPE_PIC, downloadUrl.toString());
+                                if (entity == null){
+                                    Toast.makeText(ChatActivity.this, "Failed to make notification", Toast.LENGTH_SHORT).show();
+                                    return;
+                                }
+                                Network.createAsyncClient().post(getApplicationContext(), Constants.NOTIFICATION_URL, entity, RequestParams.APPLICATION_JSON, new TextHttpResponseHandler() {
+                                    @Override
+                                    public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
+                                        ChatActivity.this.progressBar.toggleDialog(false);
+                                        Log.i(TAG, responseString);
+                                    }
+
+                                    @Override
+                                    public void onSuccess(int statusCode, Header[] headers, String responseString) {
+                                        ChatActivity.this.progressBar.toggleDialog(false);
+                                        Log.i(TAG, responseString);
+                                    }
+                                });
+                            }
+                        }
+
+
+                    });
+                }
+            }).addOnFailureListener(new OnFailureListener() {
+                @Override
+                public void onFailure(@NonNull Exception e) {
+                    Toast.makeText(ChatActivity.this, "Image Upload Failed", Toast.LENGTH_SHORT ).show();
+                    dialog.dismiss();
+                }
+            }).addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
+                @Override
+                public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
+                    @SuppressWarnings("VisibleForTests")
+                    double progresss = (100.0* taskSnapshot.getBytesTransferred()/ taskSnapshot.getTotalByteCount());
+                    progressBar.setProgress((int)progresss);
+                }
+            });
+
+        }
     }
 
     public  boolean isStoragePermissionGranted() {
