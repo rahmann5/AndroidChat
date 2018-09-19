@@ -191,10 +191,10 @@ public class NotificationActivity extends AppCompatActivity implements Notificat
         return keys[1] + "-" + keys[0];
     }
 
-    private String removeAnyDuplicateKey (String[] myKeys, String keyToAdd ,String searchDup) {
+    private String removeAnyDuplicateKey (String[] myKeys, String keyToAdd , String searchDup) {
         String newKeys = keyToAdd;
         for (String key : myKeys) {
-            if (!key.equals(searchDup)) {
+            if (!key.equals(searchDup) || !key.equals(keyToAdd)) {
                 newKeys += "," + key;
             }
         }
