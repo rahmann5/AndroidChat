@@ -267,6 +267,7 @@ public class MyContactsActivity extends AppCompatActivity implements AddContactD
         switch (pos) {
             case 0 : // see profile info
                 Intent chatDetailActivity = new Intent(this, ChatDetailActivity.class);
+                chatDetailActivity.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                 chatDetailActivity.putExtra("username", c.getContact().getUsername());
                 startActivity(chatDetailActivity);
                 break;
@@ -344,6 +345,7 @@ public class MyContactsActivity extends AppCompatActivity implements AddContactD
     private void startChatActivity (String chatKey) {
         Intent chatIntent = new Intent(MyContactsActivity.this, ChatActivity.class);
         chatIntent.putExtra("chatKey", chatKey);
+        chatIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         startActivity(chatIntent);
         finish();
     }

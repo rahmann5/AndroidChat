@@ -231,6 +231,7 @@ public class NotificationActivity extends AppCompatActivity implements Notificat
                 } else {
                     if(home) {
                         Intent i = new Intent(NotificationActivity.this, ChatActivity.class);
+                        i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                         i.putExtra("chatKey", gNotification.getChatKey());
                         startActivity(i);
                     }

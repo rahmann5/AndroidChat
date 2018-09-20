@@ -235,6 +235,7 @@ public class SingleSessionFragment extends Fragment {
             @Override
             public void onItemClick(Chat chat, int pos) {
                 Intent chatActivity = new Intent(getActivity(), ChatActivity.class);
+                chatActivity.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                 String chatKey = chat.getChatKey();
                 chatActivity.putExtra("chatKey", chatKey);
                 startActivity(chatActivity);
@@ -271,12 +272,14 @@ public class SingleSessionFragment extends Fragment {
                         switch (which) {
                             case 0 : // see profile info
                                 Intent chatDetailActivity = new Intent(getContext(), ChatDetailActivity.class);
+                                chatDetailActivity.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                                 chatDetailActivity.putExtra("username", chat.getUsernameOfTheOneBeingSpokenTo());
                                 startActivity(chatDetailActivity);
                                 break;
 
                             case 1 : // chat with contact
                                 Intent chatActivity = new Intent(getActivity(), ChatActivity.class);
+                                chatActivity.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                                 String chatKey = chat.getChatKey();
                                 chatActivity.putExtra("chatKey", chatKey);
                                 startActivity(chatActivity);

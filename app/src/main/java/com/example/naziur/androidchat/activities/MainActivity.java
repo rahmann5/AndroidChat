@@ -106,6 +106,7 @@ public class MainActivity extends AppCompatActivity {
         }
         if (intent == null) {
             intent = new Intent(this, SessionActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
             System.out.println("No Extra");
         }
         startActivity(intent);
