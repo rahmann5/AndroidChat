@@ -88,7 +88,7 @@ public class LoginActivity extends AppCompatActivity {
                         if(!foundMatch)
                             Toast.makeText(LoginActivity.this, "Please enter unique username", Toast.LENGTH_LONG).show();
                         else
-                            startActivity(new Intent(LoginActivity.this, SessionActivity.class));
+                            startActivity(new Intent(LoginActivity.this, SessionActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
 
                         progressDialog.toggleDialog(false);
                     }
@@ -121,7 +121,7 @@ public class LoginActivity extends AppCompatActivity {
                 progressDialog.toggleDialog(false);
                 if (databaseError == null) {
                     if (user.login(firebaseUserModel)) {
-                        Intent intent = new Intent(LoginActivity.this, SessionActivity.class);
+                        Intent intent = new Intent(LoginActivity.this, SessionActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                         startActivity(intent);
                         finish();
                     }

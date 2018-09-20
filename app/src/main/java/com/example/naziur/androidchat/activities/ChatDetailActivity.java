@@ -106,7 +106,7 @@ public class ChatDetailActivity extends AppCompatActivity {
         db.insertContact(user.getUsername(), user.getProfileName(), user.getProfilePic(), user.getDeviceToken());
         isInContacts = true;
         finish();
-        startActivity(getIntent());
+        startActivity(getIntent().setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
     }
 
     @Override
@@ -124,7 +124,7 @@ public class ChatDetailActivity extends AppCompatActivity {
 
         switch(id){
             case R.id.action_profile:
-                startActivity(new Intent(ChatDetailActivity.this, ProfileActivity.class));
+                startActivity(new Intent(ChatDetailActivity.this, ProfileActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
                 break;
             case R.id.action_contacts:
                 Toast.makeText(this, "Settings in progress", Toast.LENGTH_SHORT).show();
