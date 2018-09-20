@@ -607,7 +607,7 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.view_details :
-                Intent chatDetailActivity = new Intent(this, ChatDetailActivity.class);
+                Intent chatDetailActivity = new Intent(this, ChatDetailActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                 chatDetailActivity.putExtra("username", friend.getUsername());
                 startActivity(chatDetailActivity);
                 return true;
@@ -632,7 +632,7 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
         actionBar.getCustomView().findViewById(R.id.back).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                startActivity(new Intent (ChatActivity.this, SessionActivity.class));
+                startActivity(new Intent (ChatActivity.this, SessionActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
                 finish();
             }
         });
