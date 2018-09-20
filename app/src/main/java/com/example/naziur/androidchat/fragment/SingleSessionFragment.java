@@ -296,6 +296,10 @@ public class SingleSessionFragment extends Fragment {
         progressBar.toggleDialog(true);
         allChatKeys.remove(chat.getChatKey());
         final String updatedKeys = getChatKeysAsString();
+        performDeletionOfChat(updatedKeys, chat);
+    }
+
+    private void verifyAllMessageDeleteable (final Chat chat) {
         usersRef.orderByChild("username").equalTo(chat.getUsernameOfTheOneBeingSpokenTo()).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -304,27 +308,27 @@ public class SingleSessionFragment extends Fragment {
                         FirebaseUserModel firebaseUserModel = data.getValue(FirebaseUserModel.class);
                         if(firebaseUserModel.getUsername().equals(chat.getUsernameOfTheOneBeingSpokenTo())){
                             List<String> allKeys = Arrays.asList(firebaseUserModel.getChatKeys().split(","));
-                            if(allKeys.contains(chat.getChatKey())) // not complete delete
-                                performDeletionOfChat(updatedKeys, chat.getChatKey(),false);
-                            else // a complete delete
-                                performDeletionOfChat(updatedKeys, chat.getChatKey(), true);
+                            if(!allKeys.contains(chat.getChatKey())) // complete delete
+                                collectAllRemovableImagesForMessages (chat.getChatKey());
+
                         }
                     }
                 } else {
                     // if friend account deleted
-                    performDeletionOfChat(updatedKeys, chat.getChatKey(), true);
+                    collectAllRemovableImagesForMessages (chat.getChatKey());
                 }
             }
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
                 progressBar.toggleDialog(false);
-                Log.i(TAG, "Failed to check if other user in the chat also deleted the chat, aborted deletion of chat");
+                // record which chat key failed to remove
+                Log.i(TAG, "Failed to check if other user in the chat also deleted the chat "+ chat.getChatKey() +", aborted deletion of chat");
             }
         });
     }
 
-    private void performDeletionOfChat(final String updatedKeys, final String chatKey ,final boolean deleteMsgs){
+    private void performDeletionOfChat(final String updatedKeys, final Chat chat){
         DatabaseReference pendingTasks = usersRef.orderByChild("username").equalTo(user.name).getRef();
         pendingTasks.runTransaction(new Transaction.Handler() {
             @Override
@@ -350,9 +354,7 @@ public class SingleSessionFragment extends Fragment {
                     Log.i(TAG, "Transaction:onComplete:" + databaseError);
                     progressBar.toggleDialog(false);
                 } else {
-                    if(deleteMsgs){
-                        collectAllRemovableImagesForMessages (chatKey);
-                    }
+                    verifyAllMessageDeleteable(chat);
                 }
             }
 
