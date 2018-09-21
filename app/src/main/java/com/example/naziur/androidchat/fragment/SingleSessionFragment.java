@@ -82,7 +82,7 @@ public class SingleSessionFragment extends Fragment {
         // Inflate the layout for this fragment
         getActivity().setTitle("All Chats");
 
-        View rootView = inflater.inflate(R.layout.fragment_session_single, container, false);
+        View rootView = inflater.inflate(R.layout.fragment_session_all_chats, container, false);
         valueEventListeners = new ArrayList<>();
         allChats = new ArrayList<>();
         allChatKeys = new ArrayList<>();
@@ -106,7 +106,7 @@ public class SingleSessionFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        if (!Network.isInternetAvailable(getActivity(), true) && myChatsdapter.getItemCount() == 0) {
+        if (!Network.isInternetAvailable(getActivity(), true) || myChatsdapter.getItemCount() == 0) {
             emptyChats.setVisibility(View.VISIBLE);
             return;
         } else {
@@ -137,7 +137,7 @@ public class SingleSessionFragment extends Fragment {
             }
         };
 
-        usersRef.addValueEventListener(userListener);
+        usersRef.orderByChild("username").equalTo(user.name).addValueEventListener(userListener);
     }
 
     private void updateExistingContacts (Cursor c) {
