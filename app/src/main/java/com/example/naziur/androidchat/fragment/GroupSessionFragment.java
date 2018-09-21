@@ -166,7 +166,7 @@ public class GroupSessionFragment extends Fragment {
                 for (DataSnapshot msgData : dataSnapshot.getChildren()) {
                     FirebaseGroupMessageModel groupMessageModel = msgData.getValue(FirebaseGroupMessageModel.class);
                     db = new ContactDBHelper(getActivity());
-                    String senderName = db.getProfileNameAndPic(groupMessageModel.getSenderName())[0];
+                    String senderName = (groupMessageModel.getSenderName().equals(user.name))? user.profileName : db.getProfileNameAndPic(groupMessageModel.getSenderName())[0];
                     db.close();
                     SimpleDateFormat formatter = new SimpleDateFormat(getString(R.string.simple_date));
                     String dateString = formatter.format(new Date(groupMessageModel.getCreatedDateLong()));
@@ -205,7 +205,7 @@ public class GroupSessionFragment extends Fragment {
 
             @Override
             public void onItemLongClicked(Chat chat, int pos) {
-                createDialog(chat, pos);
+                createDialog(chat, pos).show();
             }
 
             @Override
