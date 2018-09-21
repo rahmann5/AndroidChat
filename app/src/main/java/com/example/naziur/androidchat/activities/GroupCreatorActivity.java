@@ -368,7 +368,7 @@ public class GroupCreatorActivity extends AppCompatActivity {
         firebaseGroupMessageModel.setText(inviteMessage);
 
 
-        msgRef.child("group").child(uniqueId).setValue(firebaseGroupMessageModel, new DatabaseReference.CompletionListener() {
+        msgRef.child("group").child(uniqueId).push().setValue(firebaseGroupMessageModel, new DatabaseReference.CompletionListener() {
             @Override
             public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
                 Network.createAsyncClient().post(getApplicationContext(), Constants.NOTIFICATION_URL, entity, RequestParams.APPLICATION_JSON, new TextHttpResponseHandler() {
