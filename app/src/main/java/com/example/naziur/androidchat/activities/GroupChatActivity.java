@@ -122,8 +122,6 @@ public class GroupChatActivity extends AppCompatActivity {
             }
         });
 
-        actionBar.setDisplayShowHomeEnabled(true);
-        actionBar.setDisplayHomeAsUpEnabled(true);
     }
 
     @Override
