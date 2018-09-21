@@ -27,10 +27,11 @@ import com.example.naziur.androidchat.adapter.MyContactsAdapter;
 import com.example.naziur.androidchat.database.ContactDBHelper;
 import com.example.naziur.androidchat.database.MyContactsContract;
 import com.example.naziur.androidchat.models.Contact;
+import com.example.naziur.androidchat.models.FirebaseGroupMessageModel;
 import com.example.naziur.androidchat.models.FirebaseGroupModel;
 import com.example.naziur.androidchat.models.FirebaseUserModel;
-import com.example.naziur.androidchat.models.Group;
 import com.example.naziur.androidchat.models.User;
+import com.example.naziur.androidchat.utils.Constants;
 import com.example.naziur.androidchat.utils.Network;
 import com.example.naziur.androidchat.utils.ProgressDialog;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -45,12 +46,21 @@ import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
+import com.loopj.android.http.RequestParams;
+import com.loopj.android.http.TextHttpResponseHandler;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
-import java.util.UUID;
+import java.util.Random;
 
+import cz.msebera.android.httpclient.Header;
+import cz.msebera.android.httpclient.entity.StringEntity;
 import de.hdodenhof.circleimageview.CircleImageView;
 import pl.aprilapps.easyphotopicker.DefaultCallback;
 import pl.aprilapps.easyphotopicker.EasyImage;
@@ -64,7 +74,7 @@ public class GroupCreatorActivity extends AppCompatActivity {
     private RecyclerView contactsRecyclerView;
     private RecyclerView choiceRecyclerView;
     private MyContactsAdapter myContactsAdapter;
-    private DatabaseReference userRef, groupRef;
+    private DatabaseReference userRef, groupRef, msgRef;
     private StorageReference mStorageRef;
     private ChoiceAdapter allChosenMembersAdapter;
     private File myImageFile;
@@ -88,6 +98,7 @@ public class GroupCreatorActivity extends AppCompatActivity {
         mStorageRef = FirebaseStorage.getInstance().getReference();
         userRef = database.getReference("users");
         groupRef = database.getReference("groups");
+        msgRef = database.getReference("messages");
         groupImage = (CircleImageView) findViewById(R.id.group_photo);
         CircleImageView refreshImage = (CircleImageView) findViewById(R.id.refresh);
         final EditText groupNameEt = (EditText) findViewById(R.id.group_name);
@@ -247,8 +258,8 @@ public class GroupCreatorActivity extends AppCompatActivity {
     }
 
 
-    private void createGroupNode(String title, String imgUrl){
-        final String uniqueID = UUID.randomUUID().toString()+System.currentTimeMillis();
+    private void createGroupNode(final String title, String imgUrl){
+        final String uniqueID = System.currentTimeMillis()+getRandomCharactersForKey();
         DatabaseReference newRef = groupRef.push();
         FirebaseGroupModel firebaseGroupModel = new FirebaseGroupModel();
         firebaseGroupModel.setTitle(title);
@@ -264,7 +275,7 @@ public class GroupCreatorActivity extends AppCompatActivity {
                     Toast.makeText(GroupCreatorActivity.this, "Error Uploading to Database", Toast.LENGTH_SHORT).show();
                     Log.e(TAG, databaseError.toString());
                 } else {
-                    updateUsersGroupKeys(uniqueID);
+                    getDeviceTokensAndSendAdminMsg(title, uniqueID);
                 }
             }
         });
@@ -284,8 +295,11 @@ public class GroupCreatorActivity extends AppCompatActivity {
                     if(firebaseUserModel.getUsername().equals(user.name) || allMembers.contains(firebaseUserModel.getUsername())){
                         if(firebaseUserModel.getGroupKeys().equals(""))
                             firebaseUserModel.setGroupKeys(uniqueID);
-                        else
-                            firebaseUserModel.setGroupKeys(firebaseUserModel.getGroupKeys()+", " + uniqueID);
+                        else {
+                            List<String> membersKeys = Arrays.asList(firebaseUserModel.getGroupKeys().split(","));
+                            if(!membersKeys.contains(uniqueID))
+                                firebaseUserModel.setGroupKeys(firebaseUserModel.getGroupKeys() + ", " + uniqueID);
+                        }
 
                         data.setValue(firebaseUserModel);
                     }
@@ -301,11 +315,110 @@ public class GroupCreatorActivity extends AppCompatActivity {
                 if(databaseError != null){
                     Log.i(TAG, "Could not update users group keys, adding was aborted");
                     Log.e(TAG, databaseError.getMessage());
+                    finish();
                 } else {
                     moveToGroupChatActivity(uniqueID);
                 }
             }
         });
+    }
+
+    private void getDeviceTokensAndSendAdminMsg(final String title, final String uniqueId){
+        final List<String> allMembers = getAllMembersTogether();
+        Collections.sort(allMembers);
+        userRef.orderByChild("username").startAt(allMembers.get(0)).endAt(allMembers.get(allMembers.size()-1)).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if(dataSnapshot.exists()){
+                    JSONArray membersDeviceTokens = new JSONArray();
+                    for(DataSnapshot snapshot : dataSnapshot.getChildren()){
+                        FirebaseUserModel firebaseUserModel = snapshot.getValue(FirebaseUserModel.class);
+                        if(allMembers.contains(firebaseUserModel.getUsername())){
+                            membersDeviceTokens.put(firebaseUserModel.getDeviceToken());
+                        }
+                    }
+                    sendAdminMsg(membersDeviceTokens, title, uniqueId);
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                Log.i(TAG, "getDeviceTokensAndSendAdminMsg");
+                Log.e(TAG, databaseError.getMessage());
+                progressBar.toggleDialog(false);
+            }
+        });
+    }
+
+    private void sendAdminMsg(JSONArray membersDeviceTokens, String title, final String uniqueId){
+        String inviteMessage = "Group invite to: " + title + " by " + user.name;
+        final StringEntity entity = generateEntity(membersDeviceTokens, title, uniqueId, inviteMessage);
+        if (entity == null){
+            Toast.makeText(GroupCreatorActivity.this, "Failed to make background notification", Toast.LENGTH_SHORT).show();
+            updateUsersGroupKeys(uniqueId);
+            return;
+        }
+
+        FirebaseGroupMessageModel firebaseGroupMessageModel = new FirebaseGroupMessageModel();
+        firebaseGroupMessageModel.setCreatedDate(System.currentTimeMillis());
+        firebaseGroupMessageModel.setMediaType(Constants.MESSAGE_TYPE_TEXT);
+        firebaseGroupMessageModel.setSenderDeviceId(user.deviceId);
+        firebaseGroupMessageModel.setSenderName(user.name);
+        firebaseGroupMessageModel.setId(uniqueId);
+        firebaseGroupMessageModel.setText(inviteMessage);
+
+
+        msgRef.child("group").child(uniqueId).setValue(firebaseGroupMessageModel, new DatabaseReference.CompletionListener() {
+            @Override
+            public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
+                Network.createAsyncClient().post(getApplicationContext(), Constants.NOTIFICATION_URL, entity, RequestParams.APPLICATION_JSON, new TextHttpResponseHandler() {
+                    int count = 0;
+                    @Override
+                    public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
+                        Toast.makeText(GroupCreatorActivity.this, "Error sending background notification", Toast.LENGTH_SHORT).show();
+                        Log.i(TAG, responseString);
+                        if(count == 0)
+                            updateUsersGroupKeys(uniqueId);
+                        count++;
+                    }
+
+                    @Override
+                    public void onSuccess(int statusCode, Header[] headers, String responseString) {
+                        Log.i(TAG, responseString);
+                        if(count == 0)
+                            updateUsersGroupKeys(uniqueId);
+                        count++;
+                    }
+                });
+            }
+        });
+
+    }
+
+    private StringEntity generateEntity (JSONArray membersDeviceTokens, String title, String uniqueId, String inviteMsg) {
+        JSONObject params = new JSONObject();
+        // params.put("to", c.getContact().getDeviceToken());
+        StringEntity entity = null;
+
+        try {
+
+            params.put("registration_ids", membersDeviceTokens);
+            JSONObject payload = new JSONObject();
+            payload.put("group_uid", uniqueId); // used for extra intent in main activity
+            JSONObject notificationObject = new JSONObject();
+            notificationObject.put("click_action", ".MainActivity");
+            notificationObject.put("body", inviteMsg);
+            notificationObject.put("title", title);
+            notificationObject.put("tag", uniqueId);
+            params.put("data", payload);
+            params.put("notification", notificationObject);
+
+            entity = new StringEntity(params.toString());
+        }catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return entity;
     }
 
     private String getAllMembersAsString(){
@@ -400,8 +513,10 @@ public class GroupCreatorActivity extends AppCompatActivity {
         return myContacts;
     }
 
-    private void makeGroup(){
-
+    private String getRandomCharactersForKey(){
+        Random rand = new Random();
+        String name = user.name;
+        return ""+name.charAt(rand.nextInt(name.length()))+name.charAt(rand.nextInt(name.length()))+rand.nextInt(name.length());
     }
 
     @Override

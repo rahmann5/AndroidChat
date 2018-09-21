@@ -130,7 +130,7 @@ public class ContactDBHelper extends SQLiteOpenHelper {
         String where = MyContactsContract.MyContactsContractEntry.COLUMN_USERNAME  + " = ?";
         return db.delete(MyContactsContract.MyContactsContractEntry.TABLE_NAME, where, new String []{username});
     }
-
+    //Update so that the device token is also updated
     public boolean updateProfile(String username, String newProfile, String profilePic){
         SQLiteDatabase db = getWritableDatabase();
         ContentValues cv = new ContentValues();
