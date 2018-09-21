@@ -79,6 +79,7 @@ public class LoginActivity extends AppCompatActivity {
                         for(DataSnapshot snapshot : dataSnapshot.getChildren()){
                            FirebaseUserModel firebaseUserModel = snapshot.getValue(FirebaseUserModel.class);
                             if(firebaseUserModel.getDeviceId().equals(currentDeviceId)){
+                                firebaseUserModel.setDeviceToken(FirebaseInstanceId.getInstance().getToken());
                                 user.login(firebaseUserModel);
                                 user.saveFirebaseKey(snapshot.getKey());
                                 foundMatch = true;

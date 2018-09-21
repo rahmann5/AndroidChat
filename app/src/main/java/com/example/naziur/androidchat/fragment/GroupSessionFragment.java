@@ -1,8 +1,11 @@
 package com.example.naziur.androidchat.fragment;
 
 
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.OrientationHelper;
 import android.support.v7.widget.RecyclerView;
@@ -11,11 +14,14 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.naziur.androidchat.R;
+import com.example.naziur.androidchat.activities.GroupChatActivity;
 import com.example.naziur.androidchat.adapter.AllChatsAdapter;
 import com.example.naziur.androidchat.database.ContactDBHelper;
 import com.example.naziur.androidchat.models.Chat;
+import com.example.naziur.androidchat.models.FirebaseGroupMessageModel;
 import com.example.naziur.androidchat.models.FirebaseGroupModel;
 import com.example.naziur.androidchat.models.FirebaseUserModel;
 import com.example.naziur.androidchat.models.User;
@@ -27,7 +33,9 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -35,7 +43,7 @@ import java.util.List;
  */
 public class GroupSessionFragment extends Fragment {
 
-    private static final String TAG = SingleSessionFragment.class.getSimpleName();
+    private static final String TAG = GroupSessionFragment.class.getSimpleName();
 
     private FirebaseDatabase database;
     private DatabaseReference messagesRef, usersRef, groupsRef;
@@ -49,7 +57,7 @@ public class GroupSessionFragment extends Fragment {
     private List<FirebaseGroupModel> allGroups;
     private ContactDBHelper db;
     private ProgressDialog progressBar;
-    private List<ValueEventListener> grpValueEventListeners;
+    private List<ValueEventListener> grpValueEventListeners, grpMsgValueEventListeners;
 
     public GroupSessionFragment() {
         // Required empty public constructor
@@ -60,8 +68,9 @@ public class GroupSessionFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        View rootView = inflater.inflate(R.layout.fragment_group_session, container, false);
+        View rootView = inflater.inflate(R.layout.fragment_session_all_chats, container, false);
         grpValueEventListeners = new ArrayList<>();
+        grpMsgValueEventListeners = new ArrayList<>();
         allChats = new ArrayList<>();
         allGroups = new ArrayList<>();
         allGroupKeys = new ArrayList<>();
@@ -70,7 +79,7 @@ public class GroupSessionFragment extends Fragment {
         groupsRef = database.getReference("groups");
         messagesRef = database.getReference("messages");
         emptyChats = (TextView) rootView.findViewById(R.id.no_chats);
-        recyclerView = rootView.findViewById(R.id.all_group_chats_list);
+        recyclerView = rootView.findViewById(R.id.all_chats_list);
         progressBar = new ProgressDialog(getActivity(), R.layout.progress_dialog, true);
         setUpAdapterWithRecyclerView();
 
@@ -90,13 +99,6 @@ public class GroupSessionFragment extends Fragment {
     }
 
     private void fetchUsersGroupKeys(){
-        //progressBar.toggleDialog(true);
-        if (!Network.isInternetAvailable(getActivity(), true) && myChatsdapter.getItemCount() == 0) {
-            emptyChats.setVisibility(View.VISIBLE);
-            return;
-        } else {
-            emptyChats.setVisibility(View.GONE);
-        }
         userListener = new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -109,7 +111,7 @@ public class GroupSessionFragment extends Fragment {
                             if(!key.equals(""))
                                 allGroupKeys.add(key);
                         }
-                        //setUpGrpEventListeners();
+                        setUpGrpEventListeners();
                         break;
                     }
                 }
@@ -117,18 +119,18 @@ public class GroupSessionFragment extends Fragment {
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
-                progressBar.toggleDialog(false);
                 Log.i(TAG, "fetchUsersGroupKeys: "+databaseError.getMessage());
             }
         };
 
-        usersRef.addValueEventListener(userListener);
+        usersRef.orderByChild("username").equalTo(user.name).addValueEventListener(userListener);
     }
 
     private void setUpGrpEventListeners() {
         if(allGroupKeys.size() > 0){
             allGroups.clear();
             for(int i = 0 ; i < allGroupKeys.size(); i++){
+                final int index = i;
                 final String currentGroupKey = allGroupKeys.get(i);
                 ValueEventListener valueEventListener = new ValueEventListener() {
                     @Override
@@ -139,13 +141,12 @@ public class GroupSessionFragment extends Fragment {
                                 if(firebaseGroupModel.getGroupKey().equals(currentGroupKey))
                                     allGroups.add(firebaseGroupModel);
                             }
+                            setUpGrpMSgEventListeners(index, currentGroupKey);
                         }
-                        setUpGrpMSgEventListeners();
                     }
 
                     @Override
                     public void onCancelled(DatabaseError databaseError) {
-                        progressBar.toggleDialog(false);
                         Log.i(TAG, "setUpGrpEventListeners: "+databaseError.getMessage());
                     }
                 };
@@ -156,32 +157,98 @@ public class GroupSessionFragment extends Fragment {
         }
     }
 
-    private void setUpGrpMSgEventListeners(){
-        System.out.println("Found " + allGroups.size() + " groups for this user");
+    private void setUpGrpMSgEventListeners(int index, final String groupKey){
+        final String title  = allGroups.get(index).getTitle();
+        final String picUrl  = allGroups.get(index).getPic();
+        grpMsgValueEventListeners.add(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                for (DataSnapshot msgData : dataSnapshot.getChildren()) {
+                    FirebaseGroupMessageModel groupMessageModel = msgData.getValue(FirebaseGroupMessageModel.class);
+                    db = new ContactDBHelper(getActivity());
+                    String senderName = db.getProfileNameAndPic(groupMessageModel.getSenderName())[0];
+                    db.close();
+                    SimpleDateFormat formatter = new SimpleDateFormat(getString(R.string.simple_date));
+                    String dateString = formatter.format(new Date(groupMessageModel.getCreatedDateLong()));
+                    Chat chat = new Chat(title, senderName, groupMessageModel.getText(), picUrl, dateString, groupKey ,groupMessageModel.getMediaType(), true);
+                    allChats.add(chat);
+                    myChatsdapter.setAllMyChats(allChats);
+                    myChatsdapter.notifyDataSetChanged();
+                    if (myChatsdapter.getItemCount() == 0) {
+                        emptyChats.setVisibility(View.VISIBLE);
+                    } else {
+                        emptyChats.setVisibility(View.GONE);
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                Log.i(TAG, "setUpGrpMSgEventListeners: "+databaseError.getMessage());
+            }
+        });
+
+        messagesRef.child("group").child(groupKey).limitToLast(1).addValueEventListener(grpMsgValueEventListeners.get(index));
+
     }
 
     private void setUpAdapterWithRecyclerView(){
         myChatsdapter = new AllChatsAdapter(getContext(), new AllChatsAdapter.OnItemClickListener() {
             @Override
             public void onItemClick(Chat chat, int pos) {
-
+                Intent chatActivity = new Intent(getActivity(), GroupChatActivity.class);
+                chatActivity.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                String chatKey = chat.getChatKey();
+                chatActivity.putExtra("group_uid", chatKey);
+                startActivity(chatActivity);
             }
 
             @Override
             public void onItemLongClicked(Chat chat, int pos) {
-
+                createDialog(chat, pos);
             }
 
             @Override
-            public void onButtonClicked(Chat chat, int position) {
-
-            }
+            public void onButtonClicked(Chat chat, int position) {}
         });
 
         LinearLayoutManager mLayoutManager = new LinearLayoutManager(getContext());
         mLayoutManager.setOrientation(OrientationHelper.VERTICAL);
         recyclerView.setLayoutManager(mLayoutManager);
         recyclerView.setAdapter(myChatsdapter);
+    }
+
+    private AlertDialog createDialog (final Chat chat, final int position) {
+        final AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        builder.setTitle(R.string.dialog_chat_select_action)
+                .setItems(R.array.chat_dialog_actions, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        // String[] actions = getResources().getStringArray(R.array.contact_dialog_actions);
+                        onActionSelected(which, chat, position);
+                        dialog.dismiss();
+                    }
+
+                    private void onActionSelected(int which, Chat chat, int position) {
+                        switch (which) {
+                            case 0 : // see profile info
+                                Toast.makeText(getActivity(), "View Group Details", Toast.LENGTH_SHORT).show();
+                                break;
+
+                            case 1 : // chat with contact
+                                Intent chatActivity = new Intent(getActivity(), GroupChatActivity.class);
+                                chatActivity.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                                String chatKey = chat.getChatKey();
+                                chatActivity.putExtra("group_uid", chatKey);
+                                startActivity(chatActivity);
+                                break;
+
+                            case 2 : // delete Chat
+                                Toast.makeText(getActivity(), "Leave Group", Toast.LENGTH_SHORT).show();
+                                break;
+                        }
+                    }
+                });
+        return builder.create();
     }
 
     @Override
@@ -191,6 +258,11 @@ public class GroupSessionFragment extends Fragment {
             usersRef.removeEventListener(userListener);
         }
 
+        for(int i = 0; i < grpValueEventListeners.size(); i++){
+            groupsRef.orderByChild("groupKey").equalTo(allGroupKeys.get(i)).removeEventListener(grpValueEventListeners.get(i));
+            messagesRef.child("group").child(allGroupKeys.get(i)).limitToLast(1).removeEventListener(grpValueEventListeners.get(i));
+
+        }
         super.onStop();
 
     }

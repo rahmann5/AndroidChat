@@ -79,8 +79,7 @@ public class AllChatsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     }
 
     private static class MyChatsViewHolder extends RecyclerView.ViewHolder {
-        User user = User.getInstance();
-        private TextView dateTimeTv, profileTv, lastMsgTv;
+        private TextView dateTimeTv, profileTv, lastMsgTv, grpSender;
         private CircleImageView profPicIv;
         private Button addContactBtn;
 
@@ -88,12 +87,34 @@ public class AllChatsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
             super(itemView);
             profileTv = (TextView) itemView.findViewById(R.id.prof_name);
             lastMsgTv = (TextView) itemView.findViewById(R.id.last_msg);
+            grpSender = (TextView) itemView.findViewById(R.id.grp_sender_name);
             profPicIv = (CircleImageView) itemView.findViewById(R.id.prof_pic);
             dateTimeTv = (TextView) itemView.findViewById(R.id.dateTime);
             addContactBtn = (Button) itemView.findViewById(R.id.add_contact_btn);
         }
 
         public void bind (final Chat chat, final int position, final OnItemClickListener listener, Context context) {
+
+            if (chat.isGroup()) {
+                addContactBtn.setVisibility(View.GONE);
+                profileTv.setText(chat.getTitle());
+                grpSender.setText(chat.getSenderName() + ":");
+                grpSender.setVisibility(View.VISIBLE);
+            } else {
+                if(chat.getUsernameOfTheOneBeingSpokenTo().equals(chat.getSpeakingTo())) {
+                    addContactBtn.setVisibility(View.VISIBLE);
+                    addContactBtn.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            listener.onButtonClicked(chat, position);
+                        }
+                    });
+                } else {
+                    addContactBtn.setVisibility(View.GONE);
+                }
+                profileTv.setText(chat.getSpeakingTo());
+            }
+
             itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
@@ -109,26 +130,14 @@ public class AllChatsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                 }
             });
 
-            if(chat.getUsernameOfTheOneBeingSpokenTo().equals(chat.getSpeakingTo())) {
-                addContactBtn.setVisibility(View.VISIBLE);
-                addContactBtn.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        listener.onButtonClicked(chat, position);
-                    }
-                });
-            } else {
-                addContactBtn.setVisibility(View.GONE);
-            }
 
-            profileTv.setText(chat.getSpeakingTo());
             dateTimeTv.setText(chat.getTimeOfMsg());
             lastMsgTv.setText(Constants.generateMediaText(context, chat.getMsgType(), chat.getLastMsgInThisChat()));
-            if (chat.getIsSeen() == Constants.MESSAGE_SENT){
+            /*if (chat.getIsSeen() == Constants.MESSAGE_SENT){
                 lastMsgTv.setTextColor(ContextCompat.getColor(context, R.color.red));
             } else {
                 lastMsgTv.setTextColor(ContextCompat.getColor(context, R.color.black));
-            }
+            }*/
             Glide.with(context).load(chat.getProfilePic()).apply(new RequestOptions().placeholder(R.drawable.unknown).error(R.drawable.unknown)).into(profPicIv);
         }
 

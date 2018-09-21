@@ -5,6 +5,9 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -22,6 +25,8 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.MutableData;
+import com.google.firebase.database.Transaction;
 import com.google.firebase.database.ValueEventListener;
 
 import de.hdodenhof.circleimageview.CircleImageView;
@@ -114,6 +119,114 @@ public class GroupChatActivity extends AppCompatActivity {
             public void onClick(View view) {
                 startActivity(new Intent(GroupChatActivity.this, SessionActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
                 finish();
+            }
+        });
+
+        actionBar.setDisplayShowHomeEnabled(true);
+        actionBar.setDisplayHomeAsUpEnabled(true);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.group_chat_menu, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                finish();
+                break;
+            case R.id.view_details :
+                break;
+            case R.id.leave_group :
+                leaveGroup();
+                break;
+
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+    private void leaveGroup () {
+        DatabaseReference groupRef = database.getReference("groups").orderByChild("groupKey").equalTo(groupKey).getRef();
+        groupRef.runTransaction(new Transaction.Handler() {
+            @Override
+            public Transaction.Result doTransaction(MutableData mutableData) {
+
+                for (MutableData data : mutableData.getChildren()) {
+                    FirebaseGroupModel groupData = data.getValue(FirebaseGroupModel.class);
+
+                    if (groupData == null) return Transaction.success(mutableData);
+
+                    if (groupData.getGroupKey().equals(groupKey)) {
+                        String [] membersNames = groupData.getMembers().split(",");
+                        String newMembersList = "";
+                        for (String username : membersNames) {
+                            if (!username.equals(user.name))
+                                newMembersList += (newMembersList.equals("")) ? username :  "," + username ;
+                        }
+
+                        groupData.setMembers(newMembersList);
+                        data.setValue(groupData);
+                    }
+
+                }
+
+                return Transaction.success(mutableData);
+            }
+
+            @Override
+            public void onComplete(DatabaseError databaseError, boolean b, DataSnapshot dataSnapshot) {
+                if (databaseError == null) {
+                    leaveGroupFromUser();
+                } else {
+                    Toast.makeText(GroupChatActivity.this, "Error leaving group", Toast.LENGTH_SHORT).show();
+                    Log.i(TAG, databaseError.getMessage());
+                }
+            }
+        });
+    }
+
+    private void leaveGroupFromUser(){
+        DatabaseReference userRef = database.getReference("users").orderByChild("username").equalTo(user.name).getRef();
+        userRef.runTransaction(new Transaction.Handler() {
+            @Override
+            public Transaction.Result doTransaction(MutableData mutableData) {
+
+                for(MutableData data : mutableData.getChildren()) {
+                    FirebaseUserModel firebaseUser = data.getValue(FirebaseUserModel.class);
+
+                    if (firebaseUser == null) return Transaction.success(mutableData);
+
+                    if (firebaseUser.getUsername().equals(user.name)) {
+                        String [] groupsKeys = firebaseUser.getGroupKeys().split(",");
+                        String newKeys = "";
+                        for (String gKey : groupsKeys) {
+                            if (!gKey.equals(groupKey)) {
+                                newKeys += (newKeys.equals(""))? gKey : ","  + gKey;
+                            }
+                        }
+
+                        firebaseUser.setGroupKeys(newKeys);
+
+                        data.setValue(firebaseUser);
+                    }
+
+                }
+
+                return Transaction.success(mutableData);
+            }
+
+            @Override
+            public void onComplete(DatabaseError databaseError, boolean b, DataSnapshot dataSnapshot) {
+                if (databaseError == null){
+                    Toast.makeText(GroupChatActivity.this, "Successfully left group", Toast.LENGTH_SHORT).show();
+                } else {
+                    Log.i(TAG, databaseError.getMessage());
+                }
             }
         });
     }

@@ -1,6 +1,7 @@
 package com.example.naziur.androidchat.models;
 
 import com.google.firebase.database.Exclude;
+import com.google.firebase.database.ServerValue;
 
 /**
  * Created by Hamidur on 13/09/2018.
@@ -44,17 +45,21 @@ public class FirebaseGroupMessageModel {
         this.mediaType = mediaType;
     }
 
+    public java.util.Map<String, String> getCreatedDate() {
+        return ServerValue.TIMESTAMP;
+    }
+
     @Exclude
+    public Long getCreatedDateLong() {
+        return createdDate;
+    }
+
     public String getId() {
         return Id;
     }
 
     public void setId(String id) {
         Id = id;
-    }
-
-    public Long getCreatedDate() {
-        return createdDate;
     }
 
     public void setCreatedDate(Long createdDate) {

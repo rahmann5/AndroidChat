@@ -86,14 +86,33 @@
                 android:textSize="16sp"
                 android:textStyle="bold"/>
 
-            <TextView
-                android:id="@+id/last_msg"
+            <LinearLayout
                 android:layout_marginTop="5dp"
+                android:orientation="horizontal"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:ellipsize="end"
-                android:maxLines="1"
-                android:text="Last Message"/>
+                android:layout_height="wrap_content">
+
+                <TextView
+                    android:id="@+id/grp_sender_name"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:text="Sender:"
+                    android:layout_marginEnd="5dp"
+                    android:layout_marginRight="5dp"
+                    android:visibility="gone"
+                    />
+
+                <TextView
+                    android:id="@+id/last_msg"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:text="Last Message"/>
+
+            </LinearLayout>
 
         </LinearLayout>
 

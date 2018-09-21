@@ -1,5 +1,7 @@
 package com.example.naziur.androidchat.models;
 
+import com.example.naziur.androidchat.utils.Constants;
+
 /**
  * Created by Naziur on 01/09/2018.
  */
@@ -9,11 +11,13 @@ public class Chat {
     //profile name of the person the device owner is speaking to
     private String chatKey;
 
-    private String speakingTo;
-    private String usernameOfTheOneBeingSpokenTo;
+    private String speakingTo, title; // profile name/ group name
+    private String usernameOfTheOneBeingSpokenTo, senderName; // username of that profile name/ sender of the chat in group chat
     private String lastMsgInThisChat;
     private String timeOfMsg;
     private int isSeen;
+
+    private boolean isGroup;
 
     private String msgType;
 
@@ -28,13 +32,25 @@ public class Chat {
         this.chatKey = chatKey;
         isSeen = received;
         this.msgType = msgType;
+        isGroup = false;
+    }
+
+    public Chat(String groupTitle, String username, String lastMsg, String pic, String time, String chatKey, String msgType, boolean group){
+        this.title = groupTitle;
+        senderName = username;
+        lastMsgInThisChat = lastMsg;
+        profilePic = pic;
+        timeOfMsg = time;
+        this.chatKey = chatKey;
+        isSeen = Constants.MESSAGE_RECEIVED;
+        this.msgType = msgType;
+        isGroup = group;
 
     }
 
     public String getChatKey() {
         return chatKey;
     }
-
 
     public String getTimeOfMsg() {
         return timeOfMsg;
@@ -76,4 +92,10 @@ public class Chat {
     public void setMsgType(String msgType) {
         this.msgType = msgType;
     }
+
+    public boolean isGroup () {return isGroup;}
+
+    public String getTitle (){return title;}
+
+    public String getSenderName (){return senderName;}
 }
