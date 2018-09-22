@@ -1,6 +1,7 @@
 package com.example.naziur.androidchat.database;
 
 import android.util.Log;
+import android.view.View;
 
 import com.example.naziur.androidchat.models.Chat;
 import com.example.naziur.androidchat.models.Contact;
@@ -19,6 +20,9 @@ import com.google.firebase.iid.FirebaseInstanceId;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * Created by Hamidur and Naziur on 21/09/2018.
  */
@@ -35,6 +39,10 @@ public class FirebaseHelper {
 
     public static final int CONDITION_1 = 0;
     public static final int CONDITION_2 = 1;
+    public static final int CONDITION_3 = 2;
+    public static final int CONDITION_4 = 3;
+    public static final int CONDITION_5 = 4;
+    public static final int CONDITION_6 = 5;
 
     private static FirebaseHelperListener listener;
 
@@ -118,7 +126,7 @@ public class FirebaseHelper {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
 
-                listener.onChange("createMessageEventListener", CONDITION_1, null);
+                listener.onCompleteTask("createMessageEventListener", CONDITION_1, null);
 
                 for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
                     //System.out.println("Child: " + postSnapshot);
@@ -126,10 +134,10 @@ public class FirebaseHelper {
                     FirebaseMessageModel firebaseMessageModel = postSnapshot.getValue(FirebaseMessageModel.class);
                     Container container = new Container();
                     container.setMsgModel(firebaseMessageModel);
-                    listener.onChange("createMessageEventListener", CONDITION_2, container);
+                    listener.onChange("createMessageEventListener", CONDITION_1, container);
                 }
 
-                listener.onCompleteTask("createMessageEventListener", CONDITION_1, null);
+                listener.onCompleteTask("createMessageEventListener", CONDITION_2, null);
             }
 
             @Override
@@ -137,6 +145,73 @@ public class FirebaseHelper {
                 listener.onFailureTask("createMessageEventListener", databaseError);
             }
         };
+    }
+
+    public static void setUpSingleChat(String node, final String friendUsername, final String usersUsername) {
+        DatabaseReference usersRef = database.getReference(node);
+        usersRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(com.google.firebase.database.DataSnapshot dataSnapshot) {
+                FirebaseUserModel friend = null;
+                FirebaseUserModel me = null;
+                for (com.google.firebase.database.DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
+                    System.out.println("Child: " + postSnapshot);
+                    //Getting the data from snapshot
+                    FirebaseUserModel firebaseUserModel = postSnapshot.getValue(FirebaseUserModel.class);
+                    Container container = new Container();
+                    container.setUserModel(firebaseUserModel);
+                    if (firebaseUserModel.getUsername().equals(friendUsername)) {
+                        listener.onChange("setUpSingleChat", CONDITION_1, container);
+                        friend = firebaseUserModel;
+                    } else if (firebaseUserModel.getUsername().equals(usersUsername)) {
+                        listener.onChange("setUpSingleChat", CONDITION_2, container);
+                        me = firebaseUserModel;
+                    }
+
+                    if (me != null && friend != null) {
+                        break;
+                    }
+                }
+
+                listener.onCompleteTask("setUpSingleChat", CONDITION_1, null);
+
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                listener.onFailureTask("setUpSingleChat", databaseError);
+            }
+        });
+    }
+
+    public static void checkKeyListKey (String node, String username, final int myCondition1, final int myCondition2 , final String chatKey) {
+        DatabaseReference usersRef = database.getReference(node);
+        usersRef.orderByChild("username").equalTo(username).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                boolean found = false;
+                if(dataSnapshot.exists()){
+                    for(DataSnapshot snapshot : dataSnapshot.getChildren()){
+                        FirebaseUserModel firebaseUserModel = snapshot.getValue(FirebaseUserModel.class);
+                        List<String> list = Arrays.asList(firebaseUserModel.getChatKeys().split(","));
+                        if(list.contains(chatKey)){
+                            found = true;
+                            listener.onCompleteTask("checkKeyListKey", myCondition1, null);
+                            break;
+                        }
+                    }
+                }
+
+                if (!found) {
+                    listener.onCompleteTask("checkKeyListKey", myCondition2, null);
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                listener.onFailureTask("checkKeyListKey", databaseError);
+            }
+        });
     }
 
     public static ValueEventListener getMessageEventListener(final User user, final ContactDBHelper db, final String dateFormat, final String chatKey){

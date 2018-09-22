@@ -1,6 +1,5 @@
 package com.example.naziur.androidchat.activities;
 
-import android.Manifest;
 import android.app.Dialog;
 import android.content.ClipData;
 import android.content.ClipboardManager;
@@ -13,10 +12,8 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
-import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.AppCompatImageButton;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -37,14 +34,12 @@ import com.example.naziur.androidchat.R;
 import com.example.naziur.androidchat.database.ContactDBHelper;
 import com.example.naziur.androidchat.database.FirebaseHelper;
 import com.example.naziur.androidchat.fragment.ImageViewDialogFragment;
-import com.example.naziur.androidchat.models.Chat;
 import com.example.naziur.androidchat.models.FirebaseMessageModel;
 import com.example.naziur.androidchat.models.FirebaseUserModel;
 import com.example.naziur.androidchat.models.MessageCell;
 import com.example.naziur.androidchat.models.Notification;
 import com.example.naziur.androidchat.models.User;
 import com.example.naziur.androidchat.utils.Constants;
-import com.example.naziur.androidchat.fragment.ErrorDialogFragment;
 import com.example.naziur.androidchat.utils.Container;
 import com.example.naziur.androidchat.utils.Network;
 import com.example.naziur.androidchat.utils.ProgressDialog;
@@ -54,24 +49,17 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.MutableData;
-import com.google.firebase.database.Transaction;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
-import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.RequestParams;
 import com.loopj.android.http.TextHttpResponseHandler;
 
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
-import java.net.MalformedURLException;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -81,7 +69,6 @@ import java.util.List;
 import java.util.Map;
 
 import cz.msebera.android.httpclient.Header;
-import cz.msebera.android.httpclient.HttpHeaders;
 import cz.msebera.android.httpclient.entity.StringEntity;
 import de.hdodenhof.circleimageview.CircleImageView;
 import pl.aprilapps.easyphotopicker.DefaultCallback;
@@ -111,6 +98,8 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
 
     private ActionBar actionBar;
     private FirebaseUserModel friend, me;
+
+    private ImageViewDialogFragment imageViewDialog;
 
     private Menu menu;
 
@@ -158,7 +147,7 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
                 MessageCell c = (MessageCell) listView.getItemAtPosition(i);
                 if (c.getMessageType().equals(Constants.MESSAGE_TYPE_PIC)) {
                     if (Network.isInternetAvailable(ChatActivity.this, true)) {
-                        ImageViewDialogFragment imageViewDialog = ImageViewDialogFragment.newInstance(
+                        imageViewDialog = ImageViewDialogFragment.newInstance(
                                 c.getMessageText(),
                                 Constants.ACTION_DOWNLOAD,
                                 android.R.drawable.ic_menu_upload);
@@ -191,134 +180,23 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
         progressBar = new ProgressDialog(this, R.layout.progress_dialog, true);
         progressBar.toggleDialog(true);
 
-        commentValueEventListener = new ValueEventListener() {
-
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-
-                messages.clear();
-
-                for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
-                    //System.out.println("Child: " + postSnapshot);
-                    //Getting the data from snapshot
-                    FirebaseMessageModel firebaseMessageModel = postSnapshot.getValue(FirebaseMessageModel.class);
-                    messages.add(firebaseMessageModel);
-                }
-
-                updateListView();
-
-                progressBar.toggleDialog(false);
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-                messages.clear();
-                updateListView();
-                progressBar.toggleDialog(false);
-                Log.i(TAG, databaseError.getMessage());
-            }
-        };
+        commentValueEventListener = FirebaseHelper.createMessageEventListener();
 
         if (Network.isInternetAvailable(this, true)) {
             // improve for future search of users (need only the sender and receiver - currently looping through all users)
-            usersRef.addListenerForSingleValueEvent(new ValueEventListener() {
-                @Override
-                public void onDataChange(com.google.firebase.database.DataSnapshot dataSnapshot) {
-                    for (com.google.firebase.database.DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
-                        System.out.println("Child: " + postSnapshot);
-                        //Getting the data from snapshot
-                        FirebaseUserModel firebaseUserModel = postSnapshot.getValue(FirebaseUserModel.class);
-                        if (firebaseUserModel.getUsername().equals(friend.getUsername())) {
-                            friend = firebaseUserModel;
-                            ((TextView) actionBar.getCustomView().findViewById(R.id.profile_name)).setText(friend.getProfileName());
-                            Glide.with(getApplicationContext())
-                                    .load(friend.getProfilePic())
-                                    .apply(new RequestOptions().placeholder(R.drawable.placeholder).error(R.drawable.unknown))
-                                    .into(((CircleImageView) actionBar.getCustomView().findViewById(R.id.profile_icon)));
-                        }
-
-                        if (firebaseUserModel.getUsername().equals(user.name)) {
-                            me = firebaseUserModel;
-                        }
-
-                        if (me != null && !friend.getDeviceToken().equals("")) {
-                            break;
-                        }
-                    }
-
-                    // account no longer exists
-                    if (friend.getDeviceToken().equals("")) {
-                        ((CircleImageView) actionBar.getCustomView().findViewById(R.id.profile_icon)).setVisibility(View.GONE);
-                        ((TextView) actionBar.getCustomView().findViewById(R.id.profile_name)).setText(friend.getUsername());
-                    }
-
-                    if (me != null) {
-                        //String myKey = findChatKey(me, friend);
-                        String friendKey = findChatKey(friend, me);
-                        btnInvite.setVisibility(View.GONE);
-                        btnSend.setVisibility(View.VISIBLE);
-                        btnMedia.setEnabled(true);
-                        assignMessageEventListener(chatKey);
-                        if (friendKey.equals("")) {
-                            progressBar.toggleDialog(false);
-                            // change send button to be able to send notification instead
-                            btnInvite.setVisibility(View.VISIBLE);
-                            btnMedia.setEnabled(false);
-                            btnSend.setVisibility(View.GONE);
-                        }
-
-                    } else {
-                        Log.i(TAG, "ME IS NULL");
-                        progressBar.toggleDialog(false);
-                        finish();
-                    }
-
-                }
-
-                @Override
-                public void onCancelled(DatabaseError databaseError) {
-                    loadLocalData("Oops an error has occurred and we have no clue what it is.");
-                    progressBar.toggleDialog(false);
-                    Log.i(TAG, "The read failed: " + databaseError.getMessage());
-                }
-            });
+            FirebaseHelper.setUpSingleChat("users", friend.getUsername(), user.name);
         } else {
-            loadLocalData("Please connect to the internet.");
+            loadLocalData();
         }
         btnInvite.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (!Network.isInternetAvailable(ChatActivity.this, true)) {
-                    return;
-                } else {
-                    btnInvite.setEnabled(false);
-
-                    usersRef.orderByChild("username").equalTo(friend.getUsername()).addListenerForSingleValueEvent(new ValueEventListener() {
-                        @Override
-                        public void onDataChange(DataSnapshot dataSnapshot) {
-                            if(dataSnapshot.exists()){
-                                for(DataSnapshot snapshot : dataSnapshot.getChildren()){
-                                    FirebaseUserModel firebaseUserModel = snapshot.getValue(FirebaseUserModel.class);
-                                    List<String> list = Arrays.asList(firebaseUserModel.getChatKeys().split(","));
-                                    if(list.contains(chatKey)){
-                                        btnInvite.setVisibility(View.GONE);
-                                        btnSend.setVisibility(View.VISIBLE);
-                                        btnMedia.setEnabled(true);
-                                        btnInvite.setEnabled(true);
-                                    } else {
-                                        sendInviteNotification();
-                                    }
-                                }
-                            }
-                        }
-
-                        @Override
-                        public void onCancelled(DatabaseError databaseError) {
-                            Log.i(TAG, "Could not check if friend had chat key before sending message, sending is aborted");
-                        }
-                    });
-
-                }
+            if (!Network.isInternetAvailable(ChatActivity.this, true)) {
+                return;
+            } else {
+                btnInvite.setEnabled(false);
+                FirebaseHelper.checkKeyListKey("users", friend.getUsername(), FirebaseHelper.CONDITION_1, FirebaseHelper.CONDITION_2 ,chatKey);
+            }
             }
         });
 
@@ -343,47 +221,12 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
                     btnSend.setEnabled(false);
                     // send text as wish
                     progressBar.toggleDialog(true);
-
-                    checkIfFriendStillHasKeyThenDoAction(0, wishMessage, null, null);
+                    FirebaseHelper.checkKeyListKey("users", friend.getUsername(), FirebaseHelper.CONDITION_3, FirebaseHelper.CONDITION_5 ,chatKey);
+                    //checkIfFriendStillHasKeyThenDoAction(0, wishMessage, null, null);
                 }
             }
         });
 
-    }
-
-    private void checkIfFriendStillHasKeyThenDoAction(final int actionType, final String wishMessage, final Dialog dialog, final ProgressBar pBar){
-        usersRef.orderByChild("username").equalTo(friend.getUsername()).addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                if(dataSnapshot.exists()){
-                    for(DataSnapshot snapshot : dataSnapshot.getChildren()){
-                        FirebaseUserModel firebaseUserModel = snapshot.getValue(FirebaseUserModel.class);
-                        List<String> list = Arrays.asList(firebaseUserModel.getChatKeys().split(","));
-                        if(list.contains(chatKey)) {
-                            if(actionType == 0)
-                                sendMessage(wishMessage);
-                            else if (actionType == 1)
-                                sendImageAndMessage(dialog, pBar);
-                        }else {
-                            textComment.setText("");
-                            progressBar.toggleDialog(false);
-                            btnInvite.setEnabled(true);
-                            Toast.makeText(getApplicationContext(), "Recipient may have deleted this chat, so message could not be sent", Toast.LENGTH_SHORT).show();
-                            btnInvite.setVisibility(View.VISIBLE);
-                            btnSend.setVisibility(View.GONE);
-                            btnMedia.setEnabled(false);
-                            if(dialog != null)
-                                dialog.dismiss();
-                        }
-                    }
-                }
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-                Log.i(TAG, "Could not check if friend had chat key before sending message, sending is aborted");
-            }
-        });
     }
 
     private void sendInviteNotification(){
@@ -423,7 +266,7 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
 
     private void sendMessage(final String wishMessage){
         DatabaseReference newRef = messagesRef.push();
-        newRef.setValue(makeNewMessageNode(Constants.MESSAGE_TYPE_TEXT,wishMessage), new DatabaseReference.CompletionListener() {
+        newRef.setValue(Network.makeNewMessageNode(Constants.MESSAGE_TYPE_TEXT,wishMessage, friend), new DatabaseReference.CompletionListener() {
             @Override
             public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
 
@@ -438,7 +281,7 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
                     if (friend != null) {
 
                         try {
-                            StringEntity entity = generateEntity(Constants.MESSAGE_TYPE_TEXT, wishMessage);
+                            StringEntity entity = Network.generateEntity(ChatActivity.this, Constants.MESSAGE_TYPE_TEXT, wishMessage, friend, chatKey);
                             if (entity == null){
                                 Toast.makeText(ChatActivity.this, "Failed to make notification", Toast.LENGTH_SHORT).show();
                                 return;
@@ -499,44 +342,6 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
         messagesRef.addValueEventListener(commentValueEventListener);
     }
 
-
-
-
-    private StringEntity generateEntity (String type, String wishMessage) {
-        JSONObject params = new JSONObject();
-        //params.put("registration_ids", registration_ids);
-        StringEntity entity = null;
-        try {
-            params.put("to", friend.getDeviceToken());
-            JSONObject payload = new JSONObject();
-            payload.put("chatKey", chatKey); // used for extra intent in main activity
-            JSONObject notificationObject = new JSONObject();
-            notificationObject.put("click_action", ".MainActivity");
-            notificationObject.put("body", Constants.generateMediaText(this, type, wishMessage));
-            notificationObject.put("title", user.profileName);
-            notificationObject.put("tag", user.deviceId);
-            params.put("data", payload);
-            params.put("notification", notificationObject);
-
-            entity = new StringEntity(params.toString());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return entity;
-    }
-
-    private FirebaseMessageModel makeNewMessageNode (String type, String wishMessage) {
-        final FirebaseMessageModel firebaseMessageModel = new FirebaseMessageModel();
-        firebaseMessageModel.setText(wishMessage);
-        firebaseMessageModel.setSenderDeviceId(user.deviceId);
-        firebaseMessageModel.setSenderName(user.name);
-        firebaseMessageModel.setReceiverName(friend.getUsername());
-        firebaseMessageModel.setIsReceived(Constants.MESSAGE_SENT);
-        firebaseMessageModel.setMediaType(type);
-        return  firebaseMessageModel;
-    }
-
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -562,7 +367,7 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
             public void onImagesPicked(@NonNull List<File> imageFiles, EasyImage.ImageSource source, int type) {
                 switch (type){
                     case REQUEST_CODE_GALLERY_CAMERA:
-                        ImageViewDialogFragment imageViewDialog = ImageViewDialogFragment.newInstance(
+                        imageViewDialog = ImageViewDialogFragment.newInstance(
                                 imageFiles.get(0),
                                 Constants.ACTION_SEND,
                                 android.R.drawable.ic_menu_send);
@@ -575,7 +380,7 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
         });
     }
 
-    private void loadLocalData (String errorMsg) {
+    private void loadLocalData () {
         progressBar.toggleDialog(false);
         ContactDBHelper db = new ContactDBHelper(this);
         if (db.isUserAlreadyInContacts(friend.getUsername())) {
@@ -592,9 +397,6 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
             Glide.with(getApplicationContext())
                     .load(R.drawable.unknown)
                     .into(((CircleImageView) actionBar.getCustomView().findViewById(R.id.profile_icon)));
-            ErrorDialogFragment errorDialog = ErrorDialogFragment.newInstance(errorMsg);
-            errorDialog.setCancelable(false);
-            errorDialog.show(getSupportFragmentManager(), "ErrorDialogFragment");
         }
         db.close();
 
@@ -740,146 +542,132 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
     }
 
     @Override
-    public void onActionPressed(String action, final Dialog dialog, final ProgressBar progressBar) {
-
-        if (!Network.isInternetAvailable(this, true)) return;
-
-        if (action.equals(Constants.ACTION_SEND)) {
-            checkIfFriendStillHasKeyThenDoAction(1, "", dialog, progressBar);
-        } else if (action.equals(Constants.ACTION_DOWNLOAD)) {
-            if (ImageViewDialogFragment.imageFileString != null) {
-                if (isStoragePermissionGranted()) {
-                    Network.downloadImageToPhone(this, ImageViewDialogFragment.imageFileString);
-                    dialog.dismiss();
-                }
-            }
-        }
-
-    }
-
-    private void sendImageAndMessage(final Dialog dialog, final ProgressBar progressBar){
-        if (ImageViewDialogFragment.imageFile != null) {
-            Uri imgUri = Uri.fromFile(ImageViewDialogFragment.imageFile);
-            StorageReference mStorageRef = FirebaseStorage.getInstance()
-                    .getReference().child("single/" + chatKey + "/pictures/" + imgUri.getLastPathSegment());
-            mStorageRef.putFile(imgUri).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-                @Override
-                public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                    Handler handler = new Handler();
-                    handler.postDelayed(new Runnable() {
-                        @Override
-                        public void run() {
-                            progressBar.setProgress(0);
-                        }
-                    }, 5000);
-                    dialog.dismiss();
-                    ChatActivity.this.progressBar.toggleDialog(true);
-
-                    DatabaseReference newRef = messagesRef.push();
-                    @SuppressWarnings("VisibleForTests")
-                    final Uri downloadUrl = taskSnapshot.getDownloadUrl();
-                    newRef.setValue(makeNewMessageNode(Constants.MESSAGE_TYPE_PIC, downloadUrl.toString()), new DatabaseReference.CompletionListener() {
-
-                        @Override
-                        public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
-                            if (databaseError != null) {
-                                // remove image from storage
-                                removeFailedImageUpload(downloadUrl.toString());
-                                // show message failed to send (icon)
-                                Log.i(TAG, databaseError.getMessage());
-                            } else {
-                                StringEntity entity = generateEntity(Constants.MESSAGE_TYPE_PIC, downloadUrl.toString());
-                                if (entity == null){
-                                    Toast.makeText(ChatActivity.this, "Failed to make notification", Toast.LENGTH_SHORT).show();
-                                    return;
-                                }
-                                Network.createAsyncClient().post(getApplicationContext(), Constants.NOTIFICATION_URL, entity, RequestParams.APPLICATION_JSON, new TextHttpResponseHandler() {
-                                    @Override
-                                    public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
-                                        ChatActivity.this.progressBar.toggleDialog(false);
-                                        Log.i(TAG, responseString);
-                                    }
-
-                                    @Override
-                                    public void onSuccess(int statusCode, Header[] headers, String responseString) {
-                                        ChatActivity.this.progressBar.toggleDialog(false);
-                                        Log.i(TAG, responseString);
-                                    }
-                                });
-                            }
-                        }
-
-
-                    });
-                }
-            }).addOnFailureListener(new OnFailureListener() {
-                @Override
-                public void onFailure(@NonNull Exception e) {
-                    Toast.makeText(ChatActivity.this, "Image Upload Failed", Toast.LENGTH_SHORT ).show();
-                    dialog.dismiss();
-                }
-            }).addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
-                @Override
-                public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
-                    @SuppressWarnings("VisibleForTests")
-                    double progresss = (100.0* taskSnapshot.getBytesTransferred()/ taskSnapshot.getTotalByteCount());
-                    progressBar.setProgress((int)progresss);
-                }
-            });
-
-        }
-    }
-
-    public  boolean isStoragePermissionGranted() {
-        if (Build.VERSION.SDK_INT >= 23) {
-            if (checkSelfPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                    == PackageManager.PERMISSION_GRANTED) {
-                Log.i(TAG,"Permission is granted");
-                return true;
-            } else {
-                Toast.makeText(ChatActivity.this, "Please allow permission to write to storage.", Toast.LENGTH_SHORT).show();
-                Log.i(TAG,"Permission is revoked");
-                //ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
-                return false;
-            }
-        }
-        else { //permission is automatically granted on sdk<23 upon installation
-            Log.i(TAG,"Permission is granted");
-            return true;
-        }
-    }
-
-    private void removeFailedImageUpload (String uri) {
-        StorageReference photoRef = FirebaseStorage.getInstance().getReferenceFromUrl(uri);
-        photoRef.delete().addOnSuccessListener(new OnSuccessListener<Void>() {
-            @Override
-            public void onSuccess(Void aVoid) {
-                ChatActivity.this.progressBar.toggleDialog(false);
-                Log.i(TAG, "onSuccess: removed image from failed database update");
-            }
-        }).addOnFailureListener(new OnFailureListener() {
-            @Override
-            public void onFailure(@NonNull Exception e) {
-                ChatActivity.this.progressBar.toggleDialog(false);
-                Toast.makeText(ChatActivity.this, "Error Removing old picture", Toast.LENGTH_SHORT).show();
-                Log.i(TAG, "onFailure: did not delete file in storage");
-                e.printStackTrace();
-            }
-        });
+    public void onActionPressed() {
+        FirebaseHelper.checkKeyListKey("users", friend.getUsername(), FirebaseHelper.CONDITION_4, FirebaseHelper.CONDITION_5 ,chatKey);
     }
 
     @Override
     public void onCompleteTask(String tag, int condition, Container container) {
+        if (tag.equals("createMessageEventListener")) {
+            switch (condition) {
+                case FirebaseHelper.CONDITION_1 :
+                    messages.clear();
+                    break;
 
+                case FirebaseHelper.CONDITION_2 :
+                    updateListView();
+                    progressBar.toggleDialog(false);
+                    break;
+            }
+        } else if (tag.equals("setUpSingleChat")) {
+            switch (condition) {
+                case FirebaseHelper.CONDITION_1 :
+                    // account no longer exists
+                    if (friend.getDeviceToken().equals("")) {
+                        ((CircleImageView) actionBar.getCustomView().findViewById(R.id.profile_icon)).setVisibility(View.GONE);
+                        ((TextView) actionBar.getCustomView().findViewById(R.id.profile_name)).setText(friend.getUsername());
+                    }
+
+                    if (me != null) {
+                        //String myKey = findChatKey(me, friend);
+                        String friendKey = findChatKey(friend, me);
+                        btnInvite.setVisibility(View.GONE);
+                        btnSend.setVisibility(View.VISIBLE);
+                        btnMedia.setEnabled(true);
+                        assignMessageEventListener(chatKey);
+                        if (friendKey.equals("")) {
+                            progressBar.toggleDialog(false);
+                            // change send button to be able to send notification instead
+                            btnInvite.setVisibility(View.VISIBLE);
+                            btnMedia.setEnabled(false);
+                            btnSend.setVisibility(View.GONE);
+                        }
+
+                    } else {
+                        Log.i(TAG, "ME IS NULL");
+                        progressBar.toggleDialog(false);
+                        finish();
+                    }
+                    break;
+
+            }
+        } else if (tag.equals("checkKeyListKey" )) {
+            switch (condition) {
+                case FirebaseHelper.CONDITION_1 :
+                    btnInvite.setVisibility(View.GONE);
+                    btnSend.setVisibility(View.VISIBLE);
+                    btnMedia.setEnabled(true);
+                    btnInvite.setEnabled(true);
+                    break;
+                case FirebaseHelper.CONDITION_2:
+                    sendInviteNotification();
+                    break;
+                case FirebaseHelper.CONDITION_3:
+                    String wishMessage = textComment.getText().toString().trim();
+                    sendMessage(wishMessage);
+                    break;
+                case FirebaseHelper.CONDITION_4:
+                    imageViewDialog.sendImageAndMessage(chatKey, friend, ChatActivity.this);
+                    break;
+                case FirebaseHelper.CONDITION_5:
+                    textComment.setText("");
+                    progressBar.toggleDialog(false);
+                    btnInvite.setEnabled(true);
+                    Toast.makeText(getApplicationContext(), "Recipient may have deleted this chat, so message could not be sent", Toast.LENGTH_SHORT).show();
+                    btnInvite.setVisibility(View.VISIBLE);
+                    btnSend.setVisibility(View.GONE);
+                    btnMedia.setEnabled(false);
+                    imageViewDialog.getDialog().dismiss();
+                    break;
+            }
+        }
     }
 
     @Override
     public void onFailureTask(String tag, DatabaseError databaseError) {
+        switch (tag) {
+            case "createMessageEventListener" :
+                messages.clear();
+                updateListView();
+                progressBar.toggleDialog(false);
+                break;
 
+            case "setUpSingleChat" :
+                loadLocalData();
+                progressBar.toggleDialog(false);
+                break;
+
+            case "checkKeyListKey" :
+                Log.i(TAG, "Could not check if friend had chat key before sending message, sending is aborted");
+                break;
+
+        }
+        Log.i(TAG, tag + " " +databaseError.getMessage());
     }
 
     @Override
     public void onChange(String tag, int condition, Container container) {
+        if (tag.equals("createMessageEventListener")) {
+            switch (condition) {
+                case FirebaseHelper.CONDITION_1 :
+                    messages.add(container.getMsgModel());
+                    break;
+            }
+        } else if (tag.equals("setUpSingleChat")) {
+            switch (condition) {
+                case FirebaseHelper.CONDITION_1 :
+                    friend = container.getUserModel();
+                    ((TextView) actionBar.getCustomView().findViewById(R.id.profile_name)).setText(friend.getProfileName());
+                    Glide.with(getApplicationContext())
+                            .load(friend.getProfilePic())
+                            .apply(new RequestOptions().placeholder(R.drawable.placeholder).error(R.drawable.unknown))
+                            .into(((CircleImageView) actionBar.getCustomView().findViewById(R.id.profile_icon)));
+                    break;
 
+                case FirebaseHelper.CONDITION_2 :
+                    me = container.getUserModel();
+                    break;
+            }
+        }
     }
 }

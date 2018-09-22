@@ -2,22 +2,45 @@ package com.example.naziur.androidchat.fragment;
 
 import android.app.Dialog;
 import android.content.Context;
+import android.content.pm.PackageManager;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.v4.app.DialogFragment;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.AppCompatImageButton;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
+import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
 import com.example.naziur.androidchat.R;
+import com.example.naziur.androidchat.activities.ChatActivity;
+import com.example.naziur.androidchat.models.FirebaseUserModel;
 import com.example.naziur.androidchat.utils.Constants;
+import com.example.naziur.androidchat.utils.Network;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.OnProgressListener;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
+import com.loopj.android.http.RequestParams;
+import com.loopj.android.http.TextHttpResponseHandler;
 
 import java.io.File;
+
+import cz.msebera.android.httpclient.Header;
+import cz.msebera.android.httpclient.entity.StringEntity;
 
 /**
  * Created by Hamidur on 09/09/2018.
@@ -25,8 +48,10 @@ import java.io.File;
 
 public class ImageViewDialogFragment extends DialogFragment {
 
+    private static final String TAG = "ImageViewDialogFragment";
+
     public interface ImageViewDialogListener {
-        void onActionPressed(String action, Dialog dialog, ProgressBar bar);
+        void onActionPressed();
     }
 
     private static ImageViewDialogListener listener;
@@ -35,6 +60,7 @@ public class ImageViewDialogFragment extends DialogFragment {
     public static String imageFileString;
     private static String action;
     private static int actionIcon;
+    ProgressBar progressBar;
 
     public static ImageViewDialogFragment newInstance (File f, String a, int icon) {
         imageFile = f;
@@ -60,7 +86,7 @@ public class ImageViewDialogFragment extends DialogFragment {
         LayoutInflater inflater = getActivity().getLayoutInflater();
         View v = inflater.inflate(R.layout.image_viewer_dialog, null);
 
-        final ProgressBar bar = (ProgressBar) v.findViewById(R.id.upload_progress);
+        progressBar = (ProgressBar) v.findViewById(R.id.upload_progress);
 
         ImageView display = (ImageView) v.findViewById(R.id.image_viewer);
 
@@ -88,8 +114,18 @@ public class ImageViewDialogFragment extends DialogFragment {
         sendBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                if (!Network.isInternetAvailable(getActivity(), true)) return;
                 sendBtn.setEnabled(false);
-                listener.onActionPressed(action, getDialog(), bar);
+                if (action.equals(Constants.ACTION_DOWNLOAD)) {
+                    if (imageFileString != null) {
+                        if (isStoragePermissionGranted(getActivity())) {
+                            Network.downloadImageToPhone(getActivity(), imageFileString);
+                            getDialog().dismiss();
+                        }
+                    }
+                } else if (action.equals(Constants.ACTION_SEND)) {
+                    listener.onActionPressed();
+                }
             }
         });
 
@@ -108,6 +144,115 @@ public class ImageViewDialogFragment extends DialogFragment {
             // The activity doesn't implement the interface, throw exception
             throw new ClassCastException(context.toString()
                     + " must implement ContactDialogListener");
+        }
+    }
+
+    public void sendImageAndMessage(final String chatKey, final FirebaseUserModel friend, final Context context){
+        if (ImageViewDialogFragment.imageFile != null) {
+            Uri imgUri = Uri.fromFile(ImageViewDialogFragment.imageFile);
+            StorageReference mStorageRef = FirebaseStorage.getInstance()
+                    .getReference().child("single/" + chatKey + "/pictures/" + imgUri.getLastPathSegment());
+            mStorageRef.putFile(imgUri).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                @Override
+                public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                    Handler handler = new Handler();
+                    handler.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            progressBar.setProgress(0);
+                        }
+                    }, 5000);
+                    getDialog().dismiss();
+                    DatabaseReference messagesRef = FirebaseDatabase.getInstance().getReference("messages")
+                            .child("single")
+                            .child(chatKey);
+                    DatabaseReference newRef = messagesRef.push();
+                    @SuppressWarnings("VisibleForTests")
+                    final Uri downloadUrl = taskSnapshot.getDownloadUrl();
+                    newRef.setValue(Network.makeNewMessageNode(Constants.MESSAGE_TYPE_PIC, downloadUrl.toString(),friend), new DatabaseReference.CompletionListener() {
+
+                        @Override
+                        public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
+                            if (databaseError != null) {
+                                // remove image from storage
+                                removeFailedImageUpload(downloadUrl.toString(), context);
+                                // show message failed to send (icon)
+                                Log.i(TAG, databaseError.getMessage());
+                            } else {
+                                StringEntity entity = Network.generateEntity(context, Constants.MESSAGE_TYPE_PIC, downloadUrl.toString(), friend, chatKey);
+                                if (entity == null){
+                                    Toast.makeText(context, "Failed to make notification", Toast.LENGTH_SHORT).show();
+                                    return;
+                                }
+                                Network.createAsyncClient().post(context, Constants.NOTIFICATION_URL, entity, RequestParams.APPLICATION_JSON, new TextHttpResponseHandler() {
+                                    @Override
+                                    public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
+                                        Log.i(TAG, "FAILED NOTIFICATION: " + responseString);
+                                    }
+
+                                    @Override
+                                    public void onSuccess(int statusCode, Header[] headers, String responseString) {
+                                        Log.i(TAG, "SUCCESSFUL NOTIFICATION: " + responseString);
+                                    }
+                                });
+                            }
+                        }
+
+
+                    });
+                }
+            }).addOnFailureListener(new OnFailureListener() {
+                @Override
+                public void onFailure(@NonNull Exception e) {
+                    Toast.makeText(context, "Image Upload Failed", Toast.LENGTH_SHORT ).show();
+                    getDialog().dismiss();
+                }
+            }).addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
+                @Override
+                public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
+                    @SuppressWarnings("VisibleForTests")
+                    double progresss = (100.0* taskSnapshot.getBytesTransferred()/ taskSnapshot.getTotalByteCount());
+                    progressBar.setProgress((int)progresss);
+                }
+            });
+
+        }
+    }
+
+
+    private void removeFailedImageUpload (String uri, final Context context) {
+        StorageReference photoRef = FirebaseStorage.getInstance().getReferenceFromUrl(uri);
+        photoRef.delete().addOnSuccessListener(new OnSuccessListener<Void>() {
+            @Override
+            public void onSuccess(Void aVoid) {
+                Log.i(TAG, "onSuccess: removed image from failed database update");
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                Toast.makeText(context, "Error Removing old picture", Toast.LENGTH_SHORT).show();
+                Log.i(TAG, "onFailure: did not delete file in storage");
+                e.printStackTrace();
+            }
+        });
+    }
+
+    public  boolean isStoragePermissionGranted(final Context context) {
+        if (Build.VERSION.SDK_INT >= 23) {
+            if (context.checkSelfPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                    == PackageManager.PERMISSION_GRANTED) {
+                Log.i(TAG,"Permission is granted");
+                return true;
+            } else {
+                Toast.makeText(context, "Please allow permission to write to storage.", Toast.LENGTH_SHORT).show();
+                Log.i(TAG,"Permission is revoked");
+                //ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
+                return false;
+            }
+        }
+        else { //permission is automatically granted on sdk<23 upon installation
+            Log.i(TAG,"Permission is granted");
+            return true;
         }
     }
 }
