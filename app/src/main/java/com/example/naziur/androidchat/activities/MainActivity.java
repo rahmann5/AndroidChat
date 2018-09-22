@@ -16,9 +16,11 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.example.naziur.androidchat.database.FirebaseHelper;
 import com.example.naziur.androidchat.models.FirebaseUserModel;
 import com.example.naziur.androidchat.models.User;
 
+import com.example.naziur.androidchat.utils.Container;
 import com.example.naziur.androidchat.utils.Network;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -31,21 +33,18 @@ import com.google.firebase.iid.FirebaseInstanceId;
 
 import com.example.naziur.androidchat.R;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements FirebaseHelper.FirebaseHelperListener{
 
     private static final String TAG = "MainActivity";
     String currentDeviceId;
 
     User user = User.getInstance();
 
-    FirebaseDatabase database;
-    DatabaseReference usersRef;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         setTheme(R.style.AppTheme_Launcher);
         super.onCreate(savedInstanceState);
-
+        FirebaseHelper.setFirebaseHelperListener(this);
         if (!Network.isInternetAvailable(this, true)) {
             moveToLoginActivity ();
             return;
@@ -55,39 +54,7 @@ public class MainActivity extends AppCompatActivity {
 
         currentDeviceId = Settings.Secure.getString(getApplicationContext().getContentResolver(), Settings.Secure.ANDROID_ID);
 
-        database = FirebaseDatabase.getInstance();
-        usersRef = database.getReference("users");
-
-        usersRef.addListenerForSingleValueEvent(new com.google.firebase.database.ValueEventListener() {
-            @Override
-            public void onDataChange(com.google.firebase.database.DataSnapshot dataSnapshot) {
-                boolean fail = true;
-                for (com.google.firebase.database.DataSnapshot userSnapshot : dataSnapshot.getChildren()) {
-                    //Getting the data from snapshot
-                    FirebaseUserModel firebaseUserModel = userSnapshot.getValue(FirebaseUserModel.class);
-
-                    if (firebaseUserModel.getDeviceId().equals(currentDeviceId)) {
-                        fail = false;
-                        firebaseUserModel.setDeviceToken(FirebaseInstanceId.getInstance().getToken());
-                        user.login(firebaseUserModel);
-                        user.saveFirebaseKey(userSnapshot.getKey());
-                        moveToSessionScreen();
-                        break;
-                    }
-                }
-
-                if (fail) {
-                    moveToLoginActivity ();
-                }
-
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-                moveToLoginActivity ();
-                Log.i(TAG, databaseError.getMessage());
-            }
-        });
+        FirebaseHelper.autoLogin("users", currentDeviceId, user);
 
     }
 
@@ -120,5 +87,27 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+    @Override
+    public void onCompleteTask(int condition, Container container) {
+        switch (condition) {
+            case FirebaseHelper.CONDITION_1 :
+                moveToSessionScreen();
+                break;
 
+            case FirebaseHelper.CONDITION_2 :
+                moveToLoginActivity ();
+                break;
+        }
+    }
+
+    @Override
+    public void onFailureTask(DatabaseError databaseError) {
+        moveToLoginActivity ();
+        Log.i(TAG, databaseError.getMessage());
+    }
+
+    @Override
+    public void onChange(int condition, Container container) {
+        // not required
+    }
 }

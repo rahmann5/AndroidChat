@@ -221,6 +221,7 @@ public class GroupChatActivity extends AppCompatActivity {
             @Override
             public void onComplete(DatabaseError databaseError, boolean b, DataSnapshot dataSnapshot) {
                 if (databaseError == null){
+                    finish();
                     Toast.makeText(GroupChatActivity.this, "Successfully left group", Toast.LENGTH_SHORT).show();
                 } else {
                     Log.i(TAG, databaseError.getMessage());

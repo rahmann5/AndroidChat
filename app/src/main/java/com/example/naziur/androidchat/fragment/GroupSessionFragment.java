@@ -89,11 +89,11 @@ public class GroupSessionFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        if (!Network.isInternetAvailable(getActivity(), true) && myChatsdapter.getItemCount() == 0) {
+        if (myChatsdapter.getItemCount() == 0) {
             emptyChats.setVisibility(View.VISIBLE);
-            return;
-        } else {
-            emptyChats.setVisibility(View.GONE);
+            if (!Network.isInternetAvailable(getActivity(), true)) {
+                return;
+            }
         }
         fetchUsersGroupKeys();
     }
