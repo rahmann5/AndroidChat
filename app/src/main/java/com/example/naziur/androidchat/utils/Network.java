@@ -12,13 +12,19 @@ import android.widget.Toast;
 
 import com.example.naziur.androidchat.activities.ChatActivity;
 import com.example.naziur.androidchat.models.Contact;
+import com.example.naziur.androidchat.models.FirebaseMessageModel;
+import com.example.naziur.androidchat.models.FirebaseUserModel;
+import com.example.naziur.androidchat.models.User;
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.RequestParams;
+
+import org.json.JSONObject;
 
 import java.io.File;
 import java.util.List;
 
 import cz.msebera.android.httpclient.HttpHeaders;
+import cz.msebera.android.httpclient.entity.StringEntity;
 
 /**
  * Created by Hamidur on 07/09/2018.
@@ -137,5 +143,42 @@ public class Network {
         client.addHeader(HttpHeaders.AUTHORIZATION, "key=AAAAQmgvFoU:APA91bF8shJboV6QDRVUvy-8ZKhZ6c1eri8a6zlkSPLDosvPZ-MegfsPEOGeKUhoxmtMq3d11bzeOEWWIupjCuKW3rgbwmqZ8LqumrK_ldWYT_ipDExdy4J2OWnhYwvb9Y6pIx8vOWD8");
         client.addHeader(HttpHeaders.CONTENT_TYPE, RequestParams.APPLICATION_JSON);
         return client;
+    }
+
+    public static StringEntity generateEntity (Context c, String type, String wishMessage, FirebaseUserModel friend, String chatKey) {
+        User user = User.getInstance();
+        JSONObject params = new JSONObject();
+        //params.put("registration_ids", registration_ids);
+        StringEntity entity = null;
+        try {
+            params.put("to", friend.getDeviceToken());
+            JSONObject payload = new JSONObject();
+            payload.put("chatKey", chatKey); // used for extra intent in main activity
+            JSONObject notificationObject = new JSONObject();
+            notificationObject.put("click_action", ".MainActivity");
+            notificationObject.put("body", Constants.generateMediaText(c, type, wishMessage));
+            notificationObject.put("title", user.profileName);
+            notificationObject.put("tag", user.deviceId);
+            params.put("data", payload);
+            params.put("notification", notificationObject);
+
+            entity = new StringEntity(params.toString());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return entity;
+    }
+
+    public static FirebaseMessageModel makeNewMessageNode (String type, String wishMessage, FirebaseUserModel friend) {
+        User user = User.getInstance();
+        final FirebaseMessageModel firebaseMessageModel = new FirebaseMessageModel();
+        firebaseMessageModel.setText(wishMessage);
+        firebaseMessageModel.setSenderDeviceId(user.deviceId);
+        firebaseMessageModel.setSenderName(user.name);
+        firebaseMessageModel.setReceiverName(friend.getUsername());
+        firebaseMessageModel.setIsReceived(Constants.MESSAGE_SENT);
+        firebaseMessageModel.setMediaType(type);
+        return  firebaseMessageModel;
     }
 }
