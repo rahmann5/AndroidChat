@@ -21,6 +21,7 @@ import android.widget.Toast;
 import com.example.naziur.androidchat.database.ContactDBHelper;
 import com.example.naziur.androidchat.R;
 import com.example.naziur.androidchat.adapter.MyContactsAdapter;
+import com.example.naziur.androidchat.database.FirebaseHelper;
 import com.example.naziur.androidchat.database.MyContactsContract;
 import com.example.naziur.androidchat.models.Chat;
 import com.example.naziur.androidchat.models.Contact;
@@ -30,6 +31,7 @@ import com.example.naziur.androidchat.models.FirebaseUserModel;
 import com.example.naziur.androidchat.models.Notification;
 import com.example.naziur.androidchat.models.User;
 import com.example.naziur.androidchat.utils.Constants;
+import com.example.naziur.androidchat.utils.Container;
 import com.example.naziur.androidchat.utils.Network;
 import com.example.naziur.androidchat.utils.ProgressDialog;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -54,7 +56,7 @@ import java.util.List;
 import cz.msebera.android.httpclient.Header;
 import cz.msebera.android.httpclient.entity.StringEntity;
 
-public class MyContactsActivity extends AppCompatActivity implements AddContactDialogFragment.ContactDialogListener{
+public class MyContactsActivity extends AppCompatActivity implements AddContactDialogFragment.ContactDialogListener, FirebaseHelper.FirebaseHelperListener{
     private static final String TAG = "MyContactsActivity";
     private ContactDBHelper db;
     private RecyclerView myContactsRecycler;
@@ -69,6 +71,7 @@ public class MyContactsActivity extends AppCompatActivity implements AddContactD
         setContentView(R.layout.activity_my_contacts);
 
         setTitle("My Contacts");
+        FirebaseHelper.setFirebaseHelperListener(this);
         db = new ContactDBHelper(getApplicationContext());
         myContactsRecycler = (RecyclerView) findViewById(R.id.contacts_recycler);
         progressBar = new ProgressDialog(MyContactsActivity.this, R.layout.progress_dialog, true);
@@ -122,8 +125,8 @@ public class MyContactsActivity extends AppCompatActivity implements AddContactD
 
     }
 
-    private List<Contact> updateExistingContacts (final Cursor c) {
-        final List<Contact> contacts = new ArrayList<>();
+    private void updateExistingContacts (final Cursor c) {
+        myContactsAdapter = new MyContactsAdapter(this, setUpListener());
         boolean hasInternet = Network.isInternetAvailable(this, true);
         try{
             while (c.moveToNext()) {
@@ -133,54 +136,21 @@ public class MyContactsActivity extends AppCompatActivity implements AddContactD
                 fbModel.setProfileName(c.getString(c.getColumnIndex(MyContactsContract.MyContactsContractEntry.COLUMN_PROFILE)));
 
                 if (hasInternet) {
-                    // need one for profile picture
-                    Query query = userRef.orderByChild("username").equalTo(fbModel.getUsername());
-                    query.addListenerForSingleValueEvent(new ValueEventListener() {
-                        @Override
-                        public void onDataChange(DataSnapshot dataSnapshot) {
-                            if(dataSnapshot.exists()){
-                                for (com.google.firebase.database.DataSnapshot userSnapshot : dataSnapshot.getChildren()) {
-                                    FirebaseUserModel firebaseUserModel = userSnapshot.getValue(FirebaseUserModel.class);
-                                    if(firebaseUserModel.getUsername().equals(fbModel.getUsername())) {
-                                        db.updateProfile(firebaseUserModel.getUsername(), firebaseUserModel.getProfileName(), firebaseUserModel.getProfilePic());
-                                        contacts.add(new Contact(firebaseUserModel));
-                                        break;
-                                    }
-                                }
-                            } else {
-                                contacts.add(new Contact(fbModel, "", false));
-                            }
-
-                            myContactsAdapter = new MyContactsAdapter(MyContactsActivity.this, contacts ,setUpListener());
-                            myContactsRecycler.setAdapter(myContactsAdapter);
-                        }
-
-                        @Override
-                        public void onCancelled(DatabaseError databaseError) {
-                            if (contacts.isEmpty())
-                                emptyState.setVisibility(View.VISIBLE);
-                            else
-                                emptyState.setVisibility(View.GONE);
-
-                            Log.i(TAG, databaseError.getMessage());
-                        }
-                    });
+                    FirebaseHelper.updateLocalContactsFromFirebase("users", fbModel, db);
                 } else {
                     fbModel.setProfilePic(c.getString(c.getColumnIndex(MyContactsContract.MyContactsContractEntry.COLUMN_PROFILE_PIC)));
-                    contacts.add(new Contact(fbModel, "", false));
+                    myContactsAdapter.addNewItem(fbModel);
                 }
 
             }
         } finally {
             if (!hasInternet){
                 Toast.makeText(this, "Data maybe outdated", Toast.LENGTH_LONG).show();
-                myContactsAdapter = new MyContactsAdapter(MyContactsActivity.this, contacts ,setUpListener());
                 myContactsRecycler.setAdapter(myContactsAdapter);
             }
             progressBar.toggleDialog(false);
             c.close();
         }
-        return contacts;
     }
 
     private MyContactsAdapter.OnItemClickListener setUpListener () {
@@ -548,5 +518,36 @@ public class MyContactsActivity extends AppCompatActivity implements AddContactD
         }
 
         return entity;
+    }
+
+    @Override
+    public void onCompleteTask(int condition, Container container) {
+        switch (condition) {
+            case FirebaseHelper.CONDITION_1 :
+                myContactsAdapter.addNewItem(container.getContact().getContact());
+                break;
+            case FirebaseHelper.CONDITION_2 :
+                myContactsRecycler.setAdapter(myContactsAdapter);
+                break;
+        }
+    }
+
+    @Override
+    public void onFailureTask(DatabaseError databaseError) {
+        if (myContactsAdapter.getItemCount() == 0)
+            emptyState.setVisibility(View.VISIBLE);
+        else
+            emptyState.setVisibility(View.GONE);
+
+        Log.i(TAG, databaseError.getMessage());
+    }
+
+    @Override
+    public void onChange(int condition, Container container) {
+        switch (condition) {
+            case FirebaseHelper.CONDITION_1 :
+                myContactsAdapter.addNewItem(container.getContact().getContact());
+                break;
+        }
     }
 }
