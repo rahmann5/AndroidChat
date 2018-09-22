@@ -298,7 +298,7 @@ public class GroupCreatorActivity extends AppCompatActivity {
                         else {
                             List<String> membersKeys = Arrays.asList(firebaseUserModel.getGroupKeys().split(","));
                             if(!membersKeys.contains(uniqueID))
-                                firebaseUserModel.setGroupKeys(firebaseUserModel.getGroupKeys() + ", " + uniqueID);
+                                firebaseUserModel.setGroupKeys(firebaseUserModel.getGroupKeys() + "," + uniqueID);
                         }
 
                         data.setValue(firebaseUserModel);
@@ -429,7 +429,7 @@ public class GroupCreatorActivity extends AppCompatActivity {
             members += user;
 
             if(i < allMembers.size()-1){
-                members += ", ";
+                members += ",";
             }
             i++;
         }
