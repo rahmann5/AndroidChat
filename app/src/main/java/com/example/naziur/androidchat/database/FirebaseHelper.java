@@ -3,6 +3,7 @@ package com.example.naziur.androidchat.database;
 import android.util.Log;
 
 import com.example.naziur.androidchat.models.Contact;
+import com.example.naziur.androidchat.models.FirebaseMessageModel;
 import com.example.naziur.androidchat.models.FirebaseUserModel;
 import com.example.naziur.androidchat.models.User;
 import com.example.naziur.androidchat.utils.Container;
@@ -23,9 +24,9 @@ public class FirebaseHelper {
     private static FirebaseDatabase database = FirebaseDatabase.getInstance();
 
     public interface FirebaseHelperListener {
-        void onCompleteTask (int condition, Container container);
-        void onFailureTask(DatabaseError databaseError);
-        void onChange(int condition, Container container);
+        void onCompleteTask (String tag, int condition, Container container);
+        void onFailureTask(String tag, DatabaseError databaseError);
+        void onChange(String tag, int condition, Container container);
     }
 
     public static final int CONDITION_1 = 0;
@@ -54,20 +55,20 @@ public class FirebaseHelper {
                         firebaseUserModel.setDeviceToken(FirebaseInstanceId.getInstance().getToken());
                         user.login(firebaseUserModel);
                         user.saveFirebaseKey(userSnapshot.getKey());
-                        listener.onCompleteTask(CONDITION_1, null);
+                        listener.onCompleteTask("autoLogin", CONDITION_1, null);
                         break;
                     }
                 }
 
                 if (fail) {
-                    listener.onCompleteTask(CONDITION_2, null);
+                    listener.onCompleteTask("autoLogin", CONDITION_2, null);
                 }
 
             }
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
-                listener.onFailureTask(databaseError);
+                listener.onFailureTask("autoLogin", databaseError);
             }
         });
     }
@@ -86,25 +87,52 @@ public class FirebaseHelper {
                             db.updateProfile(firebaseUserModel.getUsername(), firebaseUserModel.getProfileName(), firebaseUserModel.getProfilePic());
                             Container container = new Container();
                             container.setContact(new Contact(firebaseUserModel));
-                            listener.onChange(CONDITION_1, container);
+                            listener.onChange("updateLocalContactsFromFirebase",CONDITION_1, container);
                             break;
                         }
                     }
                 } else {
                     Container container = new Container();
                     container.setContact(new Contact(fbModel, "", false));
-                    listener.onCompleteTask(CONDITION_1, container);
+                    listener.onCompleteTask("updateLocalContactsFromFirebase", CONDITION_1, container);
                 }
 
-                listener.onCompleteTask(CONDITION_2, null);
+                listener.onCompleteTask("updateLocalContactsFromFirebase", CONDITION_2, null);
 
             }
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
-               listener.onFailureTask(databaseError);
+               listener.onFailureTask("updateLocalContactsFromFirebase", databaseError);
             }
         });
+    }
+
+    public static ValueEventListener createMessageEventListener () {
+        return new ValueEventListener() {
+
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+
+                listener.onChange("createMessageEventListener", CONDITION_1, null);
+
+                for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
+                    //System.out.println("Child: " + postSnapshot);
+                    //Getting the data from snapshot
+                    FirebaseMessageModel firebaseMessageModel = postSnapshot.getValue(FirebaseMessageModel.class);
+                    Container container = new Container();
+                    container.setMsgModel(firebaseMessageModel);
+                    listener.onChange("createMessageEventListener", CONDITION_2, container);
+                }
+
+                listener.onCompleteTask("createMessageEventListener", CONDITION_1, null);
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                listener.onFailureTask("createMessageEventListener", databaseError);
+            }
+        };
     }
 
 }

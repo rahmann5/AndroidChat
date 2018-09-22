@@ -88,7 +88,7 @@ public class MainActivity extends AppCompatActivity implements FirebaseHelper.Fi
 
 
     @Override
-    public void onCompleteTask(int condition, Container container) {
+    public void onCompleteTask(String tag, int condition, Container container) {
         switch (condition) {
             case FirebaseHelper.CONDITION_1 :
                 moveToSessionScreen();
@@ -101,13 +101,13 @@ public class MainActivity extends AppCompatActivity implements FirebaseHelper.Fi
     }
 
     @Override
-    public void onFailureTask(DatabaseError databaseError) {
+    public void onFailureTask(String tag, DatabaseError databaseError) {
         moveToLoginActivity ();
-        Log.i(TAG, databaseError.getMessage());
+        Log.i(TAG, tag + " "+ databaseError.getMessage());
     }
 
     @Override
-    public void onChange(int condition, Container container) {
+    public void onChange(String tag, int condition, Container container) {
         // not required
     }
 }

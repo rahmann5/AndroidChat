@@ -1,6 +1,7 @@
 package com.example.naziur.androidchat.utils;
 
 import com.example.naziur.androidchat.models.Contact;
+import com.example.naziur.androidchat.models.FirebaseMessageModel;
 
 /**
  * Created by Hamidur on 21/09/2018.
@@ -9,6 +10,7 @@ import com.example.naziur.androidchat.models.Contact;
 public class Container {
 
     private Contact contact;
+    private FirebaseMessageModel msgModel;
 
     public Container () {
         // empty
@@ -20,5 +22,13 @@ public class Container {
 
     public void setContact(Contact contact) {
         this.contact = contact;
+    }
+
+    public FirebaseMessageModel getMsgModel() {
+        return msgModel;
+    }
+
+    public void setMsgModel(FirebaseMessageModel msgModel) {
+        this.msgModel = msgModel;
     }
 }
