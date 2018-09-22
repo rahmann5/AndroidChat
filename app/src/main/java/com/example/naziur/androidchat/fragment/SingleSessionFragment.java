@@ -46,10 +46,8 @@ import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -115,32 +113,7 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
                 return;
             }
         }
-        userListener = new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                for (com.google.firebase.database.DataSnapshot userSnapshot : dataSnapshot.getChildren()) {
-                    FirebaseUserModel firebaseUserModel = userSnapshot.getValue(FirebaseUserModel.class);
-                    if(firebaseUserModel.getUsername().equals(user.name)){
-                        String[] allKeys = firebaseUserModel.getChatKeys().split(",");
-                        allChatKeys.clear();
-                        for(String key: allKeys){
-                            if(!key.equals(""))
-                                allChatKeys.add(key);
-                        }
-                        setUpMsgEventListeners();
-                        break;
-                    }
-                }
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-                progressBar.toggleDialog(false);
-                Log.i(TAG, databaseError.getMessage());
-            }
-        };
-
-        usersRef.orderByChild("username").equalTo(user.name).addValueEventListener(userListener);
+        userListener = FirebaseHelper.getUsersValueEventListener(user);
     }
 
     private void updateExistingContacts (Cursor c) {
@@ -166,46 +139,8 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
             for (int i = 0; i < allChatKeys.size(); i++) {
                 final String chatKey = allChatKeys.get(i);
 
-                valueEventListeners.add(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(DataSnapshot dataSnapshot) {
-                        if (dataSnapshot.exists()) {
-                            for (com.google.firebase.database.DataSnapshot msgSnapshot : dataSnapshot.getChildren()) {
-                                FirebaseMessageModel firebaseMessageModel = msgSnapshot.getValue(FirebaseMessageModel.class);
-                                String isChattingTo = (firebaseMessageModel.getSenderName().equals(user.name)) ? db.getProfileNameAndPic(firebaseMessageModel.getReceiverName())[0] : db.getProfileNameAndPic(firebaseMessageModel.getSenderName())[0];
-                                String username = (firebaseMessageModel.getSenderName().equals(user.name)) ? firebaseMessageModel.getReceiverName() : firebaseMessageModel.getSenderName();
-                                SimpleDateFormat formatter = new SimpleDateFormat(getString(R.string.simple_date));
-                                String dateString = formatter.format(new Date(firebaseMessageModel.getCreatedDateLong()));
-                                Chat chat = new Chat(isChattingTo, username, firebaseMessageModel.getText(), db.getProfileNameAndPic(username)[1], dateString, chatKey, firebaseMessageModel.getIsReceived(), firebaseMessageModel.getMediaType());
-
-                                for(int i =0; i < allChats.size(); i++){
-                                    if(allChats.get(i).getUsernameOfTheOneBeingSpokenTo().equals(chat.getUsernameOfTheOneBeingSpokenTo()))
-                                        allChats.remove(i);
-                                }
-                                if(chat.getIsSeen() == Constants.MESSAGE_SENT)
-                                    allChats.add(0, chat);
-                                else
-                                    allChats.add(chat);
-                            }
-                            myChatsdapter.setAllMyChats(allChats);
-                            myChatsdapter.notifyDataSetChanged();
-                        }
-                        if (myChatsdapter.getItemCount() == 0) {
-                            emptyChats.setVisibility(View.VISIBLE);
-                        } else {
-                            emptyChats.setVisibility(View.GONE);
-                        }
-
-                    }
-
-                    @Override
-                    public void onCancelled(DatabaseError databaseError) {
-                        progressBar.toggleDialog(false);
-                        Log.i(TAG, databaseError.getMessage());
-                    }
-                });
-
-                messagesRef.child("single").child(allChatKeys.get(i)).limitToLast(1).addValueEventListener(valueEventListeners.get(i));
+                valueEventListeners.add(FirebaseHelper.getMessageEventListener(user, db, getString(R.string.simple_date), chatKey));
+                FirebaseHelper.attachOrRemoveMessageEventListener("single", allChatKeys.get(i), valueEventListeners.get(i), true);
             }
         progressBar.toggleDialog(false);
         if (myChatsdapter.getItemCount() == 0) {
@@ -466,10 +401,10 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
     public void onStop() {
 
         if (userListener != null) {
-            usersRef.removeEventListener(userListener);
+            FirebaseHelper.removeListenerFor("users", userListener);
         }
         for(int i = 0; i < valueEventListeners.size(); i++){
-            messagesRef.child("single").child(allChatKeys.get(i)).limitToLast(1).removeEventListener(valueEventListeners.get(i));
+            FirebaseHelper.attachOrRemoveMessageEventListener("single", allChatKeys.get(i), valueEventListeners.get(i), false);
         }
         super.onStop();
 
@@ -482,17 +417,73 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
     }
 
     @Override
-    public void onCompleteTask(int condition, Container container) {
-
+    public void onCompleteTask(String tag, int condition, Container container) {
+        switch(tag){
+            case "getMessageEventListener":
+                switch (condition){
+                    case FirebaseHelper.CONDITION_1:
+                        myChatsdapter.setAllMyChats(allChats);
+                        myChatsdapter.notifyDataSetChanged();
+                        break;
+                    case FirebaseHelper.CONDITION_2:
+                        if (myChatsdapter.getItemCount() == 0) {
+                            emptyChats.setVisibility(View.VISIBLE);
+                        } else {
+                            emptyChats.setVisibility(View.GONE);
+                        }
+                        break;
+                }
+                break;
+            case "getUsersValueEventListener":
+                switch(condition){
+                    case FirebaseHelper.CONDITION_1:
+                        String[] allKeys = container.getString().split(",");
+                        allChatKeys.clear();
+                        for(String key: allKeys){
+                            if(!key.equals(""))
+                                allChatKeys.add(key);
+                        }
+                        setUpMsgEventListeners();
+                        break;
+                    case FirebaseHelper.CONDITION_2:
+                        Toast.makeText(getContext(), "No chats found for this user, as the account may no longer exist", Toast.LENGTH_SHORT).show();
+                        emptyChats.setVisibility(View.VISIBLE);
+                        break;
+                }
+                break;
+        }
     }
 
     @Override
-    public void onFailureTask(DatabaseError databaseError) {
-        Log.e(TAG, databaseError.getMessage());
+    public void onFailureTask(String tag, DatabaseError databaseError) {
+        switch (tag){
+            case "getMessageEventListener":
+            case "getUsersValueEventListener":
+                progressBar.toggleDialog(false);
+                break;
+        }
+        Log.i(TAG, tag + " "+ databaseError.getMessage());
     }
 
     @Override
-    public void onChange(int condition, Container container) {
+    public void onChange(String tag, int condition, Container container) {
+        switch(tag) {
+            case "getMessageEventListener":
+                switch (condition) {
+                    case FirebaseHelper.CONDITION_1:
+                        Chat chat = container.getChat();
+                        for (int i = 0; i < allChats.size(); i++) {
+                            if (allChats.get(i).getUsernameOfTheOneBeingSpokenTo().equals(chat.getUsernameOfTheOneBeingSpokenTo()))
+                                allChats.remove(i);
+                        }
+                        if (chat.getIsSeen() == Constants.MESSAGE_SENT)
+                            allChats.add(0, chat);
+                        else
+                            allChats.add(chat);
+                        break;
 
+                }
+                break;
+        }
     }
 }

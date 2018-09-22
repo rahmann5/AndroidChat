@@ -35,6 +35,7 @@ import com.bumptech.glide.request.RequestOptions;
 import com.example.naziur.androidchat.adapter.MessagesListAdapter;
 import com.example.naziur.androidchat.R;
 import com.example.naziur.androidchat.database.ContactDBHelper;
+import com.example.naziur.androidchat.database.FirebaseHelper;
 import com.example.naziur.androidchat.fragment.ImageViewDialogFragment;
 import com.example.naziur.androidchat.models.Chat;
 import com.example.naziur.androidchat.models.FirebaseMessageModel;
@@ -44,6 +45,7 @@ import com.example.naziur.androidchat.models.Notification;
 import com.example.naziur.androidchat.models.User;
 import com.example.naziur.androidchat.utils.Constants;
 import com.example.naziur.androidchat.fragment.ErrorDialogFragment;
+import com.example.naziur.androidchat.utils.Container;
 import com.example.naziur.androidchat.utils.Network;
 import com.example.naziur.androidchat.utils.ProgressDialog;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -86,7 +88,8 @@ import pl.aprilapps.easyphotopicker.DefaultCallback;
 import pl.aprilapps.easyphotopicker.EasyImage;
 
 
-public class ChatActivity extends AppCompatActivity implements ImageViewDialogFragment.ImageViewDialogListener{
+public class ChatActivity extends AppCompatActivity implements ImageViewDialogFragment.ImageViewDialogListener,
+        FirebaseHelper.FirebaseHelperListener{
     private static final String TAG = "ChatActivity";
     private static final int REQUEST_CODE_GALLERY_CAMERA = 0;
     User user = User.getInstance();
@@ -127,6 +130,7 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
             Toast.makeText(this, "Error occurred", Toast.LENGTH_LONG).show();
             finish();
         }
+        FirebaseHelper.setFirebaseHelperListener(this);
         createCustomActionBar();
         database = FirebaseDatabase.getInstance();
         usersRef = database.getReference("users");
@@ -864,4 +868,18 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
         });
     }
 
+    @Override
+    public void onCompleteTask(String tag, int condition, Container container) {
+
+    }
+
+    @Override
+    public void onFailureTask(String tag, DatabaseError databaseError) {
+
+    }
+
+    @Override
+    public void onChange(String tag, int condition, Container container) {
+
+    }
 }

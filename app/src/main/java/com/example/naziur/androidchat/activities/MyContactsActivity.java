@@ -521,7 +521,7 @@ public class MyContactsActivity extends AppCompatActivity implements AddContactD
     }
 
     @Override
-    public void onCompleteTask(int condition, Container container) {
+    public void onCompleteTask(String tag, int condition, Container container) {
         switch (condition) {
             case FirebaseHelper.CONDITION_1 :
                 myContactsAdapter.addNewItem(container.getContact().getContact());
@@ -533,17 +533,17 @@ public class MyContactsActivity extends AppCompatActivity implements AddContactD
     }
 
     @Override
-    public void onFailureTask(DatabaseError databaseError) {
+    public void onFailureTask(String tag, DatabaseError databaseError) {
         if (myContactsAdapter.getItemCount() == 0)
             emptyState.setVisibility(View.VISIBLE);
         else
             emptyState.setVisibility(View.GONE);
 
-        Log.i(TAG, databaseError.getMessage());
+        Log.i(TAG, tag + " "+ databaseError.getMessage());
     }
 
     @Override
-    public void onChange(int condition, Container container) {
+    public void onChange(String tag, int condition, Container container) {
         switch (condition) {
             case FirebaseHelper.CONDITION_1 :
                 myContactsAdapter.addNewItem(container.getContact().getContact());
