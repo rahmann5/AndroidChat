@@ -107,4 +107,8 @@ public class FirebaseHelper {
         });
     }
 
+    public static ValueEventListener getMessageEventListener(final User user){
+        //ValueEventListener valueEventListener =
+    }
+
 }

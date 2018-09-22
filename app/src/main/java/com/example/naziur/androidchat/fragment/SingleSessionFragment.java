@@ -23,12 +23,14 @@ import com.example.naziur.androidchat.activities.ChatActivity;
 import com.example.naziur.androidchat.activities.ChatDetailActivity;
 import com.example.naziur.androidchat.adapter.AllChatsAdapter;
 import com.example.naziur.androidchat.database.ContactDBHelper;
+import com.example.naziur.androidchat.database.FirebaseHelper;
 import com.example.naziur.androidchat.database.MyContactsContract;
 import com.example.naziur.androidchat.models.Chat;
 import com.example.naziur.androidchat.models.FirebaseMessageModel;
 import com.example.naziur.androidchat.models.FirebaseUserModel;
 import com.example.naziur.androidchat.models.User;
 import com.example.naziur.androidchat.utils.Constants;
+import com.example.naziur.androidchat.utils.Container;
 import com.example.naziur.androidchat.utils.Network;
 import com.example.naziur.androidchat.utils.ProgressDialog;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -53,7 +55,7 @@ import java.util.List;
 /**
  * A simple {@link Fragment} subclass.
  */
-public class SingleSessionFragment extends Fragment {
+public class SingleSessionFragment extends Fragment implements FirebaseHelper.FirebaseHelperListener{
 
     private static final String TAG = SingleSessionFragment.class.getSimpleName();
 
@@ -83,6 +85,7 @@ public class SingleSessionFragment extends Fragment {
         getActivity().setTitle("All Chats");
 
         View rootView = inflater.inflate(R.layout.fragment_session_all_chats, container, false);
+        FirebaseHelper.setFirebaseHelperListener(this);
         valueEventListeners = new ArrayList<>();
         allChats = new ArrayList<>();
         allChatKeys = new ArrayList<>();
@@ -147,27 +150,7 @@ public class SingleSessionFragment extends Fragment {
                 fbModel.setUsername(c.getString(c.getColumnIndex(MyContactsContract.MyContactsContractEntry.COLUMN_USERNAME)));
                 fbModel.setProfileName(c.getString(c.getColumnIndex(MyContactsContract.MyContactsContractEntry.COLUMN_PROFILE)));
                 // need one for profile picture
-                Query query = usersRef.orderByChild("username").equalTo(fbModel.getUsername());
-                query.addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(DataSnapshot dataSnapshot) {
-                        if(dataSnapshot.exists()){
-                            for (com.google.firebase.database.DataSnapshot userSnapshot : dataSnapshot.getChildren()) {
-                                FirebaseUserModel firebaseUserModel = userSnapshot.getValue(FirebaseUserModel.class);
-                                if(firebaseUserModel.getUsername().equals(fbModel.getUsername())) {
-                                    db.updateProfile(firebaseUserModel.getUsername(), firebaseUserModel.getProfileName(), firebaseUserModel.getProfilePic());
-                                    break;
-                                }
-                            }
-                        }
-                    }
-
-                    @Override
-                    public void onCancelled(DatabaseError databaseError) {
-                        Log.i(TAG, databaseError.getMessage());
-                    }
-                });
-
+                FirebaseHelper.updateLocalContactsFromFirebase("users", fbModel, db);
             }
         } finally {
             c.close();
@@ -496,5 +479,20 @@ public class SingleSessionFragment extends Fragment {
     public void onDestroy() {
         db.close();
         super.onDestroy();
+    }
+
+    @Override
+    public void onCompleteTask(int condition, Container container) {
+
+    }
+
+    @Override
+    public void onFailureTask(DatabaseError databaseError) {
+        Log.e(TAG, databaseError.getMessage());
+    }
+
+    @Override
+    public void onChange(int condition, Container container) {
+
     }
 }
