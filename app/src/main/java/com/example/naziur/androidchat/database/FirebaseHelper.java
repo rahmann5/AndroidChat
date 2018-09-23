@@ -491,7 +491,7 @@ public class FirebaseHelper {
         });
     }
 
-    public static void collectAllImagesForDeletionThenDeleteRelatedMessages(String node, final String key){
+    public static void collectAllImagesForDeletionThenDeleteRelatedMessages(final String node, final String key){
         final DatabaseReference reference = database.getReference("messages").child(node).child(key);
         reference.orderByChild("mediaType").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
@@ -512,12 +512,13 @@ public class FirebaseHelper {
             @Override
             public void onCancelled(DatabaseError databaseError) {
                 listener.onFailureTask("collectAllImagesForDeletionThenDeleteRelatedMessages", databaseError);
-                cleanDeleteAllMessages(reference);
+                cleanDeleteAllMessages(node, key);
             }
         });
     }
 
-    public static void cleanDeleteAllMessages(DatabaseReference reference){
+    public static void cleanDeleteAllMessages(String node, String key){
+        DatabaseReference reference = database.getReference("messages").child(node).child(key);
         reference.setValue(null).addOnSuccessListener(new OnSuccessListener<Void>() {
             @Override
             public void onSuccess(Void aVoid) {

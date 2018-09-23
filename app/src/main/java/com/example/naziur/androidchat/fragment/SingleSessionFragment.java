@@ -241,48 +241,7 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
     }
 
     private void collectAllRemovableImagesForMessages (final String chatKey) {
-        messagesRef
-            .child("single").child(chatKey).orderByChild("mediaType")
-            .addListenerForSingleValueEvent(new ValueEventListener() {
-                @Override
-                public void onDataChange(DataSnapshot dataSnapshot) {
-                    final List<String> imageUri = new ArrayList<>();
-                    for (DataSnapshot data : dataSnapshot.getChildren()) {
-                        FirebaseMessageModel model = data.getValue(FirebaseMessageModel.class);
-                        if (model.getMediaType().equals(Constants.MESSAGE_TYPE_PIC)) {
-                            imageUri.add(model.getText());
-                        }
-                    }
-                    Log.i(TAG, "Number of images found "  + imageUri.size());
-                    deleteUploadImages(imageUri, chatKey);
-
-                }
-
-                @Override
-                public void onCancelled(DatabaseError databaseError) {
-                    //Toast.makeText(getActivity(), "Failed to obtain reference to all previous messages", Toast.LENGTH_SHORT).show();
-                    Log.i(TAG, "Failed to obtain reference to all previous messages " + databaseError.getMessage());
-                    cleanDeleteAllMessages(chatKey);
-                }
-            });
-
         FirebaseHelper.collectAllImagesForDeletionThenDeleteRelatedMessages("single", chatKey);
-    }
-
-    private void cleanDeleteAllMessages (String chatKey) {
-        messagesRef.child("single").child(chatKey).setValue(null).addOnSuccessListener(new OnSuccessListener<Void>() {
-            @Override
-            public void onSuccess(Void aVoid) {
-                progressBar.toggleDialog(false);
-                Log.i(TAG, "Successfully removed all messages");
-            }
-        }).addOnFailureListener(new OnFailureListener() {
-            @Override
-            public void onFailure(@NonNull Exception e) {
-                progressBar.toggleDialog(false);
-                Log.i(TAG, "Failed to removed all messages");
-            }
-        });
     }
 
     private void deleteUploadImages (final List<String> allUris, final String chatKey) {
@@ -304,7 +263,7 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
                 }
             });
         } else {
-            cleanDeleteAllMessages(chatKey);
+            FirebaseHelper.cleanDeleteAllMessages("single", chatKey);
         }
 
     }
