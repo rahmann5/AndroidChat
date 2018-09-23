@@ -161,7 +161,8 @@ public class FirebaseHelper {
         };
     }
 
-    public static void setUpSingleChat(String node, final String chatKey, final String friendUsername, final String usersUsername, final ValueEventListener commentValueEventListener) {
+    // get users and contacts latest chat keys (needs to be optimised)
+    public static void setUpSingleChat(String node, final String friendUsername, final String usersUsername) {
         DatabaseReference usersRef = database.getReference(node);
         usersRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
@@ -175,11 +176,11 @@ public class FirebaseHelper {
                     Container container = new Container();
                     container.setUserModel(firebaseUserModel);
                     if (firebaseUserModel.getUsername().equals(friendUsername)) {
-                        listener.onChange("setUpSingleChat", CONDITION_1, container);
                         friend = firebaseUserModel;
+                        listener.onChange("setUpSingleChat", CONDITION_1, container);
                     } else if (firebaseUserModel.getUsername().equals(usersUsername)) {
-                        listener.onChange("setUpSingleChat", CONDITION_2, container);
                         me = firebaseUserModel;
+                        listener.onChange("setUpSingleChat", CONDITION_2, container);
                     }
 
                     if (me != null && friend != null) {
@@ -188,13 +189,11 @@ public class FirebaseHelper {
                 }
 
                 listener.onCompleteTask("setUpSingleChat", CONDITION_1, null);
-                if (me != null) {
-                    DatabaseReference messagesRef = database.getReference("messages")
-                            .child("single")
-                            .child(chatKey);
-                    //Value event listener for realtime data update
-                    messagesRef.addValueEventListener(commentValueEventListener);
-                    listener.onCompleteTask("setUpSingleChat", CONDITION_2, null);
+                if (me != null && friend != null) {
+                    Container container = new Container();
+                    container.setUserModel(me);
+                    container.setContact(new Contact(friend));
+                    listener.onCompleteTask("setUpSingleChat", CONDITION_2, container);
                 } else {
                     listener.onCompleteTask("setUpSingleChat", CONDITION_3, null);
                 }
@@ -208,12 +207,16 @@ public class FirebaseHelper {
         });
     }
 
-    public static void removeMsgEventListeners (String node, String chatKey, ValueEventListener commentValueEventListener) {
+    public static void toggleMsgEventListeners (String node, String chatKey, ValueEventListener commentValueEventListener, boolean add) {
         DatabaseReference messagesRef = database.getReference("messages")
                 .child(node)
                 .child(chatKey);
         //Value event listener for realtime data update
-        messagesRef.removeEventListener(commentValueEventListener);
+        if (add) {
+            messagesRef.addValueEventListener(commentValueEventListener);
+        } else {
+            messagesRef.removeEventListener(commentValueEventListener);
+        }
     }
 
     public static void checkKeyListKey (String node, String username, final int myCondition1, final int myCondition2 , final String chatKey) {
@@ -413,6 +416,7 @@ public class FirebaseHelper {
                         if (firebaseUserModel.getUsername().equals(contactsUsername)) {
                             db.insertContact(firebaseUserModel.getUsername(), firebaseUserModel.getProfileName(), firebaseUserModel.getProfilePic(), firebaseUserModel.getDeviceToken());
                             Container container = new Container();
+                            container.setUserModel(firebaseUserModel);
                             container.setString(firebaseUserModel.getProfileName());
                             container.setInt(positionInAdapter);
                             listener.onCompleteTask("addUserToContacts", CONDITION_1, container);
@@ -475,9 +479,9 @@ public class FirebaseHelper {
     }
 
 
-    public static void updateNotificationNode (String node, String targetUsername, final String chatKey) {
+    public static void updateNotificationNode (String node, final FirebaseUserModel target, final String chatKey) {
         final User user = User.getInstance();
-        final DatabaseReference notificationRef = database.getReference("notifications").child(targetUsername);
+        final DatabaseReference notificationRef = database.getReference("notifications").child(target.getUsername());
         notificationRef.orderByChild(node).equalTo(chatKey).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -486,15 +490,18 @@ public class FirebaseHelper {
                     Notification notificationObj = new Notification();
                     notificationObj.setSender(user.name);
                     notificationObj.setChatKey(chatKey);
+                    final Container container = new Container();
+                    container.setContact(new Contact(target));
+                    container.setString(chatKey);
                     newRef.setValue(notificationObj).addOnSuccessListener(new OnSuccessListener<Void>() {
                         @Override
                         public void onSuccess(Void aVoid) {
-                            listener.onCompleteTask("updateNotificationNode", CONDITION_1, null);
+                            listener.onCompleteTask("updateNotificationNode", CONDITION_1, container);
                         }
                     }).addOnFailureListener(new OnFailureListener() {
                         @Override
                         public void onFailure(@NonNull Exception e) {
-                            listener.onCompleteTask("updateNotificationNode", CONDITION_2, null);
+                            listener.onCompleteTask("updateNotificationNode", CONDITION_2, container);
                         }
                     });
                 }
@@ -506,6 +513,75 @@ public class FirebaseHelper {
             }
         });
     }
+
+    public static void removeNotificationNode (final String target, final String chatKey) {
+        User user = User.getInstance();
+        DatabaseReference notificationRef = FirebaseDatabase.getInstance().getReference("notifications").child(user.name);
+        notificationRef.orderByChild("sender").equalTo(target).getRef().runTransaction(new Transaction.Handler() {
+            @Override
+            public Transaction.Result doTransaction(MutableData mutableData) {
+                for (MutableData data : mutableData.getChildren()) {
+                    Notification notification = data.getValue(Notification.class);
+                    if (notification == null) return Transaction.success(mutableData);
+
+                    if (target.equals(notification.getSender())) {
+                        notification = null;
+                    }
+
+                    data.setValue(notification);
+                    break;
+                }
+
+                return Transaction.success(mutableData);
+            }
+
+            @Override
+            public void onComplete(DatabaseError databaseError, boolean b, DataSnapshot dataSnapshot) {
+                if (databaseError == null) {
+                    Container container = new Container();
+                    container.setString(chatKey);
+                    listener.onCompleteTask("removeNotificationNode", CONDITION_1, container );
+                } else {
+                    listener.onFailureTask("removeNotificationNode", databaseError);
+                }
+            }
+        });
+    }
+
+    public static void notificationNodeExists(final String target, final String chatKey) {
+        User user = User.getInstance();
+        DatabaseReference notificationRef = FirebaseDatabase.getInstance().getReference("notifications").child(user.name);
+        notificationRef.orderByChild("sender").equalTo(target).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                boolean invite = false;
+                if (dataSnapshot.exists()) {
+                    for (DataSnapshot notiSnapshot : dataSnapshot.getChildren()) {
+                        Notification notification = notiSnapshot.getValue(Notification.class);
+                        if (notification.getSender().equals(target)) {
+                            invite = true;
+                            break;
+                        }
+                    }
+                }
+
+                Container container = new Container();
+                container.setString(chatKey);
+                if (invite) {
+                    listener.onCompleteTask("notificationNodeExists", CONDITION_1, container);
+                } else {
+                    listener.onCompleteTask("notificationNodeExists", CONDITION_2, container);
+                }
+
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                listener.onFailureTask("notificationNodeExists", databaseError);
+            }
+        });
+    }
+
 
     public static void updateFirebaseMessageStatus (final String node, final String chatKey, final Map<Long, Map<String, Object>> messages) {
         final DatabaseReference messagesRef = database.getReference("messages").child(node).child(chatKey);
@@ -577,5 +653,47 @@ public class FirebaseHelper {
         });
     }
 
+    public static void updateChatKeyFromContact (final Contact c, final String chatKey, final boolean invite) {
+        final User user = User.getInstance();
+        database.getReference("users").orderByChild("username").equalTo(user.name).getRef().runTransaction(new Transaction.Handler() {
+            @Override
+            public Transaction.Result doTransaction(MutableData mutableData) {
+                for (MutableData data : mutableData.getChildren()) {
+                    FirebaseUserModel currentUser = data.getValue(FirebaseUserModel.class);
+                    if (currentUser == null) return Transaction.success(mutableData);
+                    if (currentUser.getUsername().equals(user.name)) {
+                        String currentKeys = currentUser.getChatKeys();
+                        if (currentKeys.equals("")) {
+                            currentKeys = chatKey;
+                        } else {
+                            currentKeys = currentKeys + "," + chatKey;
+                        }
+
+                        currentUser.setChatKeys(currentKeys);
+                        data.setValue(currentUser);
+                        break;
+                    }
+                }
+
+                return Transaction.success(mutableData);
+            }
+
+            @Override
+            public void onComplete(DatabaseError databaseError, boolean b, DataSnapshot dataSnapshot) {
+                if (databaseError == null) {
+                    Container container = new Container();
+                    container.setContact(c);
+                    container.setString(chatKey);
+                    if (invite) {
+                        listener.onCompleteTask("updateChatKeyFromContact", CONDITION_1, container);
+                    } else {
+                        listener.onCompleteTask("updateChatKeyFromContact", CONDITION_2, container);
+                    }
+                } else {
+                    listener.onFailureTask("updateChatKeyFromContact", databaseError);
+                }
+            }
+        });
+    }
 
 }

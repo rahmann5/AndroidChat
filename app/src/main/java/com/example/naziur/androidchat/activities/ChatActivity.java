@@ -220,7 +220,7 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
         super.onResume();
         if (Network.isInternetAvailable(this, true)) {
             // improve for future search of users (need only the sender and receiver - currently looping through all users)
-            FirebaseHelper.setUpSingleChat("users", chatKey, friend.getUsername(), user.name, commentValueEventListener);
+            FirebaseHelper.setUpSingleChat("users", friend.getUsername(), user.name);
         } else {
             loadLocalData();
         }
@@ -229,7 +229,7 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
     @Override
     protected void onStop() {
         super.onStop();
-        FirebaseHelper.removeMsgEventListeners("single", chatKey, commentValueEventListener);
+        FirebaseHelper.toggleMsgEventListeners("single", chatKey, commentValueEventListener, false);
     }
 
     private void sendMessage(final String wishMessage){
@@ -453,10 +453,12 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
                         ((CircleImageView) actionBar.getCustomView().findViewById(R.id.profile_icon)).setVisibility(View.GONE);
                         ((TextView) actionBar.getCustomView().findViewById(R.id.profile_name)).setText(friend.getUsername());
                     }
+
                     break;
 
                 case FirebaseHelper.CONDITION_2:
                     //String myKey = findChatKey(me, friend);
+                    FirebaseHelper.toggleMsgEventListeners("single", chatKey, commentValueEventListener, true);
                     String friendKey = findChatKey(friend, me);
                     btnInvite.setVisibility(View.GONE);
                     btnSend.setVisibility(View.VISIBLE);
@@ -486,7 +488,7 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
                     btnInvite.setEnabled(true);
                     break;
                 case FirebaseHelper.CONDITION_2:
-                    FirebaseHelper.updateNotificationNode("chatKey", friend.getUsername(), chatKey);
+                    FirebaseHelper.updateNotificationNode("chatKey", friend, chatKey);
                     break;
                 case FirebaseHelper.CONDITION_3:
                     String wishMessage = textComment.getText().toString().trim();

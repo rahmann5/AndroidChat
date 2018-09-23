@@ -63,7 +63,6 @@ public class MyContactsActivity extends AppCompatActivity implements AddContactD
     private MyContactsAdapter myContactsAdapter;
     private TextView emptyState;
     private User user = User.getInstance();
-    private DatabaseReference userRef;
     private ProgressDialog progressBar;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,7 +75,6 @@ public class MyContactsActivity extends AppCompatActivity implements AddContactD
         myContactsRecycler = (RecyclerView) findViewById(R.id.contacts_recycler);
         progressBar = new ProgressDialog(MyContactsActivity.this, R.layout.progress_dialog, true);
         emptyState = (TextView) findViewById(R.id.empty_contacts);
-        userRef = FirebaseDatabase.getInstance().getReference("users");
         FloatingActionButton floatingActionButton  = (FloatingActionButton) findViewById(R.id.add_contact);
         floatingActionButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -192,36 +190,7 @@ public class MyContactsActivity extends AppCompatActivity implements AddContactD
     public void onDialogPositiveClick(DialogFragment dialog, final String username) {
         progressBar.toggleDialog(true);
         if(!db.isUserAlreadyInContacts(username) && !username.equals(user.name)){
-            Query query = userRef.orderByChild("username").equalTo(username);
-            query.addListenerForSingleValueEvent(new ValueEventListener() {
-                @Override
-                public void onDataChange(DataSnapshot dataSnapshot) {
-                    if(dataSnapshot.exists()){
-                        for (com.google.firebase.database.DataSnapshot userSnapshot : dataSnapshot.getChildren()) {
-                            //Getting the data from snapshot
-                            FirebaseUserModel firebaseUserModel = userSnapshot.getValue(FirebaseUserModel.class);
-
-                            if (firebaseUserModel.getUsername().equals(username)) {
-                                Log.i(TAG, "Adding to contacts: " + firebaseUserModel.getUsername());
-                                db.insertContact(firebaseUserModel.getUsername(), firebaseUserModel.getProfileName(), firebaseUserModel.getProfilePic(), firebaseUserModel.getDeviceToken());
-                                myContactsAdapter.addNewItem(firebaseUserModel);
-                                emptyState.setVisibility(View.GONE);
-                                break;
-                            }
-                        }
-
-                    } else {
-                        Toast.makeText(MyContactsActivity.this, "That contact does not exist", Toast.LENGTH_LONG).show();
-                    }
-                    progressBar.toggleDialog(false);
-                }
-
-                @Override
-                public void onCancelled(DatabaseError databaseError) {
-                    progressBar.toggleDialog(false);
-                    Log.i(TAG, "Failed to add contact " + databaseError.getMessage());
-                }
-            });
+           FirebaseHelper.addUserToContacts(username, db, 0);
         } else {
             progressBar.toggleDialog(false);
             Toast.makeText(MyContactsActivity.this, "User cannot be added as they may already exist or it is your username", Toast.LENGTH_LONG).show();
@@ -244,7 +213,9 @@ public class MyContactsActivity extends AppCompatActivity implements AddContactD
 
             case 1 : // chat with contact
                 if (Network.isInternetAvailable(MyContactsActivity.this, true) && c.isActive()) {
-                   checkKeyExists(c);
+                    progressBar.toggleDialog(true);
+                    // checking where exists if it exists at all
+                    FirebaseHelper.setUpSingleChat("users", c.getContact().getUsername(), user.name);
                 }
                 break;
             case 2 : // delete contact
@@ -255,61 +226,6 @@ public class MyContactsActivity extends AppCompatActivity implements AddContactD
                 }
                 break;
         }
-    }
-
-    private void checkKeyExists (final Contact contact) {
-        progressBar.toggleDialog(true);
-        // get users and contacts latest chat keys (needs to be optimised)
-        userRef.orderByChild("username").addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                FirebaseUserModel currentUser = null;
-                FirebaseUserModel contactUser = null;
-                for (DataSnapshot userSnapShot : dataSnapshot.getChildren()) {
-                    FirebaseUserModel model = userSnapShot.getValue(FirebaseUserModel.class);
-                    if(model.getUsername().equals(user.name)) {
-                        currentUser = model;
-                    } else if (model.getUsername().equals(contact.getContact().getUsername())) {
-                        contactUser = model;
-                    }
-                    if (currentUser != null && contactUser != null) break;
-                }
-
-                if (currentUser != null && contactUser != null) {
-                    contact.setContact(contactUser);
-                    String currentUserChatKey = findChatKey(currentUser, contact.getContact()); // check user contains chat key with chosen contact
-                    String contactChatKey = findChatKey(contact.getContact(), currentUser); // check chosen contact contains chat key with user
-                    // both have same key
-                    if (!contactChatKey.equals("") && !currentUserChatKey.equals("") && currentUserChatKey.equals(contactChatKey)) { // both have chat keys
-                        progressBar.toggleDialog(false);
-                        startChatActivity(contactChatKey);
-                    } else if (!currentUserChatKey.equals("") && contactChatKey.equals("")) { // only user has key
-                        progressBar.toggleDialog(false);
-                        startChatActivity(currentUserChatKey);
-                    } else if (currentUserChatKey.equals("") && !contactChatKey.equals("")) { // only contact has key
-                        updateChatKeyFromContact(contact, contactChatKey, false);
-                    } else { // neither has keys or maybe opposite of each others key
-                        if (contactChatKey.equals("") && currentUserChatKey.equals("")) {
-                            createKeyAndSendInvitation(contact);
-                        } else {
-                            checkForInvitationClash(contact, currentUserChatKey);
-                        }
-                    }
-                } else {
-                    Toast.makeText(MyContactsActivity.this, "Error finding user information", Toast.LENGTH_LONG).show();
-                    progressBar.toggleDialog(false);
-                }
-
-
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-                progressBar.toggleDialog(false);
-                Toast.makeText(MyContactsActivity.this, "Error has occurred creating chat", Toast.LENGTH_LONG).show();
-                Log.i(TAG, databaseError.getMessage());
-            }
-        });
     }
 
     private void startChatActivity (String chatKey) {
@@ -336,162 +252,11 @@ public class MyContactsActivity extends AppCompatActivity implements AddContactD
         return lChatKey ;
     }
 
-    private void updateChatKeyFromContact (final Contact c, final String chatKey, final boolean invite) {
-        userRef.orderByChild("username").equalTo(user.name).getRef().runTransaction(new Transaction.Handler() {
-            @Override
-            public Transaction.Result doTransaction(MutableData mutableData) {
-               for (MutableData data : mutableData.getChildren()) {
-                   FirebaseUserModel currentUser = data.getValue(FirebaseUserModel.class);
-                   if (currentUser == null) return Transaction.success(mutableData);
-                   if (currentUser.getUsername().equals(user.name)) {
-                       String currentKeys = currentUser.getChatKeys();
-                       if (currentKeys.equals("")) {
-                           currentKeys = chatKey;
-                       } else {
-                           currentKeys = currentKeys + "," + chatKey;
-                       }
-
-                       currentUser.setChatKeys(currentKeys);
-                       data.setValue(currentUser);
-                       break;
-                   }
-               }
-
-                return Transaction.success(mutableData);
-            }
-
-            @Override
-            public void onComplete(DatabaseError databaseError, boolean b, DataSnapshot dataSnapshot) {
-                if (databaseError == null) {
-                    if (invite) {
-                        createNotification(c, chatKey);
-                    } else {
-                        removeMyPendingNotifications(c, chatKey);
-                    }
-                } else {
-                    progressBar.toggleDialog(false);
-                    Toast.makeText(MyContactsActivity.this, "Error has occurred creating connection", Toast.LENGTH_LONG).show();
-                    Log.i(TAG, databaseError.getMessage());
-                }
-            }
-        });
-    }
-
-    private void removeMyPendingNotifications(final Contact contact, final String chatKey) {
-        DatabaseReference notificationRef = FirebaseDatabase.getInstance().getReference("notifications").child(user.name);
-        notificationRef.orderByChild("sender").equalTo(contact.getContact().getUsername()).getRef().runTransaction(new Transaction.Handler() {
-            @Override
-            public Transaction.Result doTransaction(MutableData mutableData) {
-                for (MutableData data : mutableData.getChildren()) {
-                    Notification notification = data.getValue(Notification.class);
-                    if (notification == null) return Transaction.success(mutableData);
-
-                    if (contact.getContact().getUsername().equals(notification.getSender())) {
-                        notification = null;
-                    }
-
-                    data.setValue(notification);
-                    break;
-                }
-
-                 return Transaction.success(mutableData);
-            }
-
-            @Override
-            public void onComplete(DatabaseError databaseError, boolean b, DataSnapshot dataSnapshot) {
-                progressBar.toggleDialog(false);
-                if (databaseError == null) {
-                    startChatActivity(chatKey);
-                } else {
-                    Toast.makeText(MyContactsActivity.this, "Failed to remove pending invite notification", Toast.LENGTH_LONG).show();
-                    Log.i(TAG, databaseError.getMessage());
-                }
-            }
-        });
-    }
-
-
-    private void checkForInvitationClash (final Contact contact, final String chatKey) {
-        DatabaseReference notificationRef = FirebaseDatabase.getInstance().getReference("notifications").child(user.name);
-        notificationRef.orderByChild("sender").equalTo(contact.getContact().getUsername()).addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                boolean invite = false;
-                if (dataSnapshot.exists()) {
-                    for (DataSnapshot notiSnapshot : dataSnapshot.getChildren()) {
-                        Notification notification = notiSnapshot.getValue(Notification.class);
-                        if (notification.getSender().equals(contact.getContact().getUsername())) {
-                            invite = true;
-                            break;
-                        }
-                    }
-                }
-
-                if (invite) {
-                    startActivity(new Intent(MyContactsActivity.this, NotificationActivity.class));
-                } else {
-                    startChatActivity(chatKey);
-                }
-
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-                progressBar.toggleDialog(false);
-                Toast.makeText(MyContactsActivity.this, "Error creating chat between users.", Toast.LENGTH_LONG).show();
-                Log.i(TAG, databaseError.getMessage() );
-            }
-        });
-    }
 
     private void createKeyAndSendInvitation (final Contact contact) {
         String newChatKey = user.name + "-" + contact.getContact().getUsername();
-        updateChatKeyFromContact(contact, newChatKey , true);
+        FirebaseHelper.updateChatKeyFromContact(contact, newChatKey , true);
 
-    }
-
-    private void createNotification (final Contact c, final String chatKey) {
-        DatabaseReference notificationRef = FirebaseDatabase.getInstance().getReference("notifications").child(c.getContact().getUsername());
-        Notification newNotification = new Notification();
-        newNotification.setSender(user.name);
-        newNotification.setChatKey(chatKey);
-        notificationRef.push().setValue(newNotification).addOnSuccessListener(new OnSuccessListener<Void>() {
-            @Override
-            public void onSuccess(Void aVoid) {
-                StringEntity entity = generateEntity(c);
-                if (entity == null){
-                    progressBar.toggleDialog(false);
-                    Toast.makeText(MyContactsActivity.this, "Failed to make background notification", Toast.LENGTH_SHORT).show();
-                    startChatActivity(chatKey);
-                    return;
-                }
-
-                Network.createAsyncClient().post(getApplicationContext(), Constants.NOTIFICATION_URL, entity, RequestParams.APPLICATION_JSON, new TextHttpResponseHandler() {
-                    @Override
-                    public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
-                        progressBar.toggleDialog(false);
-                        Toast.makeText(MyContactsActivity.this, "Error sending background notification", Toast.LENGTH_SHORT).show();
-                        Log.i(TAG, responseString);
-                        startChatActivity(chatKey);
-                    }
-
-                    @Override
-                    public void onSuccess(int statusCode, Header[] headers, String responseString) {
-                        progressBar.toggleDialog(false);
-                        Log.i(TAG, responseString);
-                        startChatActivity(chatKey);
-                    }
-                });
-            }
-
-        }).addOnFailureListener(new OnFailureListener() {
-            @Override
-            public void onFailure(@NonNull Exception e) {
-                progressBar.toggleDialog(false);
-                Toast.makeText(MyContactsActivity.this, "Failed to make a notification", Toast.LENGTH_SHORT).show();
-                startChatActivity(chatKey);
-            }
-        });
     }
 
 
@@ -520,34 +285,169 @@ public class MyContactsActivity extends AppCompatActivity implements AddContactD
         return entity;
     }
 
+    private void createBackgroundNotification (Contact c, final String chatKey) {
+        StringEntity entity = generateEntity(c);
+        if (entity == null){
+            progressBar.toggleDialog(false);
+            Toast.makeText(MyContactsActivity.this, "Failed to make background notification", Toast.LENGTH_SHORT).show();
+            startChatActivity(chatKey);
+            return;
+        }
+
+        Network.createAsyncClient().post(getApplicationContext(), Constants.NOTIFICATION_URL, entity, RequestParams.APPLICATION_JSON, new TextHttpResponseHandler() {
+            @Override
+            public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
+                progressBar.toggleDialog(false);
+                Toast.makeText(MyContactsActivity.this, "Error sending background notification", Toast.LENGTH_SHORT).show();
+                Log.i(TAG, responseString);
+                startChatActivity(chatKey);
+            }
+
+            @Override
+            public void onSuccess(int statusCode, Header[] headers, String responseString) {
+                progressBar.toggleDialog(false);
+                Log.i(TAG, responseString);
+                startChatActivity(chatKey);
+            }
+        });
+    }
+
     @Override
     public void onCompleteTask(String tag, int condition, Container container) {
-        switch (condition) {
-            case FirebaseHelper.CONDITION_1 :
-                myContactsAdapter.addNewItem(container.getContact().getContact());
-                break;
-            case FirebaseHelper.CONDITION_2 :
-                myContactsRecycler.setAdapter(myContactsAdapter);
-                break;
+        if (tag.equals("updateLocalContactsFromFirebase")) {
+            switch (condition) {
+                case FirebaseHelper.CONDITION_1 :
+                    myContactsAdapter.addNewItem(container.getContact().getContact());
+                    break;
+                case FirebaseHelper.CONDITION_2 :
+                    myContactsRecycler.setAdapter(myContactsAdapter);
+                    break;
+            }
+        } else if (tag.equals("addUserToContacts")) {
+            switch (condition) {
+                case FirebaseHelper.CONDITION_1 :
+                    myContactsAdapter.addNewItem(container.getUserModel());
+                    emptyState.setVisibility(View.GONE);
+                    break;
+
+                case FirebaseHelper.CONDITION_2 :
+                    Toast.makeText(MyContactsActivity.this, "That contact does not exist", Toast.LENGTH_LONG).show();
+                    break;
+            }
+            progressBar.toggleDialog(false);
+        } else if (tag.equals("setUpSingleChat")) {
+            switch (condition) {
+                case FirebaseHelper.CONDITION_2 :
+                    Contact contact = container.getContact();
+                    FirebaseUserModel currentUser = container.getUserModel();
+                    String currentUserChatKey = findChatKey(currentUser, contact.getContact()); // check user contains chat key with chosen contact
+                    String contactChatKey = findChatKey(contact.getContact(), currentUser); // check chosen contact contains chat key with user
+                    // both have same key
+                    if (!contactChatKey.equals("") && !currentUserChatKey.equals("") && currentUserChatKey.equals(contactChatKey)) { // both have chat keys
+                        progressBar.toggleDialog(false);
+                        startChatActivity(contactChatKey);
+                    } else if (!currentUserChatKey.equals("") && contactChatKey.equals("")) { // only user has key
+                        progressBar.toggleDialog(false);
+                        startChatActivity(currentUserChatKey);
+                    } else if (currentUserChatKey.equals("") && !contactChatKey.equals("")) { // only contact has key
+                        FirebaseHelper.updateChatKeyFromContact(contact, contactChatKey , false);
+                    } else { // neither has keys or maybe opposite of each others key
+                        if (contactChatKey.equals("") && currentUserChatKey.equals("")) {
+                            createKeyAndSendInvitation(contact);
+                        } else {
+                            FirebaseHelper.notificationNodeExists(contact.getContact().getUsername(), currentUserChatKey);
+                        }
+                    }
+                    break;
+
+                case FirebaseHelper.CONDITION_3:
+                    Toast.makeText(MyContactsActivity.this, "Error finding user information", Toast.LENGTH_LONG).show();
+                    progressBar.toggleDialog(false);
+                    break;
+
+            }
+        } else if (tag.equals("updateChatKeyFromContact")) {
+            switch (condition) {
+                case FirebaseHelper.CONDITION_1 :
+                    FirebaseHelper.updateNotificationNode("chatKey", container.getContact().getContact(), container.getString());
+                    break;
+
+                case FirebaseHelper.CONDITION_2 :
+                    FirebaseHelper.removeNotificationNode(container.getContact().getContact().getUsername(), container.getString());
+                    break;
+            }
+        } else if (tag.equals("updateNotificationNode")) {
+            switch (condition) {
+                case FirebaseHelper.CONDITION_1 :
+                    createBackgroundNotification(container.getContact(), container.getString());
+                    break;
+
+                case FirebaseHelper.CONDITION_2:
+                    progressBar.toggleDialog(false);
+                    Toast.makeText(MyContactsActivity.this, "Failed to make a notification", Toast.LENGTH_SHORT).show();
+                    startChatActivity(container.getString());
+                    break;
+            }
+        } else if (tag.equals("removeNotificationNode")) {
+            switch (condition) {
+                case FirebaseHelper.CONDITION_1 :
+                    startChatActivity(container.getString());
+                    break;
+            }
+        } else if (tag.equals("notificationNodeExists")) {
+            switch (condition) {
+                case FirebaseHelper.CONDITION_1 :
+                    startActivity(new Intent(MyContactsActivity.this, NotificationActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
+                    break;
+
+                case FirebaseHelper.CONDITION_2 :
+                    startChatActivity(container.getString());
+                    break;
+            }
         }
     }
 
     @Override
     public void onFailureTask(String tag, DatabaseError databaseError) {
-        if (myContactsAdapter.getItemCount() == 0)
-            emptyState.setVisibility(View.VISIBLE);
-        else
-            emptyState.setVisibility(View.GONE);
+
+        switch (tag) {
+            case "updateLocalContactsFromFirebase" :
+                if (myContactsAdapter.getItemCount() == 0)
+                    emptyState.setVisibility(View.VISIBLE);
+                else
+                    emptyState.setVisibility(View.GONE);
+                break;
+
+            case "addUserToContacts" :
+                progressBar.toggleDialog(false);
+                break;
+
+            case "setUpSingleChat" :
+                progressBar.toggleDialog(false);
+                Toast.makeText(MyContactsActivity.this, "Error has occurred creating chat", Toast.LENGTH_LONG).show();
+                break;
+
+            case "updateChatKeyFromContact" :
+                progressBar.toggleDialog(false);
+                Toast.makeText(MyContactsActivity.this, "Error has occurred creating connection", Toast.LENGTH_LONG).show();
+                break;
+
+            case "notificationNodeExists" :
+                progressBar.toggleDialog(false);
+                break;
+        }
 
         Log.i(TAG, tag + " "+ databaseError.getMessage());
     }
 
     @Override
     public void onChange(String tag, int condition, Container container) {
-        switch (condition) {
-            case FirebaseHelper.CONDITION_1 :
-                myContactsAdapter.addNewItem(container.getContact().getContact());
-                break;
-        }
+       if (tag.equals("updateLocalContactsFromFirebase")) {
+           switch (condition) {
+               case FirebaseHelper.CONDITION_1 :
+                   myContactsAdapter.addNewItem(container.getContact().getContact());
+                   break;
+           }
+       }
     }
 }
