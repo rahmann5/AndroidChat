@@ -12,8 +12,10 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import com.example.naziur.androidchat.R;
+import com.example.naziur.androidchat.database.FirebaseHelper;
 import com.example.naziur.androidchat.models.FirebaseUserModel;
 import com.example.naziur.androidchat.models.User;
+import com.example.naziur.androidchat.utils.Container;
 import com.example.naziur.androidchat.utils.Network;
 import com.example.naziur.androidchat.utils.ProgressDialog;
 import com.google.firebase.database.DataSnapshot;
@@ -24,7 +26,7 @@ import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.iid.FirebaseInstanceId;
 
-public class LoginActivity extends AppCompatActivity {
+public class LoginActivity extends AppCompatActivity implements FirebaseHelper.FirebaseHelperListener{
 
     private static final String TAG = "LoginActivity";
     EditText editTextUsername, editTextProfileName;
@@ -32,6 +34,7 @@ public class LoginActivity extends AppCompatActivity {
     FirebaseDatabase database;
     DatabaseReference usersRef;
     String currentDeviceId;
+    ProgressDialog progressDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,7 +42,7 @@ public class LoginActivity extends AppCompatActivity {
         setContentView(R.layout.activity_login);
 
         user.sharedpreferences = getSharedPreferences(user.appPreferences, Context.MODE_PRIVATE);
-
+        FirebaseHelper.setFirebaseHelperListener(this);
         currentDeviceId = Settings.Secure.getString(getApplicationContext().getContentResolver(), Settings.Secure.ANDROID_ID);
 
         database = FirebaseDatabase.getInstance();
@@ -61,77 +64,81 @@ public class LoginActivity extends AppCompatActivity {
                 return;
             }
 
-            final ProgressDialog progressDialog = new ProgressDialog(this, R.layout.progress_dialog, true);
+            progressDialog = new ProgressDialog(this, R.layout.progress_dialog, true);
             progressDialog.toggleDialog(true);
-            Query query = usersRef.orderByChild("username").equalTo(strUsername);
-            query.addListenerForSingleValueEvent(new ValueEventListener() {
-                @Override
-                public void onDataChange(DataSnapshot dataSnapshot) {
-                    if(!dataSnapshot.exists()){
-                        if (!strProfileName.isEmpty())
-                            addUserToDatabase(strUsername, strProfileName, progressDialog);
-                        else
-                            Toast.makeText(LoginActivity.this, "Please enter a profile name", Toast.LENGTH_LONG).show();
-                    } else {
-                        String currentDeviceId = Settings.Secure.getString(getApplicationContext().getContentResolver(), Settings.Secure.ANDROID_ID);
-                        boolean foundMatch = false;
-
-                        for(DataSnapshot snapshot : dataSnapshot.getChildren()){
-                           FirebaseUserModel firebaseUserModel = snapshot.getValue(FirebaseUserModel.class);
-                            if(firebaseUserModel.getDeviceId().equals(currentDeviceId)){
-                                firebaseUserModel.setDeviceToken(FirebaseInstanceId.getInstance().getToken());
-                                user.login(firebaseUserModel);
-                                user.saveFirebaseKey(snapshot.getKey());
-                                foundMatch = true;
-                                break;
-                            }
-                        }
-                        if(!foundMatch)
-                            Toast.makeText(LoginActivity.this, "Please enter unique username", Toast.LENGTH_LONG).show();
-                        else
-                            startActivity(new Intent(LoginActivity.this, SessionActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
-
-                        progressDialog.toggleDialog(false);
-                    }
-                }
-
-                @Override
-                public void onCancelled(DatabaseError databaseError) {
-                    progressDialog.toggleDialog(false);
-                    Log.i(TAG, databaseError.getMessage());
-                }
-            });
-            //
-
+            String currentDeviceId = Settings.Secure.getString(getApplicationContext().getContentResolver(), Settings.Secure.ANDROID_ID);
+            FirebaseHelper.manualLogin(user, strUsername, strProfileName, currentDeviceId);
         }
     }
 
 
-    private void addUserToDatabase(final String strUsername, String strProfileName, final ProgressDialog progressDialog){
+    private void addUserToDatabase(final String strUsername, String strProfileName){
         final FirebaseUserModel firebaseUserModel = new FirebaseUserModel();
         firebaseUserModel.setUsername(strUsername);
         firebaseUserModel.setProfileName(strProfileName);
         firebaseUserModel.setStatus(getResources().getString(R.string.status_available));
         firebaseUserModel.setDeviceId(currentDeviceId);
         firebaseUserModel.setDeviceToken(FirebaseInstanceId.getInstance().getToken());
+        FirebaseHelper.registerNewUser(firebaseUserModel);
+    }
 
-        final DatabaseReference newRef = usersRef.push();
-        newRef.setValue(firebaseUserModel, new DatabaseReference.CompletionListener() {
-            @Override
-            public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
-                progressDialog.toggleDialog(false);
-                if (databaseError == null) {
-                    if (user.login(firebaseUserModel)) {
-                        Intent intent = new Intent(LoginActivity.this, SessionActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                        startActivity(intent);
-                        finish();
-                    }
-                } else {
-                    Toast.makeText(LoginActivity.this, "Failed to register user " +  strUsername + " please try again.", Toast.LENGTH_LONG).show();
-                    Log.i(TAG, databaseError.getMessage());
+    @Override
+    public void onCompleteTask(String tag, int condition, Container container) {
+        switch (tag){
+            case "manualLogin":
+                switch (condition){
+                    case FirebaseHelper.CONDITION_1:
+                        /*Container: 0=>profile name, 1=> username*/
+                        if (!container.getStringList().get(0).isEmpty())
+                            addUserToDatabase(container.getStringList().get(1), container.getStringList().get(0));
+                        else
+                            Toast.makeText(LoginActivity.this, "Please enter a profile name", Toast.LENGTH_LONG).show();
+                        break;
+                    case FirebaseHelper.CONDITION_2:
+                        container.getUserModel().setDeviceToken(FirebaseInstanceId.getInstance().getToken());
+                        user.login(container.getUserModel());
+                        break;
+                    case FirebaseHelper.CONDITION_3:
+                        Toast.makeText(LoginActivity.this, "Device Id do not match", Toast.LENGTH_LONG).show();
+                        break;
+                    case FirebaseHelper.CONDITION_4:
+                        Toast.makeText(LoginActivity.this, "Please enter unique username", Toast.LENGTH_LONG).show();
+                        break;
+                    case FirebaseHelper.CONDITION_5:
+                        startActivity(new Intent(LoginActivity.this, SessionActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
+                        break;
                 }
+                break;
+            case "registerNewUser":
+                switch (condition){
+                    case FirebaseHelper.CONDITION_1:
+                        if (user.login(container.getUserModel())) {
+                            Intent intent = new Intent(LoginActivity.this, SessionActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                            startActivity(intent);
+                            finish();
+                        }
+                        break;
+                }
+                break;
 
-            }
-        });
+        }
+        progressDialog.toggleDialog(false);
+    }
+
+    @Override
+    public void onFailureTask(String tag, DatabaseError databaseError) {
+        switch (tag) {
+            case "manualLogin":
+                break;
+            case "registerNewUser":
+                Toast.makeText(LoginActivity.this, "Failed to register user please try again.", Toast.LENGTH_LONG).show();
+        }
+        progressDialog.toggleDialog(false);
+        Log.i(TAG, tag+": "+databaseError.getMessage());
+    }
+
+    @Override
+    public void onChange(String tag, int condition, Container container) {
+
     }
 }

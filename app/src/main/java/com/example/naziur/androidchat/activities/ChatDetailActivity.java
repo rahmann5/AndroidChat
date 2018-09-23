@@ -1,12 +1,12 @@
 package com.example.naziur.androidchat.activities;
 
 import android.content.Intent;
-import android.database.Cursor;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -18,7 +18,9 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
 import com.example.naziur.androidchat.R;
 import com.example.naziur.androidchat.database.ContactDBHelper;
+import com.example.naziur.androidchat.database.FirebaseHelper;
 import com.example.naziur.androidchat.models.FirebaseUserModel;
+import com.example.naziur.androidchat.utils.Container;
 import com.example.naziur.androidchat.utils.Network;
 import com.example.naziur.androidchat.utils.ProgressDialog;
 import com.google.firebase.database.DataSnapshot;
@@ -27,9 +29,10 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
-public class ChatDetailActivity extends AppCompatActivity {
+public class ChatDetailActivity extends AppCompatActivity implements FirebaseHelper.FirebaseHelperListener{
 
-    private FirebaseUserModel user;
+    private static final String TAG = ChatDetailActivity.class.getSimpleName();
+    private FirebaseUserModel userBeingViewed;
     private FirebaseDatabase database;
     private DatabaseReference userRef;
     private ContactDBHelper db;
@@ -47,15 +50,16 @@ public class ChatDetailActivity extends AppCompatActivity {
         database = FirebaseDatabase.getInstance();
         userRef = database.getReference("users");
         progressBar = new ProgressDialog(ChatDetailActivity.this, R.layout.progress_dialog, true);
+        FirebaseHelper.setFirebaseHelperListener(this);
         Bundle extra = getIntent().getExtras();
         if (extra != null) {
-            user = new FirebaseUserModel();
-            user.setUsername(extra.getString("username"));
+            userBeingViewed = new FirebaseUserModel();
+            userBeingViewed.setUsername(extra.getString("username"));
         } else {
             Toast.makeText(this, "Error occurred", Toast.LENGTH_LONG).show();
             finish();
         }
-        isInContacts = db.isUserAlreadyInContacts(user.getUsername());
+        isInContacts = db.isUserAlreadyInContacts(userBeingViewed.getUsername());
 
         mToolbar = (Toolbar) findViewById(R.id.toolbar);
 
@@ -103,7 +107,7 @@ public class ChatDetailActivity extends AppCompatActivity {
     }
 
     private void addUserAsContact(){
-        db.insertContact(user.getUsername(), user.getProfileName(), user.getProfilePic(), user.getDeviceToken());
+        db.insertContact(userBeingViewed.getUsername(), userBeingViewed.getProfileName(), userBeingViewed.getProfilePic(), userBeingViewed.getDeviceToken());
         isInContacts = true;
         finish();
         startActivity(getIntent().setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
@@ -155,43 +159,20 @@ public class ChatDetailActivity extends AppCompatActivity {
 
     private void getUsersInformationOffline (boolean notExistsInServer) {
         if(isInContacts) {
-            String[] profileAndPic = db.getProfileNameAndPic(user.getUsername());
-            user.setProfileName(profileAndPic[0]);
-            user.setProfilePic(profileAndPic[1]);
-            user.setStatus(getResources().getString(R.string.status_available));
+            String[] profileAndPic = db.getProfileNameAndPic(userBeingViewed.getUsername());
+            userBeingViewed.setProfileName(profileAndPic[0]);
+            userBeingViewed.setProfilePic(profileAndPic[1]);
+            userBeingViewed.setStatus(getResources().getString(R.string.status_available));
             putUserData();
         } else if(notExistsInServer){
-            Toast.makeText(this, "This user may not exist anymore", Toast.LENGTH_SHORT);
+            Toast.makeText(this, "This userBeingViewed may not exist anymore", Toast.LENGTH_SHORT);
             finish();
         }
     }
 
     private void getUsersInformationOnline() {
         progressBar.toggleDialog(true);
-        userRef.orderByChild("username").equalTo(user.getUsername()).addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                if(dataSnapshot.exists()) {
-                    for (com.google.firebase.database.DataSnapshot userSnapshot : dataSnapshot.getChildren()) {
-                        FirebaseUserModel firebaseUserModel = userSnapshot.getValue(FirebaseUserModel.class);
-                        if (user.getUsername().equals(user.getUsername())) {
-                            user = firebaseUserModel;
-                            putUserData();
-
-                        }
-                    }
-                } else {
-                    getUsersInformationOffline(true);
-                }
-                progressBar.toggleDialog(false);
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-                Toast.makeText(ChatDetailActivity.this, "Failed to retrieve latest information", Toast.LENGTH_SHORT).show();
-                progressBar.toggleDialog(false);
-            }
-        });
+        FirebaseHelper.getOnlineInfoForUser(userBeingViewed.getUsername());
     }
 
     private void putUserData() {
@@ -199,20 +180,54 @@ public class ChatDetailActivity extends AppCompatActivity {
         TextView profileTv = (TextView) findViewById(R.id.profile_tv);
         TextView statusTv = (TextView) findViewById(R.id.status_tv);
         ImageView profilePicIv = (ImageView) findViewById(R.id.expandedImage);
-        usernameTv.setText("Username: " + user.getUsername());
-        profileTv.setText("Profile Name: " + user.getProfileName());
-        statusTv.setText("Status: " + user.getStatus());
-        mToolbar.setTitle(user.getProfileName());
+        usernameTv.setText("Username: " + userBeingViewed.getUsername());
+        profileTv.setText("Profile Name: " + userBeingViewed.getProfileName());
+        statusTv.setText("Status: " + userBeingViewed.getStatus());
+        mToolbar.setTitle(userBeingViewed.getProfileName());
         setSupportActionBar(mToolbar);
         getSupportActionBar().setDisplayShowTitleEnabled(true);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         invalidateOptionsMenu();
-        Glide.with(ChatDetailActivity.this).load(user.getProfilePic()).apply(new RequestOptions().placeholder(R.drawable.placeholder).error(R.drawable.unknown)).into(profilePicIv);
+        Glide.with(ChatDetailActivity.this).load(userBeingViewed.getProfilePic()).apply(new RequestOptions().placeholder(R.drawable.placeholder).error(R.drawable.unknown)).into(profilePicIv);
     }
 
     @Override
     protected void onDestroy() {
         db.close();
         super.onDestroy();
+    }
+
+    @Override
+    public void onCompleteTask(String tag, int condition, Container container) {
+        switch(tag){
+            case "getOnlineInfoForUser":
+                switch(condition){
+                    case FirebaseHelper.CONDITION_1:
+                        userBeingViewed = container.getUserModel();
+                        putUserData();
+                        break;
+                    case FirebaseHelper.CONDITION_2:
+                        getUsersInformationOffline(true);
+                        break;
+                }
+                break;
+        }
+        progressBar.toggleDialog(false);
+    }
+
+    @Override
+    public void onFailureTask(String tag, DatabaseError databaseError) {
+        switch (tag){
+            case "getOnlineInfoForUser":
+                Toast.makeText(ChatDetailActivity.this, "Failed to retrieve latest information", Toast.LENGTH_SHORT).show();
+                Log.i(TAG, tag+": "+databaseError.getMessage());
+                progressBar.toggleDialog(false);
+                break;
+        }
+    }
+
+    @Override
+    public void onChange(String tag, int condition, Container container) {
+
     }
 }

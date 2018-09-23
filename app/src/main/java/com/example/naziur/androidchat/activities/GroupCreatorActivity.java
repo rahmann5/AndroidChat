@@ -69,7 +69,7 @@ public class GroupCreatorActivity extends AppCompatActivity {
     private static final int REQUEST_CODE_GALLERY_CAMERA = 0;
     private final String TAG = getClass().getSimpleName();
 
-    private List<String> membersSelectdFromContacts;
+    private List<String> membersSelectedFromContacts;
     private List<String> newUsersNotInContacts;
     private RecyclerView contactsRecyclerView;
     private RecyclerView choiceRecyclerView;
@@ -92,7 +92,7 @@ public class GroupCreatorActivity extends AppCompatActivity {
         setContentView(R.layout.activity_group_creator);
         setTitle("Group Chat");
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        membersSelectdFromContacts = new ArrayList<>();
+        membersSelectedFromContacts = new ArrayList<>();
         newUsersNotInContacts = new ArrayList<>();
         FirebaseDatabase database = FirebaseDatabase.getInstance();
         mStorageRef = FirebaseStorage.getInstance().getReference();
@@ -113,8 +113,8 @@ public class GroupCreatorActivity extends AppCompatActivity {
         allChosenMembersAdapter = new ChoiceAdapter(this, new OnItemClickListener() {
             @Override
             public void onItemClick(String user, int pos) {
-                if(membersSelectdFromContacts.contains(user))
-                    membersSelectdFromContacts.remove(user);
+                if(membersSelectedFromContacts.contains(user))
+                    membersSelectedFromContacts.remove(user);
                 else if(newUsersNotInContacts.contains(user))
                     newUsersNotInContacts.remove(user);
 
@@ -128,11 +128,11 @@ public class GroupCreatorActivity extends AppCompatActivity {
         myContactsAdapter = new MyContactsAdapter(this, readCursorData(contactDbHelper.getAllMyContacts(null)), new MyContactsAdapter.OnItemClickListener() {
             @Override
             public void onItemClick(Contact contact, int pos) {
-                if (membersSelectdFromContacts.contains(contact.getContact().getUsername())) {
-                    membersSelectdFromContacts.remove(contact.getContact().getUsername());
+                if (membersSelectedFromContacts.contains(contact.getContact().getUsername())) {
+                    membersSelectedFromContacts.remove(contact.getContact().getUsername());
                 } else {
                     if(!allChosenMembersAdapter.isUserAlreadyInContacts(contact.getContact().getUsername())) {
-                        membersSelectdFromContacts.add(contact.getContact().getUsername());
+                        membersSelectedFromContacts.add(contact.getContact().getUsername());
                     }
                 }
                 updateChosenList();
@@ -207,7 +207,7 @@ public class GroupCreatorActivity extends AppCompatActivity {
                     return;
                 }
 
-                if(membersSelectdFromContacts.size() > 0 || newUsersNotInContacts.size() > 0){
+                if(membersSelectedFromContacts.size() > 0 || newUsersNotInContacts.size() > 0){
                     progressBar.toggleDialog(true);
                     if(myImageFile == null){
                         createGroupNode(title, "");
@@ -446,7 +446,7 @@ public class GroupCreatorActivity extends AppCompatActivity {
 
     private List<String> getAllMembersTogether(){
         List<String> allMembers = new ArrayList<String>();
-        allMembers.addAll(membersSelectdFromContacts);
+        allMembers.addAll(membersSelectedFromContacts);
         allMembers.addAll(newUsersNotInContacts);
         return allMembers;
     }

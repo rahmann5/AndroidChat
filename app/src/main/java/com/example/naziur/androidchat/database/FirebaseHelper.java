@@ -1,5 +1,6 @@
 package com.example.naziur.androidchat.database;
 
+import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.content.Context;
 import android.widget.Toast;
@@ -95,6 +96,64 @@ public class FirebaseHelper {
             @Override
             public void onCancelled(DatabaseError databaseError) {
                 listener.onFailureTask("autoLogin", databaseError);
+            }
+        });
+    }
+
+    public static void manualLogin(final User user, final String username, final String profileName, final String currentDeviceId){
+        DatabaseReference reference = database.getReference("users");
+        reference.orderByChild("username").equalTo(username).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                Container container = new Container();
+                if(!dataSnapshot.exists()){
+                    List<String> contents = new ArrayList<>();
+                    contents.add(profileName);
+                    contents.add(username);
+                    container.setStringList(contents);
+                    listener.onCompleteTask("manualLogin", CONDITION_1, container);
+                } else {
+                    boolean foundMatch = false;
+
+                    for(DataSnapshot snapshot : dataSnapshot.getChildren()){
+                        FirebaseUserModel firebaseUserModel = snapshot.getValue(FirebaseUserModel.class);
+                        container.setUserModel(firebaseUserModel);
+                        if(firebaseUserModel.getDeviceId().equals(currentDeviceId)){
+                            listener.onCompleteTask("manualLogin", CONDITION_2, container);
+                            user.saveFirebaseKey(snapshot.getKey());
+                            foundMatch = true;
+                            break;
+                        } else {
+                            listener.onCompleteTask("manualLogin", CONDITION_3, null);
+                        }
+                    }
+                    if(!foundMatch)
+                        listener.onCompleteTask("manualLogin", CONDITION_4, null);
+                    else
+                        listener.onCompleteTask("manualLogin", CONDITION_5, null);
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                listener.onFailureTask("manualLogin", databaseError);
+            }
+        });
+    }
+
+    public static void registerNewUser(final FirebaseUserModel firebaseUserModel){
+        DatabaseReference reference = database.getReference("users");
+        final DatabaseReference newRef = reference.push();
+        newRef.setValue(firebaseUserModel, new DatabaseReference.CompletionListener() {
+            @Override
+            public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
+                if (databaseError == null) {
+                    Container c = new Container();
+                    c.setUserModel(firebaseUserModel);
+                    listener.onCompleteTask("registerNewUser", CONDITION_1, c);
+                } else {
+                    listener.onFailureTask("registerNewUser", databaseError);
+                }
             }
         });
     }
@@ -573,6 +632,33 @@ public class FirebaseHelper {
                     }
 
                 }
+            }
+        });
+    }
+
+    public static void getOnlineInfoForUser(final String userBeingViewed){
+        DatabaseReference reference = database.getReference("users");
+        reference.orderByChild("username").equalTo(userBeingViewed).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if(dataSnapshot.exists()) {
+                    for (com.google.firebase.database.DataSnapshot userSnapshot : dataSnapshot.getChildren()) {
+                        FirebaseUserModel firebaseUserModel = userSnapshot.getValue(FirebaseUserModel.class);
+                        if (userBeingViewed.equals(userBeingViewed)) {
+                            Container container = new Container();
+                            container.setUserModel(firebaseUserModel);
+                            listener.onCompleteTask("getOnlineInfoForUser", CONDITION_1, container);
+                            break;
+                        }
+                    }
+                } else {
+                    listener.onCompleteTask("getOnlineInfoForUser", CONDITION_2, null);
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                listener.onFailureTask("getOnlineInfoForUser", databaseError);
             }
         });
     }
