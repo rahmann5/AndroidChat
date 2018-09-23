@@ -22,8 +22,10 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
 import com.example.naziur.androidchat.R;
 import com.example.naziur.androidchat.activities.ChatActivity;
+import com.example.naziur.androidchat.database.FirebaseHelper;
 import com.example.naziur.androidchat.models.FirebaseUserModel;
 import com.example.naziur.androidchat.utils.Constants;
+import com.example.naziur.androidchat.utils.Container;
 import com.example.naziur.androidchat.utils.Network;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -46,7 +48,7 @@ import cz.msebera.android.httpclient.entity.StringEntity;
  * Created by Hamidur on 09/09/2018.
  */
 
-public class ImageViewDialogFragment extends DialogFragment {
+public class ImageViewDialogFragment extends DialogFragment implements FirebaseHelper.FirebaseHelperListener{
 
     private static final String TAG = "ImageViewDialogFragment";
 
@@ -162,44 +164,10 @@ public class ImageViewDialogFragment extends DialogFragment {
                             progressBar.setProgress(0);
                         }
                     }, 5000);
-                    getDialog().dismiss();
-                    DatabaseReference messagesRef = FirebaseDatabase.getInstance().getReference("messages")
-                            .child("single")
-                            .child(chatKey);
-                    DatabaseReference newRef = messagesRef.push();
                     @SuppressWarnings("VisibleForTests")
                     final Uri downloadUrl = taskSnapshot.getDownloadUrl();
-                    newRef.setValue(Network.makeNewMessageNode(Constants.MESSAGE_TYPE_PIC, downloadUrl.toString(),friend), new DatabaseReference.CompletionListener() {
-
-                        @Override
-                        public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
-                            if (databaseError != null) {
-                                // remove image from storage
-                                removeFailedImageUpload(downloadUrl.toString(), context);
-                                // show message failed to send (icon)
-                                Log.i(TAG, databaseError.getMessage());
-                            } else {
-                                StringEntity entity = Network.generateEntity(context, Constants.MESSAGE_TYPE_PIC, downloadUrl.toString(), friend, chatKey);
-                                if (entity == null){
-                                    Toast.makeText(context, "Failed to make notification", Toast.LENGTH_SHORT).show();
-                                    return;
-                                }
-                                Network.createAsyncClient().post(context, Constants.NOTIFICATION_URL, entity, RequestParams.APPLICATION_JSON, new TextHttpResponseHandler() {
-                                    @Override
-                                    public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
-                                        Log.i(TAG, "FAILED NOTIFICATION: " + responseString);
-                                    }
-
-                                    @Override
-                                    public void onSuccess(int statusCode, Header[] headers, String responseString) {
-                                        Log.i(TAG, "SUCCESSFUL NOTIFICATION: " + responseString);
-                                    }
-                                });
-                            }
-                        }
-
-
-                    });
+                    getDialog().dismiss();
+                    FirebaseHelper.createImageUploadMessageNode("single", chatKey, context, downloadUrl.toString(), friend);
                 }
             }).addOnFailureListener(new OnFailureListener() {
                 @Override
@@ -218,25 +186,7 @@ public class ImageViewDialogFragment extends DialogFragment {
 
         }
     }
-
-
-    private void removeFailedImageUpload (String uri, final Context context) {
-        StorageReference photoRef = FirebaseStorage.getInstance().getReferenceFromUrl(uri);
-        photoRef.delete().addOnSuccessListener(new OnSuccessListener<Void>() {
-            @Override
-            public void onSuccess(Void aVoid) {
-                Log.i(TAG, "onSuccess: removed image from failed database update");
-            }
-        }).addOnFailureListener(new OnFailureListener() {
-            @Override
-            public void onFailure(@NonNull Exception e) {
-                Toast.makeText(context, "Error Removing old picture", Toast.LENGTH_SHORT).show();
-                Log.i(TAG, "onFailure: did not delete file in storage");
-                e.printStackTrace();
-            }
-        });
-    }
-
+    
     public  boolean isStoragePermissionGranted(final Context context) {
         if (Build.VERSION.SDK_INT >= 23) {
             if (context.checkSelfPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
@@ -254,5 +204,35 @@ public class ImageViewDialogFragment extends DialogFragment {
             Log.i(TAG,"Permission is granted");
             return true;
         }
+    }
+
+    @Override
+    public void onCompleteTask(String tag, int condition, Container container) {
+        if (tag.equals("createImageUploadMessageNode")) {
+            switch (condition) {
+                case FirebaseHelper.CONDITION_1 :
+                    Log.i(TAG, "FAILED NOTIFICATION: " + container.getString());
+                    break;
+
+                case FirebaseHelper.CONDITION_2 :
+                    Log.i(TAG, "SUCCESSFUL NOTIFICATION: " + container.getString());
+                    break;
+
+            }
+        }
+    }
+
+    @Override
+    public void onFailureTask(String tag, DatabaseError databaseError) {
+        switch (tag) {
+            case "createImageUploadMessageNode" :
+                Log.i(TAG, databaseError.getMessage());
+                break;
+        }
+    }
+
+    @Override
+    public void onChange(String tag, int condition, Container container) {
+
     }
 }
