@@ -217,103 +217,13 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
         progressBar.toggleDialog(true);
         allChatKeys.remove(chat.getChatKey());
         final String updatedKeys = getChatKeysAsString();
-        performDeletionOfChat(updatedKeys, chat);
-    }
-
-    private void verifyAllMessageDeleteable (final Chat chat) {
-        usersRef.orderByChild("username").equalTo(chat.getUsernameOfTheOneBeingSpokenTo()).addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                if(dataSnapshot.exists()){
-                    for(DataSnapshot data : dataSnapshot.getChildren()){
-                        FirebaseUserModel firebaseUserModel = data.getValue(FirebaseUserModel.class);
-                        if(firebaseUserModel.getUsername().equals(chat.getUsernameOfTheOneBeingSpokenTo())){
-                            List<String> allKeys = Arrays.asList(firebaseUserModel.getChatKeys().split(","));
-                            if(!allKeys.contains(chat.getChatKey())) // complete delete
-                                collectAllRemovableImagesForMessages (chat.getChatKey());
-
-                        }
-                    }
-                } else {
-                    // if friend account deleted
-                    collectAllRemovableImagesForMessages (chat.getChatKey());
-                }
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-                progressBar.toggleDialog(false);
-                // record which chat key failed to remove
-                Log.i(TAG, "Failed to check if other user in the chat also deleted the chat "+ chat.getChatKey() +", aborted deletion of chat");
-            }
-        });
-    }
-
-    private void performDeletionOfChat(final String updatedKeys, final Chat chat){
-        DatabaseReference pendingTasks = usersRef.orderByChild("username").equalTo(user.name).getRef();
-        pendingTasks.runTransaction(new Transaction.Handler() {
-            @Override
-            public Transaction.Result doTransaction(MutableData mutableData) {
-                for(MutableData data : mutableData.getChildren()){
-                    FirebaseUserModel firebaseUserModel = data.getValue(FirebaseUserModel.class);
-                    if(firebaseUserModel == null)
-                        return Transaction.success(mutableData);
-
-                    if(firebaseUserModel.getUsername().equals(user.name)){
-                        firebaseUserModel.setChatKeys(updatedKeys);
-                        data.setValue(firebaseUserModel);
-                    }
-
-                }
-
-                return Transaction.success(mutableData);
-            }
-
-            @Override
-            public void onComplete(DatabaseError databaseError, boolean b, DataSnapshot dataSnapshot) {
-                if(databaseError != null) {
-                    Log.i(TAG, "Transaction:onComplete:" + databaseError);
-                    progressBar.toggleDialog(false);
-                } else {
-                    verifyAllMessageDeleteable(chat);
-                }
-            }
-
-        });
+        FirebaseHelper.updateChatKeys(user, updatedKeys, chat); //  initiate deletion of chat
     }
 
     private void addUserToContacts(final Chat chat, final int position){
 
         if(!db.isUserAlreadyInContacts(chat.getUsernameOfTheOneBeingSpokenTo())){
-            Query query = usersRef.orderByChild("username").equalTo(chat.getUsernameOfTheOneBeingSpokenTo());
-            query.addListenerForSingleValueEvent(new ValueEventListener() {
-                @Override
-                public void onDataChange(DataSnapshot dataSnapshot) {
-                    if(dataSnapshot.exists()){
-                        for (com.google.firebase.database.DataSnapshot userSnapshot : dataSnapshot.getChildren()) {
-                            //Getting the data from snapshot
-                            FirebaseUserModel firebaseUserModel = userSnapshot.getValue(FirebaseUserModel.class);
-
-                            if (firebaseUserModel.getUsername().equals(chat.getUsernameOfTheOneBeingSpokenTo())) {
-                                Log.i(TAG, "Adding to contacts: " + firebaseUserModel.getUsername());
-                                db.insertContact(firebaseUserModel.getUsername(), firebaseUserModel.getProfileName(), firebaseUserModel.getProfilePic(), firebaseUserModel.getDeviceToken());
-                                myChatsdapter.getAllMyChats().get(position).setSpeakingTo(firebaseUserModel.getProfileName() );
-                                myChatsdapter.notifyDataSetChanged();
-                                break;
-                            }
-                        }
-
-                    } else {
-                        Toast.makeText(getActivity(), "That contact does not exist.", Toast.LENGTH_LONG).show();
-                    }
-                }
-
-                @Override
-                public void onCancelled(DatabaseError databaseError) {
-                    Toast.makeText(getActivity(), "Failed to add contact.", Toast.LENGTH_LONG).show();
-                    Log.i(TAG, databaseError.getMessage());
-                }
-            });
+            FirebaseHelper.addUserToContacts(chat.getUsernameOfTheOneBeingSpokenTo(), db, position);
         } else {
             Toast.makeText(getActivity(), "That user may already exists in your contacts.", Toast.LENGTH_LONG).show();
         }
@@ -331,12 +241,12 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
     }
 
     private void collectAllRemovableImagesForMessages (final String chatKey) {
-        final List<String> imageUri = new ArrayList<>();
         messagesRef
             .child("single").child(chatKey).orderByChild("mediaType")
             .addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
                 public void onDataChange(DataSnapshot dataSnapshot) {
+                    final List<String> imageUri = new ArrayList<>();
                     for (DataSnapshot data : dataSnapshot.getChildren()) {
                         FirebaseMessageModel model = data.getValue(FirebaseMessageModel.class);
                         if (model.getMediaType().equals(Constants.MESSAGE_TYPE_PIC)) {
@@ -355,6 +265,8 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
                     cleanDeleteAllMessages(chatKey);
                 }
             });
+
+        FirebaseHelper.collectAllImagesForDeletionThenDeleteRelatedMessages("single", chatKey);
     }
 
     private void cleanDeleteAllMessages (String chatKey) {
@@ -451,6 +363,51 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
                         break;
                 }
                 break;
+            case "checkKeyListKey":
+                switch(condition){
+                    case FirebaseHelper.CONDITION_2:
+                        collectAllRemovableImagesForMessages (container.getString());
+                        break;
+                }
+                break;
+            case "updateChatKeys":
+                switch(condition){
+                    case FirebaseHelper.CONDITION_1:
+                        //verifying if all messages are deleteable
+                        FirebaseHelper.checkKeyListKey("users", container.getChat().getUsernameOfTheOneBeingSpokenTo(), FirebaseHelper.CONDITION_1, FirebaseHelper.CONDITION_2, container.getChat().getChatKey());
+                        break;
+                }
+                break;
+            case "addUserToContacts":
+                switch (condition){
+                    case FirebaseHelper.CONDITION_1:
+                        myChatsdapter.getAllMyChats().get(container.getInt()).setSpeakingTo(container.getString());
+                        myChatsdapter.notifyDataSetChanged();
+                        break;
+                    case FirebaseHelper.CONDITION_2:
+                        Toast.makeText(getActivity(), "That contact does not exist.", Toast.LENGTH_LONG).show();
+                        break;
+                }
+                break;
+            case "collectAllImagesForDeletionThenDeleteRelatedMessages":
+                switch (condition){
+                    case FirebaseHelper.CONDITION_1:
+                        deleteUploadImages(container.getStringList(), container.getString());
+                        break;
+                }
+                break;
+            case "cleanDeleteAllMessages":
+                switch (condition){
+                    case FirebaseHelper.CONDITION_1:
+                        progressBar.toggleDialog(false);
+                        Log.i(TAG, "Successfully removed all messages");
+                        break;
+                    case FirebaseHelper.CONDITION_2:
+                        progressBar.toggleDialog(false);
+                        Log.i(TAG, "Failed to removed all messages with error: " +container.getString());
+                        break;
+                }
+                break;
         }
     }
 
@@ -459,7 +416,17 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
         switch (tag){
             case "getMessageEventListener":
             case "getUsersValueEventListener":
+            case "updateChatKeys":
                 progressBar.toggleDialog(false);
+                break;
+            case "checkKeyListKey":
+                Log.i(TAG, tag + " Error verifying if all messages were deletable, aborted deletion");
+                break;
+            case "addUserToContacts":
+                Toast.makeText(getActivity(), "Failed to add contact.", Toast.LENGTH_LONG).show();
+                break;
+            case "collectAllImagesForDeletionThenDeleteRelatedMessages":
+                Log.i(TAG, tag + " Failed to obtain reference to all previous messages");
                 break;
         }
         Log.i(TAG, tag + " "+ databaseError.getMessage());
@@ -481,7 +448,6 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
                         else
                             allChats.add(chat);
                         break;
-
                 }
                 break;
         }

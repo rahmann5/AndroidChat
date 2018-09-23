@@ -1,23 +1,31 @@
 package com.example.naziur.androidchat.database;
 
+import android.support.annotation.NonNull;
 import android.util.Log;
 import android.view.View;
+import android.widget.Toast;
 
 import com.example.naziur.androidchat.models.Chat;
 import com.example.naziur.androidchat.models.Contact;
 import com.example.naziur.androidchat.models.FirebaseMessageModel;
 import com.example.naziur.androidchat.models.FirebaseUserModel;
 import com.example.naziur.androidchat.models.User;
+import com.example.naziur.androidchat.utils.Constants;
 import com.example.naziur.androidchat.utils.Container;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.MutableData;
 import com.google.firebase.database.Query;
+import com.google.firebase.database.Transaction;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.iid.FirebaseInstanceId;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 
 import java.util.Arrays;
@@ -203,7 +211,9 @@ public class FirebaseHelper {
                 }
 
                 if (!found) {
-                    listener.onCompleteTask("checkKeyListKey", myCondition2, null);
+                    Container container = new Container();
+                    container.setString(chatKey);
+                    listener.onCompleteTask("checkKeyListKey", myCondition2, container);
                 }
             }
 
@@ -287,6 +297,114 @@ public class FirebaseHelper {
         usersRef.orderByChild("username").equalTo(user.name).addValueEventListener(valueEventListener);
 
         return valueEventListener;
+    }
+
+    public static void updateChatKeys(final User user, final String updatedKeys, final Chat chat){
+        DatabaseReference pendingTasks = database.getReference("users").orderByChild("username").equalTo(user.name).getRef();
+        pendingTasks.runTransaction(new Transaction.Handler() {
+            @Override
+            public Transaction.Result doTransaction(MutableData mutableData) {
+                for(MutableData data : mutableData.getChildren()){
+                    FirebaseUserModel firebaseUserModel = data.getValue(FirebaseUserModel.class);
+                    if(firebaseUserModel == null)
+                        return Transaction.success(mutableData);
+
+                    if(firebaseUserModel.getUsername().equals(user.name)){
+                        firebaseUserModel.setChatKeys(updatedKeys);
+                        data.setValue(firebaseUserModel);
+                    }
+
+                }
+
+                return Transaction.success(mutableData);
+            }
+
+            @Override
+            public void onComplete(DatabaseError databaseError, boolean b, DataSnapshot dataSnapshot) {
+                if(databaseError != null) {
+                    listener.onFailureTask("updateChatKeys", databaseError);
+                } else {
+                    Container container = new Container();
+                    container.setChat(chat);
+                    listener.onCompleteTask("updateChatKeys", CONDITION_1, container);
+                }
+            }
+
+        });
+    }
+
+    public static void addUserToContacts(final String contactsUsername, final ContactDBHelper db, final int positionInAdapter){
+        Query query = database.getReference("users").orderByChild("username").equalTo(contactsUsername);
+        query.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if(dataSnapshot.exists()){
+                    for (com.google.firebase.database.DataSnapshot userSnapshot : dataSnapshot.getChildren()) {
+                        //Getting the data from snapshot
+                        FirebaseUserModel firebaseUserModel = userSnapshot.getValue(FirebaseUserModel.class);
+
+                        if (firebaseUserModel.getUsername().equals(contactsUsername)) {
+                            db.insertContact(firebaseUserModel.getUsername(), firebaseUserModel.getProfileName(), firebaseUserModel.getProfilePic(), firebaseUserModel.getDeviceToken());
+                            Container container = new Container();
+                            container.setString(firebaseUserModel.getProfileName());
+                            container.setInt(positionInAdapter);
+                            listener.onCompleteTask("addUserToContacts", CONDITION_1, container);
+                            break;
+                        }
+                    }
+
+                } else {
+                    listener.onCompleteTask("addUserToContacts", CONDITION_2, null);
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                listener.onFailureTask("addUserToContacts", databaseError);
+            }
+        });
+    }
+
+    public static void collectAllImagesForDeletionThenDeleteRelatedMessages(String node, final String key){
+        final DatabaseReference reference = database.getReference("messages").child(node).child(key);
+        reference.orderByChild("mediaType").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                final List<String> imageUri = new ArrayList<>();
+                for (DataSnapshot data : dataSnapshot.getChildren()) {
+                    FirebaseMessageModel model = data.getValue(FirebaseMessageModel.class);
+                    if (model.getMediaType().equals(Constants.MESSAGE_TYPE_PIC)) {
+                        imageUri.add(model.getText());
+                    }
+                }
+                Container container = new Container();
+                container.setString(key);
+                container.setStringList(imageUri);
+                listener.onCompleteTask("collectAllImagesForDeletionThenDeleteRelatedMessages", CONDITION_1, container);
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                listener.onFailureTask("collectAllImagesForDeletionThenDeleteRelatedMessages", databaseError);
+                cleanDeleteAllMessages(reference);
+            }
+        });
+    }
+
+    public static void cleanDeleteAllMessages(DatabaseReference reference){
+        reference.setValue(null).addOnSuccessListener(new OnSuccessListener<Void>() {
+            @Override
+            public void onSuccess(Void aVoid) {
+                listener.onCompleteTask("cleanDeleteAllMessages", CONDITION_1, null);
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                Container container = new Container();
+                container.setString(e.getMessage());
+                listener.onCompleteTask("cleanDeleteAllMessages", CONDITION_2, container);
+            }
+        });
     }
 
 }

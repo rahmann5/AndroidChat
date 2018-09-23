@@ -5,6 +5,8 @@ import com.example.naziur.androidchat.models.Contact;
 import com.example.naziur.androidchat.models.FirebaseMessageModel;
 import com.example.naziur.androidchat.models.FirebaseUserModel;
 
+import java.util.List;
+
 /**
  * Created by Hamidur on 21/09/2018.
  */
@@ -15,7 +17,9 @@ public class Container {
     private FirebaseMessageModel msgModel;
     private FirebaseUserModel userModel;
     private String simpleString;
+    private int simpleInt;
     private Chat chat;
+    private List<String> stringList;
 
     public Container () {
         // empty
@@ -53,11 +57,27 @@ public class Container {
         this.simpleString = simpleString;
     }
 
+    public int getInt() {
+        return simpleInt;
+    }
+
+    public void setInt(int simpleInt) {
+        this.simpleInt = simpleInt;
+    }
+
     public void setChat(Chat chat){
         this.chat = chat;
     }
 
     public Chat getChat(){
         return chat;
+    }
+
+    public List<String> getStringList() {
+        return stringList;
+    }
+
+    public void setStringList(List<String> stringList) {
+        this.stringList = stringList;
     }
 }
