@@ -6,6 +6,7 @@ import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.Uri;
 import android.os.Environment;
+import android.support.annotation.NonNull;
 import android.util.Log;
 import android.net.NetworkInfo;
 import android.widget.Toast;
@@ -15,6 +16,10 @@ import com.example.naziur.androidchat.models.Contact;
 import com.example.naziur.androidchat.models.FirebaseMessageModel;
 import com.example.naziur.androidchat.models.FirebaseUserModel;
 import com.example.naziur.androidchat.models.User;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.RequestParams;
 
@@ -133,6 +138,23 @@ public class Network {
                         File.separator + DIR_NAME + File.separator + filename);
 
         dm.enqueue(request);
+    }
+
+    public static void removeFailedImageUpload (String uri, final Context context) {
+        StorageReference photoRef = FirebaseStorage.getInstance().getReferenceFromUrl(uri);
+        photoRef.delete().addOnSuccessListener(new OnSuccessListener<Void>() {
+            @Override
+            public void onSuccess(Void aVoid) {
+                Log.i(LOG_TAG, "onSuccess: removed image from failed database update");
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                Toast.makeText(context, "Error Removing old picture", Toast.LENGTH_SHORT).show();
+                Log.i(LOG_TAG, "onFailure: did not delete file in storage");
+                e.printStackTrace();
+            }
+        });
     }
 
     public static AsyncHttpClient createAsyncClient () {
