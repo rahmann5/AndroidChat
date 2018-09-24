@@ -6,6 +6,8 @@ import com.example.naziur.androidchat.models.FirebaseMessageModel;
 import com.example.naziur.androidchat.models.FirebaseUserModel;
 import com.example.naziur.androidchat.models.Notification;
 
+import org.json.JSONArray;
+
 import java.util.List;
 
 /**
@@ -23,6 +25,7 @@ public class Container {
     private Chat chat;
     private List<String> stringList;
     private List<Notification> notifications;
+    private JSONArray jsonArray;
 
     public Container () {
         // empty
@@ -82,6 +85,14 @@ public class Container {
 
     public void setStringList(List<String> stringList) {
         this.stringList = stringList;
+    }
+
+    public JSONArray getJsonArray() {
+        return jsonArray;
+    }
+
+    public void setJsonArray(JSONArray jsonArray) {
+        this.jsonArray = jsonArray;
     }
 
     public boolean getBoolean() {

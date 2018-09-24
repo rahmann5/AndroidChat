@@ -233,7 +233,7 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
     }
 
     private void sendMessage(final String wishMessage){
-        FirebaseHelper.updateMessageNode(this, "single", chatKey, wishMessage, friend);
+        FirebaseHelper.updateMessageNode(this, "single", chatKey, wishMessage, friend, null, "");
         //messagesRef.removeEventListener(commentValueEventListener);
         // messagesRef.addValueEventListener(commentValueEventListener);
     }

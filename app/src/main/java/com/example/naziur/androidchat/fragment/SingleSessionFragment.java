@@ -58,8 +58,6 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
     private static final String TAG = SingleSessionFragment.class.getSimpleName();
 
     private FirebaseDatabase database;
-    private DatabaseReference messagesRef;
-    private DatabaseReference usersRef;
     private ValueEventListener userListener;
     private AllChatsAdapter myChatsdapter;
     private RecyclerView recyclerView;
@@ -88,8 +86,6 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
         allChats = new ArrayList<>();
         allChatKeys = new ArrayList<>();
         database = FirebaseDatabase.getInstance();
-        usersRef = database.getReference("users");
-        messagesRef = database.getReference("messages");
         emptyChats = (TextView) rootView.findViewById(R.id.no_chats);
         recyclerView = rootView.findViewById(R.id.all_chats_list);
         progressBar = new ProgressDialog(getActivity(), R.layout.progress_dialog, true);
