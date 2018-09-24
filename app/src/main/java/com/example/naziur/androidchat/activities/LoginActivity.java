@@ -32,7 +32,6 @@ public class LoginActivity extends AppCompatActivity implements FirebaseHelper.F
     EditText editTextUsername, editTextProfileName;
     User user = User.getInstance();
     FirebaseDatabase database;
-    DatabaseReference usersRef;
     String currentDeviceId;
     ProgressDialog progressDialog;
 
@@ -46,7 +45,6 @@ public class LoginActivity extends AppCompatActivity implements FirebaseHelper.F
         currentDeviceId = Settings.Secure.getString(getApplicationContext().getContentResolver(), Settings.Secure.ANDROID_ID);
 
         database = FirebaseDatabase.getInstance();
-        usersRef = database.getReference("users");
 
         editTextUsername = (EditText) findViewById(R.id.editTextUsername);
         editTextProfileName = (EditText) findViewById(R.id.editTextProfileName);

@@ -25,6 +25,7 @@ import com.bumptech.glide.request.RequestOptions;
 import com.example.naziur.androidchat.R;
 import com.example.naziur.androidchat.adapter.MyContactsAdapter;
 import com.example.naziur.androidchat.database.ContactDBHelper;
+import com.example.naziur.androidchat.database.FirebaseHelper;
 import com.example.naziur.androidchat.database.MyContactsContract;
 import com.example.naziur.androidchat.models.Contact;
 import com.example.naziur.androidchat.models.FirebaseGroupMessageModel;
@@ -32,6 +33,7 @@ import com.example.naziur.androidchat.models.FirebaseGroupModel;
 import com.example.naziur.androidchat.models.FirebaseUserModel;
 import com.example.naziur.androidchat.models.User;
 import com.example.naziur.androidchat.utils.Constants;
+import com.example.naziur.androidchat.utils.Container;
 import com.example.naziur.androidchat.utils.Network;
 import com.example.naziur.androidchat.utils.ProgressDialog;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -65,7 +67,7 @@ import de.hdodenhof.circleimageview.CircleImageView;
 import pl.aprilapps.easyphotopicker.DefaultCallback;
 import pl.aprilapps.easyphotopicker.EasyImage;
 
-public class GroupCreatorActivity extends AppCompatActivity {
+public class GroupCreatorActivity extends AppCompatActivity implements FirebaseHelper.FirebaseHelperListener{
     private static final int REQUEST_CODE_GALLERY_CAMERA = 0;
     private final String TAG = getClass().getSimpleName();
 
@@ -74,13 +76,101 @@ public class GroupCreatorActivity extends AppCompatActivity {
     private RecyclerView contactsRecyclerView;
     private RecyclerView choiceRecyclerView;
     private MyContactsAdapter myContactsAdapter;
-    private DatabaseReference userRef, groupRef, msgRef;
     private StorageReference mStorageRef;
     private ChoiceAdapter allChosenMembersAdapter;
     private File myImageFile;
     private User user = User.getInstance();
     private CircleImageView groupImage;
     private ProgressDialog progressBar;
+
+    @Override
+    public void onCompleteTask(String tag, int condition, Container container) {
+        switch(tag){
+            case "addUserToContacts":
+                switch (condition){
+                    case FirebaseHelper.CONDITION_1:
+                        FirebaseUserModel firebaseUserModel = container.getUserModel();
+                        if (!allChosenMembersAdapter.isUserAlreadyInContacts(container.getString())) {
+                            newUsersNotInContacts.add(firebaseUserModel.getUsername());
+                            updateChosenList();
+                            break;
+                        }
+                        break;
+                    case FirebaseHelper.CONDITION_2:
+                        Toast.makeText(GroupCreatorActivity.this, "The username you entered is not valid", Toast.LENGTH_SHORT).show();
+                        break;
+                }
+                break;
+            case "createGroup":
+                switch (condition){
+                    case FirebaseHelper.CONDITION_1:
+                        String title = container.getString().split(",")[0];
+                        String uniqueID = container.getString().split(",")[1];
+                        final List<String> allMembers = getAllMembersTogether();
+                        Collections.sort(allMembers);
+                        FirebaseHelper.getDeviceTokensFor(allMembers, title, uniqueID);
+                        break;
+                }
+                break;
+            case "updateMessageNode":
+                switch (condition){
+                    case FirebaseHelper.CONDITION_2:
+                        Toast.makeText(GroupCreatorActivity.this, "Failed to make background notification", Toast.LENGTH_SHORT).show();
+                        break;
+                }
+                FirebaseHelper.updateGroupKeyForMembers(getAllMembersTogether(), container.getString(), user);
+                break;
+            case "getDeviceTokensFor":
+                switch(condition){
+                    case FirebaseHelper.CONDITION_1:
+                        String title = container.getString().split(",")[0];
+                        String uniqueID = container.getString().split(",")[1];
+                        sendAdminMsg(container.getJsonArray(), title, uniqueID);
+                        break;
+                }
+                break;
+            case "updateGroupKeyForMembers":
+                switch (condition){
+                    case FirebaseHelper.CONDITION_1:
+                        moveToGroupChatActivity(container.getString());
+                        progressBar.toggleDialog(false);
+                        break;
+                }
+                break;
+        }
+    }
+
+    @Override
+    public void onFailureTask(String tag, DatabaseError databaseError) {
+        switch(tag){
+            case "addUserToContacts":
+                Log.i(TAG, tag+": Failed to retrieve user from server with error:" + databaseError.getMessage());
+                break;
+            case "createGroup":
+                progressBar.toggleDialog(false);
+                Toast.makeText(GroupCreatorActivity.this, "Error Uploading to Database", Toast.LENGTH_SHORT).show();
+                Log.e(TAG,  tag+" "+databaseError.toString());
+                break;
+            case "updateMessageNode":
+                Log.i(TAG,  tag+" "+databaseError.toString());
+                break;
+            case "getDeviceTokensFor":
+                Log.i(TAG, tag+" "+databaseError.getMessage());
+                progressBar.toggleDialog(false);
+                break;
+            case "updateGroupKeyForMembers":
+                Log.e(TAG, tag+" "+databaseError.getMessage());
+                finish();
+                progressBar.toggleDialog(false);
+                break;
+        }
+    }
+
+    @Override
+    public void onChange(String tag, int condition, Container container) {
+
+    }
+
     public interface OnItemClickListener {
         void onItemClick (String user, int pos);
     }
@@ -94,11 +184,8 @@ public class GroupCreatorActivity extends AppCompatActivity {
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         membersSelectedFromContacts = new ArrayList<>();
         newUsersNotInContacts = new ArrayList<>();
-        FirebaseDatabase database = FirebaseDatabase.getInstance();
         mStorageRef = FirebaseStorage.getInstance().getReference();
-        userRef = database.getReference("users");
-        groupRef = database.getReference("groups");
-        msgRef = database.getReference("messages");
+        FirebaseHelper.setFirebaseHelperListener(this);
         groupImage = (CircleImageView) findViewById(R.id.group_photo);
         CircleImageView refreshImage = (CircleImageView) findViewById(R.id.refresh);
         final EditText groupNameEt = (EditText) findViewById(R.id.group_name);
@@ -148,28 +235,7 @@ public class GroupCreatorActivity extends AppCompatActivity {
                 }
 
                 if(!searchedUsernameEt.getText().toString().trim().isEmpty() && !searchedUsernameEt.getText().toString().trim().equals(user.name)){
-                    userRef.orderByChild("username").equalTo(searchedUsernameEt.getText().toString().trim()).addListenerForSingleValueEvent(new ValueEventListener() {
-                        @Override
-                        public void onDataChange(DataSnapshot dataSnapshot) {
-                            if(dataSnapshot.exists()){
-                                for(DataSnapshot snapShot : dataSnapshot.getChildren()) {
-                                    FirebaseUserModel firebaseUserModel = snapShot.getValue(FirebaseUserModel.class);
-                                    if (firebaseUserModel.getUsername().equals(searchedUsernameEt.getText().toString().trim())
-                                            && !allChosenMembersAdapter.isUserAlreadyInContacts(searchedUsernameEt.getText().toString().trim())) {
-                                        newUsersNotInContacts.add(firebaseUserModel.getUsername());
-                                        updateChosenList();
-                                    }
-                                }
-                            } else {
-                                Toast.makeText(GroupCreatorActivity.this, "The username you entered is not valid", Toast.LENGTH_SHORT).show();
-                            }
-                        }
-
-                        @Override
-                        public void onCancelled(DatabaseError databaseError) {
-                            Log.i(TAG, "Failed to retrieve user from server");
-                        }
-                    });
+                    FirebaseHelper.addUserToContacts(searchedUsernameEt.getText().toString().trim(), null, 0); // TEST
                 }else {
                     Toast.makeText(GroupCreatorActivity.this, "You must enter a username before searching for one", Toast.LENGTH_SHORT).show();
                 }
@@ -260,165 +326,18 @@ public class GroupCreatorActivity extends AppCompatActivity {
 
     private void createGroupNode(final String title, String imgUrl){
         final String uniqueID = System.currentTimeMillis()+getRandomCharactersForKey();
-        DatabaseReference newRef = groupRef.push();
         FirebaseGroupModel firebaseGroupModel = new FirebaseGroupModel();
         firebaseGroupModel.setTitle(title);
         firebaseGroupModel.setAdmin(user.name);
         firebaseGroupModel.setPic(imgUrl);
         firebaseGroupModel.setGroupKey(uniqueID);
         firebaseGroupModel.setMembers(getAllMembersAsString());
-        newRef.setValue(firebaseGroupModel, new DatabaseReference.CompletionListener() {
-            @Override
-            public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
-                if(databaseError != null){
-                    progressBar.toggleDialog(false);
-                    Toast.makeText(GroupCreatorActivity.this, "Error Uploading to Database", Toast.LENGTH_SHORT).show();
-                    Log.e(TAG, databaseError.toString());
-                } else {
-                    getDeviceTokensAndSendAdminMsg(title, uniqueID);
-                }
-            }
-        });
-    }
-
-    private void updateUsersGroupKeys(final String uniqueID) {
-
-        userRef.orderByChild("username").getRef().runTransaction(new Transaction.Handler() {
-            @Override
-            public Transaction.Result doTransaction(MutableData mutableData) {
-                List<String> allMembers = getAllMembersTogether();
-                for(MutableData data : mutableData.getChildren()){
-                    FirebaseUserModel firebaseUserModel = data.getValue(FirebaseUserModel.class);
-                    if(firebaseUserModel == null)
-                        return Transaction.success(mutableData);
-
-                    if(firebaseUserModel.getUsername().equals(user.name) || allMembers.contains(firebaseUserModel.getUsername())){
-                        if(firebaseUserModel.getGroupKeys().equals(""))
-                            firebaseUserModel.setGroupKeys(uniqueID);
-                        else {
-                            List<String> membersKeys = Arrays.asList(firebaseUserModel.getGroupKeys().split(","));
-                            if(!membersKeys.contains(uniqueID))
-                                firebaseUserModel.setGroupKeys(firebaseUserModel.getGroupKeys() + "," + uniqueID);
-                        }
-
-                        data.setValue(firebaseUserModel);
-                    }
-
-                }
-
-                return Transaction.success(mutableData);
-            }
-
-            @Override
-            public void onComplete(DatabaseError databaseError, boolean b, DataSnapshot dataSnapshot) {
-                progressBar.toggleDialog(false);
-                if(databaseError != null){
-                    Log.i(TAG, "Could not update users group keys, adding was aborted");
-                    Log.e(TAG, databaseError.getMessage());
-                    finish();
-                } else {
-                    moveToGroupChatActivity(uniqueID);
-                }
-            }
-        });
-    }
-
-    private void getDeviceTokensAndSendAdminMsg(final String title, final String uniqueId){
-        final List<String> allMembers = getAllMembersTogether();
-        Collections.sort(allMembers);
-        userRef.orderByChild("username").startAt(allMembers.get(0)).endAt(allMembers.get(allMembers.size()-1)).addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                if(dataSnapshot.exists()){
-                    JSONArray membersDeviceTokens = new JSONArray();
-                    for(DataSnapshot snapshot : dataSnapshot.getChildren()){
-                        FirebaseUserModel firebaseUserModel = snapshot.getValue(FirebaseUserModel.class);
-                        if(allMembers.contains(firebaseUserModel.getUsername())){
-                            membersDeviceTokens.put(firebaseUserModel.getDeviceToken());
-                        }
-                    }
-                    sendAdminMsg(membersDeviceTokens, title, uniqueId);
-                }
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-                Log.i(TAG, "getDeviceTokensAndSendAdminMsg");
-                Log.e(TAG, databaseError.getMessage());
-                progressBar.toggleDialog(false);
-            }
-        });
+        FirebaseHelper.createGroup(firebaseGroupModel);
     }
 
     private void sendAdminMsg(JSONArray membersDeviceTokens, String title, final String uniqueId){
         String inviteMessage = "Group invite to: " + title + " by " + user.name;
-        final StringEntity entity = generateEntity(membersDeviceTokens, title, uniqueId, inviteMessage);
-        if (entity == null){
-            Toast.makeText(GroupCreatorActivity.this, "Failed to make background notification", Toast.LENGTH_SHORT).show();
-            updateUsersGroupKeys(uniqueId);
-            return;
-        }
-
-        FirebaseGroupMessageModel firebaseGroupMessageModel = new FirebaseGroupMessageModel();
-        firebaseGroupMessageModel.setCreatedDate(System.currentTimeMillis());
-        firebaseGroupMessageModel.setMediaType(Constants.MESSAGE_TYPE_TEXT);
-        firebaseGroupMessageModel.setSenderDeviceId(user.deviceId);
-        firebaseGroupMessageModel.setSenderName(user.name);
-        firebaseGroupMessageModel.setId(uniqueId);
-        firebaseGroupMessageModel.setText(inviteMessage);
-
-
-        msgRef.child("group").child(uniqueId).push().setValue(firebaseGroupMessageModel, new DatabaseReference.CompletionListener() {
-            @Override
-            public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
-                Network.createAsyncClient().post(getApplicationContext(), Constants.NOTIFICATION_URL, entity, RequestParams.APPLICATION_JSON, new TextHttpResponseHandler() {
-                    int count = 0;
-                    @Override
-                    public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
-                        Toast.makeText(GroupCreatorActivity.this, "Error sending background notification", Toast.LENGTH_SHORT).show();
-                        Log.i(TAG, responseString);
-                        if(count == 0)
-                            updateUsersGroupKeys(uniqueId);
-                        count++;
-                    }
-
-                    @Override
-                    public void onSuccess(int statusCode, Header[] headers, String responseString) {
-                        Log.i(TAG, responseString);
-                        if(count == 0)
-                            updateUsersGroupKeys(uniqueId);
-                        count++;
-                    }
-                });
-            }
-        });
-
-    }
-
-    private StringEntity generateEntity (JSONArray membersDeviceTokens, String title, String uniqueId, String inviteMsg) {
-        JSONObject params = new JSONObject();
-        // params.put("to", c.getContact().getDeviceToken());
-        StringEntity entity = null;
-
-        try {
-
-            params.put("registration_ids", membersDeviceTokens);
-            JSONObject payload = new JSONObject();
-            payload.put("group_uid", uniqueId); // used for extra intent in main activity
-            JSONObject notificationObject = new JSONObject();
-            notificationObject.put("click_action", ".MainActivity");
-            notificationObject.put("body", inviteMsg);
-            notificationObject.put("title", title);
-            notificationObject.put("tag", uniqueId);
-            params.put("data", payload);
-            params.put("notification", notificationObject);
-
-            entity = new StringEntity(params.toString());
-        }catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return entity;
+        FirebaseHelper.updateMessageNode(this, "group", uniqueId, inviteMessage, null, membersDeviceTokens, title);
     }
 
     private String getAllMembersAsString(){

@@ -13,6 +13,8 @@ import android.widget.Toast;
 
 import com.example.naziur.androidchat.activities.ChatActivity;
 import com.example.naziur.androidchat.models.Contact;
+import com.example.naziur.androidchat.models.FirebaseGroupMessageModel;
+import com.example.naziur.androidchat.models.FirebaseGroupModel;
 import com.example.naziur.androidchat.models.FirebaseMessageModel;
 import com.example.naziur.androidchat.models.FirebaseUserModel;
 import com.example.naziur.androidchat.models.User;
@@ -23,6 +25,7 @@ import com.google.firebase.storage.StorageReference;
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.RequestParams;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.File;
@@ -167,7 +170,7 @@ public class Network {
         return client;
     }
 
-    public static StringEntity generateEntity (Context c, String type, String wishMessage, FirebaseUserModel friend, String chatKey) {
+    public static StringEntity generateSingleMsgEntity(Context c, String type, String wishMessage, FirebaseUserModel friend, String chatKey) {
         User user = User.getInstance();
         JSONObject params = new JSONObject();
         //params.put("registration_ids", registration_ids);
@@ -192,6 +195,32 @@ public class Network {
         return entity;
     }
 
+    public static StringEntity generateGroupMsgEntity (JSONArray membersDeviceTokens, String title, String uniqueId, String inviteMsg) {
+        JSONObject params = new JSONObject();
+        // params.put("to", c.getContact().getDeviceToken());
+        StringEntity entity = null;
+
+        try {
+
+            params.put("registration_ids", membersDeviceTokens);
+            JSONObject payload = new JSONObject();
+            payload.put("group_uid", uniqueId); // used for extra intent in main activity
+            JSONObject notificationObject = new JSONObject();
+            notificationObject.put("click_action", ".MainActivity");
+            notificationObject.put("body", inviteMsg);
+            notificationObject.put("title", title);
+            notificationObject.put("tag", uniqueId);
+            params.put("data", payload);
+            params.put("notification", notificationObject);
+
+            entity = new StringEntity(params.toString());
+        }catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return entity;
+    }
+
     public static FirebaseMessageModel makeNewMessageNode (String type, String wishMessage, FirebaseUserModel friend) {
         User user = User.getInstance();
         final FirebaseMessageModel firebaseMessageModel = new FirebaseMessageModel();
@@ -202,5 +231,17 @@ public class Network {
         firebaseMessageModel.setIsReceived(Constants.MESSAGE_SENT);
         firebaseMessageModel.setMediaType(type);
         return  firebaseMessageModel;
+    }
+
+    public static FirebaseGroupMessageModel makeNewGroupMessageModel(String uniqueId, String text, String type){
+        User user = User.getInstance();
+        FirebaseGroupMessageModel firebaseGroupMessageModel = new FirebaseGroupMessageModel();
+        firebaseGroupMessageModel.setCreatedDate(System.currentTimeMillis());
+        firebaseGroupMessageModel.setMediaType(type);
+        firebaseGroupMessageModel.setSenderDeviceId(user.deviceId);
+        firebaseGroupMessageModel.setSenderName(user.name);
+        firebaseGroupMessageModel.setId(uniqueId);
+        firebaseGroupMessageModel.setText(text);
+        return firebaseGroupMessageModel;
     }
 }
