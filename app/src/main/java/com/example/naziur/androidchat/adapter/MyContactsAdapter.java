@@ -78,6 +78,11 @@ public class MyContactsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
         notifyItemRemoved(pos);
     }
 
+    public void addNewItemContact(Contact fbModel){
+        allMyContacts.add(fbModel);
+        notifyDataSetChanged();
+    }
+
     public void addNewItem(FirebaseUserModel fbModel){
         allMyContacts.add(new Contact(fbModel));
         notifyDataSetChanged();

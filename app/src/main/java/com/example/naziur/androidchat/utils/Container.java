@@ -4,6 +4,7 @@ import com.example.naziur.androidchat.models.Chat;
 import com.example.naziur.androidchat.models.Contact;
 import com.example.naziur.androidchat.models.FirebaseMessageModel;
 import com.example.naziur.androidchat.models.FirebaseUserModel;
+import com.example.naziur.androidchat.models.Notification;
 
 import java.util.List;
 
@@ -18,8 +19,10 @@ public class Container {
     private FirebaseUserModel userModel;
     private String simpleString;
     private int simpleInt;
+    private boolean simpleBoolean;
     private Chat chat;
     private List<String> stringList;
+    private List<Notification> notifications;
 
     public Container () {
         // empty
@@ -79,5 +82,21 @@ public class Container {
 
     public void setStringList(List<String> stringList) {
         this.stringList = stringList;
+    }
+
+    public boolean getBoolean() {
+        return simpleBoolean;
+    }
+
+    public void setBoolean(boolean simpleBoolean) {
+        this.simpleBoolean = simpleBoolean;
+    }
+
+    public List<Notification> getNotifications() {
+        return notifications;
+    }
+
+    public void setNotifications(List<Notification> notifications) {
+        this.notifications = notifications;
     }
 }

@@ -114,7 +114,6 @@ public class MyContactsActivity extends AppCompatActivity implements AddContactD
             updateExistingContacts(c);
             emptyState.setVisibility(View.GONE);
         } else {
-            Log.i(TAG, "Found no items");
             emptyState.setVisibility(View.VISIBLE);
             myContactsAdapter = new MyContactsAdapter(this, setUpListener());
             myContactsRecycler.setAdapter(myContactsAdapter);
@@ -255,7 +254,7 @@ public class MyContactsActivity extends AppCompatActivity implements AddContactD
 
     private void createKeyAndSendInvitation (final Contact contact) {
         String newChatKey = user.name + "-" + contact.getContact().getUsername();
-        FirebaseHelper.updateChatKeyFromContact(contact, newChatKey , true);
+        FirebaseHelper.updateChatKeyFromContact(contact, newChatKey , true, false);
 
     }
 
@@ -350,12 +349,12 @@ public class MyContactsActivity extends AppCompatActivity implements AddContactD
                         progressBar.toggleDialog(false);
                         startChatActivity(currentUserChatKey);
                     } else if (currentUserChatKey.equals("") && !contactChatKey.equals("")) { // only contact has key
-                        FirebaseHelper.updateChatKeyFromContact(contact, contactChatKey , false);
+                        FirebaseHelper.updateChatKeyFromContact(contact, contactChatKey , false, false);
                     } else { // neither has keys or maybe opposite of each others key
                         if (contactChatKey.equals("") && currentUserChatKey.equals("")) {
                             createKeyAndSendInvitation(contact);
                         } else {
-                            FirebaseHelper.notificationNodeExists(contact.getContact().getUsername(), currentUserChatKey);
+                            FirebaseHelper.notificationNodeExists(contact.getContact().getUsername(), currentUserChatKey, null);
                         }
                     }
                     break;
@@ -373,7 +372,7 @@ public class MyContactsActivity extends AppCompatActivity implements AddContactD
                     break;
 
                 case FirebaseHelper.CONDITION_2 :
-                    FirebaseHelper.removeNotificationNode(container.getContact().getContact().getUsername(), container.getString());
+                    FirebaseHelper.removeNotificationNode(container.getContact().getContact().getUsername(), container.getString(), true);
                     break;
             }
         } else if (tag.equals("updateNotificationNode")) {

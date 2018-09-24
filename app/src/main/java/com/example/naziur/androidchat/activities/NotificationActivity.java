@@ -17,9 +17,12 @@ import android.widget.Toast;
 
 import com.example.naziur.androidchat.R;
 import com.example.naziur.androidchat.adapter.NotificationAdapter;
+import com.example.naziur.androidchat.database.FirebaseHelper;
+import com.example.naziur.androidchat.models.Contact;
 import com.example.naziur.androidchat.models.FirebaseUserModel;
 import com.example.naziur.androidchat.models.Notification;
 import com.example.naziur.androidchat.models.User;
+import com.example.naziur.androidchat.utils.Container;
 import com.example.naziur.androidchat.utils.Network;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -32,16 +35,16 @@ import com.google.firebase.database.ValueEventListener;
 import java.util.ArrayList;
 import java.util.List;
 
-public class NotificationActivity extends AppCompatActivity implements NotificationAdapter.OnItemClickListener{
+public class NotificationActivity extends AppCompatActivity implements NotificationAdapter.OnItemClickListener, FirebaseHelper.FirebaseHelperListener{
 
     private static final String TAG = "NotificationActivity";
     private User user = User.getInstance();
 
     private RecyclerView notificationRecycler;
     private NotificationAdapter notificationAdapter;
-    private DatabaseReference notificationRef;
 
     ValueEventListener notificationEvent;
+    List<Notification> allNotifications;
 
     private TextView emptyText;
 
@@ -50,11 +53,11 @@ public class NotificationActivity extends AppCompatActivity implements Notificat
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_notification);
         setTitle("Notifications");
+        allNotifications = new ArrayList<>();
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
-        notificationRef = FirebaseDatabase.getInstance().getReference("notifications").child(user.name);
         LinearLayoutManager mLayoutManager = new LinearLayoutManager(this);
-
+        FirebaseHelper.setFirebaseHelperListener(this);
         emptyText = (TextView) findViewById(R.id.empty_notifications);
         notificationRecycler = (RecyclerView) findViewById(R.id.notification_recycler);
         notificationRecycler.setLayoutManager(mLayoutManager);
@@ -63,34 +66,14 @@ public class NotificationActivity extends AppCompatActivity implements Notificat
 
         notificationRecycler.addItemDecoration(dividerItemDecoration);
 
-        notificationEvent = new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                List<Notification> allNotifications = new ArrayList<>();
-                for (DataSnapshot notificationSnapshot : dataSnapshot.getChildren()) {
-                    Notification singleNotification = notificationSnapshot.getValue(Notification.class);
-                    allNotifications.add(singleNotification);
-                }
-
-                notificationAdapter = new NotificationAdapter(NotificationActivity.this, NotificationActivity.this, allNotifications);
-                notificationRecycler.setAdapter(notificationAdapter);
-                toggleEmpty(allNotifications);
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-                toggleEmpty(null);
-                Toast.makeText(NotificationActivity.this, "Failed to retrieve notifications", Toast.LENGTH_SHORT).show();
-                Log.i(TAG, databaseError.getMessage());
-            }
-        };
+        notificationEvent = FirebaseHelper.getNotificationChecker(user.name, null);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         if (Network.isInternetAvailable(this, true)) {
-            notificationRef.addValueEventListener(notificationEvent);
+            FirebaseHelper.notificationNodeExists(null, null, notificationEvent);
         } else {
             toggleEmpty(null);
         }
@@ -132,111 +115,78 @@ public class NotificationActivity extends AppCompatActivity implements Notificat
 
 
     @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        if (notificationRef != null)
-            notificationRef.removeEventListener(notificationEvent);
+    protected void onStop() {
+        super.onStop();
+        FirebaseHelper.removeNotificationListener(notificationEvent);
     }
 
     @Override
     public void onButtonClicked(Notification notification, int pos, boolean accept) {
         if (accept) {
-            acceptInvite (notification);
-        } else {
-            rejectInvite (notification, false);
+            FirebaseUserModel temp = new FirebaseUserModel();
+            temp.setUsername(notification.getSender());
+            FirebaseHelper.updateChatKeyFromContact(new Contact(temp), notification.getChatKey(), true, true);
+        } else { // reject
+            FirebaseHelper.removeNotificationNode(notification.getSender(), notification.getChatKey(), false);
         }
     }
 
-    private void acceptInvite (final Notification gNotification) {
-        DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users");
-        userRef.orderByChild("username").equalTo(user.name).getRef().runTransaction(new Transaction.Handler() {
-            @Override
-            public Transaction.Result doTransaction(MutableData mutableData) {
-                for (MutableData data : mutableData.getChildren()) {
-                    FirebaseUserModel userModel = data.getValue(FirebaseUserModel.class);
-                    if (userModel == null) return Transaction.success(mutableData);
-
-                    if (userModel.getUsername().equals(user.name)) {
-                        String currentKeys = userModel.getChatKeys();
-                        if (currentKeys.equals("")) {
-                            currentKeys = gNotification.getChatKey();
-                        } else {
-                            currentKeys = removeAnyDuplicateKey(userModel.getChatKeys().split(","), gNotification.getChatKey() ,generateOppositeKey(gNotification.getChatKey()));
-                        }
-
-                        userModel.setChatKeys(currentKeys);
-                        data.setValue(userModel);
-                        break;
-                    }
-
-                }
-
-                return Transaction.success(mutableData);
-            }
-
-            @Override
-            public void onComplete(DatabaseError databaseError, boolean b, DataSnapshot dataSnapshot) {
-                if (databaseError == null) {
-                    rejectInvite(gNotification, true);
-                } else {
-                    Toast.makeText(NotificationActivity.this, "Failed to remove pending invite notification", Toast.LENGTH_LONG).show();
-                    Log.i(TAG, databaseError.getMessage());
-                }
-            }
-        });
-    }
-
-    private String generateOppositeKey (String currentKey) {
-        String [] keys = currentKey.split("-");
-        return keys[1] + "-" + keys[0];
-    }
-
-    private String removeAnyDuplicateKey (String[] myKeys, String keyToAdd , String searchDup) {
-        String newKeys = keyToAdd;
-        for (String key : myKeys) {
-            if (!key.equals(searchDup) || !key.equals(keyToAdd)) {
-                newKeys += "," + key;
-            }
-        }
-
-        return newKeys;
-    }
-
-    private void rejectInvite (final Notification gNotification, final boolean home) {
-        DatabaseReference notificationRef = FirebaseDatabase.getInstance().getReference("notifications").child(user.name);
-        notificationRef.orderByChild("sender").equalTo(gNotification.getSender()).getRef().runTransaction(new Transaction.Handler() {
-            @Override
-            public Transaction.Result doTransaction(MutableData mutableData) {
-                for (MutableData data : mutableData.getChildren()) {
-                    Notification notification = data.getValue(Notification.class);
-                    if (notification == null) return Transaction.success(mutableData);
-
-                    if (gNotification.getSender().equals(notification.getSender())) {
-                        notification = null;
-                    }
-
-                    data.setValue(notification);
+    @Override
+    public void onCompleteTask(String tag, int condition, Container container) {
+        if (tag.equals("notificationNodeExists")) {
+            switch (condition) {
+                case FirebaseHelper.CONDITION_1 :
+                case FirebaseHelper.CONDITION_2 :
+                    notificationAdapter = new NotificationAdapter(NotificationActivity.this, NotificationActivity.this, allNotifications);
+                    notificationRecycler.setAdapter(notificationAdapter);
+                    toggleEmpty(allNotifications);
                     break;
-                }
-
-                return Transaction.success(mutableData);
             }
-
-            @Override
-            public void onComplete(DatabaseError databaseError, boolean b, DataSnapshot dataSnapshot) {
-
-                if (databaseError != null) {
-                    Toast.makeText(NotificationActivity.this, "Failed to remove pending invite notification", Toast.LENGTH_LONG).show();
-                    Log.i(TAG, databaseError.getMessage());
-                } else {
-                    if(home) {
-                        Intent i = new Intent(NotificationActivity.this, ChatActivity.class);
-                        i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                        i.putExtra("chatKey", gNotification.getChatKey());
-                        startActivity(i);
-                    }
-                }
+        } else if (tag.equals("removeNotificationNode")) {
+            switch (condition) {
+                case FirebaseHelper.CONDITION_1 :
+                    Intent i = new Intent(NotificationActivity.this, ChatActivity.class);
+                    i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                    i.putExtra("chatKey", container.getString());
+                    startActivity(i);
+                    break;
             }
-        });
+        } else if (tag.equals("updateChatKeyFromContact")) {
+            switch (condition) {
+                case FirebaseHelper.CONDITION_1:
+                    FirebaseHelper.removeNotificationNode(container.getContact().getContact().getUsername(), container.getString(), true);
+            }
+        }
+    }
+
+    @Override
+    public void onFailureTask(String tag, DatabaseError databaseError) {
+        switch (tag) {
+            case "notificationNodeExists" :
+                toggleEmpty(null);
+                Toast.makeText(NotificationActivity.this, "Failed to retrieve notifications", Toast.LENGTH_SHORT).show();
+                break;
+
+            case "removeNotificationNode" :
+                Toast.makeText(NotificationActivity.this, "Failed to remove pending invite notification", Toast.LENGTH_LONG).show();
+                break;
+
+            case "updateChatKeyFromContact" :
+                Toast.makeText(NotificationActivity.this, "Failed to remove pending invite notification", Toast.LENGTH_LONG).show();
+                break;
+
+        }
+        Log.i(TAG, databaseError.getMessage());
+    }
+
+    @Override
+    public void onChange(String tag, int condition, Container container) {
+        if (tag.equals("notificationNodeExists")) {
+            switch (condition) {
+                case FirebaseHelper.CONDITION_3 :
+                    allNotifications = container.getNotifications();
+                    break;
+            }
+        }
     }
 }

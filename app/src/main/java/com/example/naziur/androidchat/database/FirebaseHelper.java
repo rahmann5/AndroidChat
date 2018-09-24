@@ -1,5 +1,6 @@
 package com.example.naziur.androidchat.database;
 
+import android.net.Uri;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.content.Context;
@@ -574,7 +575,7 @@ public class FirebaseHelper {
         });
     }
 
-    public static void removeNotificationNode (final String target, final String chatKey) {
+    public static void removeNotificationNode (final String target, final String chatKey, final boolean action) {
         User user = User.getInstance();
         DatabaseReference notificationRef = FirebaseDatabase.getInstance().getReference("notifications").child(user.name);
         notificationRef.orderByChild("sender").equalTo(target).getRef().runTransaction(new Transaction.Handler() {
@@ -600,7 +601,9 @@ public class FirebaseHelper {
                 if (databaseError == null) {
                     Container container = new Container();
                     container.setString(chatKey);
-                    listener.onCompleteTask("removeNotificationNode", CONDITION_1, container );
+                    if (action) {
+                        listener.onCompleteTask("removeNotificationNode", CONDITION_1, container );
+                    }
                 } else {
                     listener.onFailureTask("removeNotificationNode", databaseError);
                 }
@@ -608,13 +611,28 @@ public class FirebaseHelper {
         });
     }
 
-    public static void notificationNodeExists(final String target, final String chatKey) {
+    public static void notificationNodeExists(final String target, final String chatKey, ValueEventListener eventListener) {
         User user = User.getInstance();
         DatabaseReference notificationRef = FirebaseDatabase.getInstance().getReference("notifications").child(user.name);
-        notificationRef.orderByChild("sender").equalTo(target).addListenerForSingleValueEvent(new ValueEventListener() {
+        if (eventListener == null)
+            notificationRef.orderByChild("sender").equalTo(target).addListenerForSingleValueEvent(getNotificationChecker(target, chatKey));
+        else
+            notificationRef.addValueEventListener(eventListener);
+    }
+
+    public static void removeNotificationListener (ValueEventListener eventListener) {
+        User user = User.getInstance();
+        DatabaseReference notificationRef = FirebaseDatabase.getInstance().getReference("notifications").child(user.name);
+        notificationRef.removeEventListener(eventListener);
+    }
+
+    public static ValueEventListener getNotificationChecker (final String target, final String chatKey) {
+        return new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
+                boolean exists = false;
                 boolean invite = false;
+                List<Notification> notifications = new ArrayList<>();
                 if (dataSnapshot.exists()) {
                     for (DataSnapshot notiSnapshot : dataSnapshot.getChildren()) {
                         Notification notification = notiSnapshot.getValue(Notification.class);
@@ -622,11 +640,15 @@ public class FirebaseHelper {
                             invite = true;
                             break;
                         }
+                        notifications.add(notification);
                     }
+                    exists = true;
                 }
 
                 Container container = new Container();
                 container.setString(chatKey);
+                container.setBoolean(exists);
+                container.setNotifications(notifications);
                 if (invite) {
                     listener.onCompleteTask("notificationNodeExists", CONDITION_1, container);
                 } else {
@@ -639,9 +661,8 @@ public class FirebaseHelper {
             public void onCancelled(DatabaseError databaseError) {
                 listener.onFailureTask("notificationNodeExists", databaseError);
             }
-        });
+        };
     }
-
 
     public static void updateFirebaseMessageStatus (final String node, final String chatKey, final Map<Long, Map<String, Object>> messages) {
         final DatabaseReference messagesRef = database.getReference("messages").child(node).child(chatKey);
@@ -713,7 +734,7 @@ public class FirebaseHelper {
         });
     }
 
-    public static void updateChatKeyFromContact (final Contact c, final String chatKey, final boolean invite) {
+    public static void updateChatKeyFromContact (final Contact c, final String chatKey, final boolean invite, final boolean duplicationCheck) {
         final User user = User.getInstance();
         database.getReference("users").orderByChild("username").equalTo(user.name).getRef().runTransaction(new Transaction.Handler() {
             @Override
@@ -726,7 +747,8 @@ public class FirebaseHelper {
                         if (currentKeys.equals("")) {
                             currentKeys = chatKey;
                         } else {
-                            currentKeys = currentKeys + "," + chatKey;
+                            currentKeys = (duplicationCheck) ? removeAnyDuplicateKey(currentUser.getChatKeys().split(","), chatKey ,generateOppositeKey(chatKey))
+                                                    : currentKeys + "," + chatKey; ;
                         }
 
                         currentUser.setChatKeys(currentKeys);
@@ -755,6 +777,23 @@ public class FirebaseHelper {
             }
         });
     }
+
+    private static String generateOppositeKey (String currentKey) {
+        String [] keys = currentKey.split("-");
+        return keys[1] + "-" + keys[0];
+    }
+
+    private static String removeAnyDuplicateKey (String[] myKeys, String keyToAdd , String searchDup) {
+        String newKeys = keyToAdd;
+        for (String key : myKeys) {
+            if (!key.equals(searchDup) || !key.equals(keyToAdd)) {
+                newKeys += "," + key;
+            }
+        }
+
+        return newKeys;
+    }
+
     public static void getOnlineInfoForUser(final String userBeingViewed){
         DatabaseReference reference = database.getReference("users");
         reference.orderByChild("username").equalTo(userBeingViewed).addListenerForSingleValueEvent(new ValueEventListener() {
@@ -778,6 +817,50 @@ public class FirebaseHelper {
             @Override
             public void onCancelled(DatabaseError databaseError) {
                 listener.onFailureTask("getOnlineInfoForUser", databaseError);
+            }
+        });
+    }
+
+
+    public static void updateUserInfo (String target, final Uri uploadedImgUri, final String status, final String profileName, final boolean reset) {
+        DatabaseReference userRef = database.getReference("users");
+        userRef.orderByChild("username").equalTo(target).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                for (DataSnapshot snapshot: dataSnapshot.getChildren()) {
+                    final FirebaseUserModel updatedUser = snapshot.getValue(FirebaseUserModel.class);
+                    updatedUser.setStatus(status);
+                    updatedUser.setProfileName(profileName);
+
+                    if (uploadedImgUri != null && !reset) { // new profile pic upload
+                        updatedUser.setProfilePic(uploadedImgUri.toString());
+                    } else if (uploadedImgUri == null && reset) { // reset image back to unknown
+                        updatedUser.setProfilePic("");
+                    } else if (uploadedImgUri == null && !reset){ // keep current image but change other information
+                        // do nothing
+                    }
+
+                    snapshot.getRef().setValue(updatedUser).addOnSuccessListener(new OnSuccessListener<Void>() {
+                        @Override
+                        public void onSuccess(Void aVoid) {
+                            Container container = new Container();
+                            container.setUserModel(updatedUser);
+                            listener.onCompleteTask("updateUserInfo", CONDITION_1, container);
+                        }
+                    }).addOnFailureListener(new OnFailureListener() {
+                        @Override
+                        public void onFailure(@NonNull Exception e) {
+                            listener.onCompleteTask("updateUserInfo", CONDITION_2, null);
+                        }
+                    });
+
+                    break;
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                listener.onFailureTask("updateUserInfo", databaseError);
             }
         });
     }

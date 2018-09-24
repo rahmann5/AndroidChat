@@ -17,9 +17,11 @@ import android.widget.Toast;
 
 import com.example.naziur.androidchat.R;
 import com.example.naziur.androidchat.adapter.SessionFragmentPagerAdapter;
+import com.example.naziur.androidchat.database.FirebaseHelper;
 import com.example.naziur.androidchat.fragment.GroupSessionFragment;
 import com.example.naziur.androidchat.fragment.SingleSessionFragment;
 import com.example.naziur.androidchat.models.User;
+import com.example.naziur.androidchat.utils.Container;
 import com.example.naziur.androidchat.utils.NetworkChangeReceiver;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -27,22 +29,21 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
-public class SessionActivity extends AppCompatActivity implements NetworkChangeReceiver.OnNetworkStateChangeListener {
+public class SessionActivity extends AppCompatActivity implements NetworkChangeReceiver.OnNetworkStateChangeListener, FirebaseHelper.FirebaseHelperListener{
     private static final String TAG = "SessionActivity";
     private User user = User.getInstance();
     private NetworkChangeReceiver networkChangeReceiver;
     ViewPager viewPager;
     private Menu menu;
     private ValueEventListener notificationListener;
-    private DatabaseReference notificationRef;
 
     SessionFragmentPagerAdapter sessionFragmentPagerAdapter;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_session);
-
-       viewPager = (ViewPager) findViewById(R.id.viewpager);
+        FirebaseHelper.setFirebaseHelperListener(this);
+        viewPager = (ViewPager) findViewById(R.id.viewpager);
         sessionFragmentPagerAdapter = new SessionFragmentPagerAdapter(getSupportFragmentManager());
 
         Toolbar mToolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -53,24 +54,8 @@ public class SessionActivity extends AppCompatActivity implements NetworkChangeR
         TabLayout tabLayout = (TabLayout) findViewById(R.id.sliding_tabs);
         tabLayout.setupWithViewPager(viewPager);
 
-        notificationListener = new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                if (menu != null) {
-                    final MenuItem notificationItem = menu.findItem(R.id.action_notification);
-                    if (dataSnapshot.exists()) {
-                        notificationItem.setIcon(R.drawable.ic_action_alert_notification);
-                    } else {
-                        notificationItem.setIcon(R.drawable.ic_action_notification);
-                    }
-                }
-            }
+        notificationListener = FirebaseHelper.getNotificationChecker(null, null);
 
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-                Log.i(TAG, databaseError.getMessage());
-            }
-        };
 
         viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
 
@@ -146,10 +131,7 @@ public class SessionActivity extends AppCompatActivity implements NetworkChangeR
     @Override
     protected void onResume() {
         super.onResume();
-
-        notificationRef = FirebaseDatabase.getInstance().getReference("notifications").child(user.name);
-        // could be improved with non-single event value listener in the case of receiving first notification
-        notificationRef.addValueEventListener(notificationListener);
+        FirebaseHelper.notificationNodeExists(null, null, notificationListener);
 
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
@@ -157,10 +139,9 @@ public class SessionActivity extends AppCompatActivity implements NetworkChangeR
     }
 
     @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        if (notificationRef != null)
-            notificationRef.removeEventListener(notificationListener);
+    protected void onStop() {
+        super.onStop();
+        FirebaseHelper.removeNotificationListener(notificationListener);
 
     }
 
@@ -173,4 +154,37 @@ public class SessionActivity extends AppCompatActivity implements NetworkChangeR
     }
 
 
+    @Override
+    public void onCompleteTask(String tag, int condition, Container container) {
+        if (tag.equals("notificationNodeExists")) {
+            switch (condition) {
+                case FirebaseHelper.CONDITION_1 :
+                case FirebaseHelper.CONDITION_2 :
+                    if (menu != null) {
+                        final MenuItem notificationItem = menu.findItem(R.id.action_notification);
+                        if (container.getBoolean()) {
+                            notificationItem.setIcon(R.drawable.ic_action_alert_notification);
+                        } else {
+                            notificationItem.setIcon(R.drawable.ic_action_notification);
+                        }
+                    }
+
+                    break;
+            }
+        }
+    }
+
+    @Override
+    public void onFailureTask(String tag, DatabaseError databaseError) {
+        switch (tag) {
+            case "notificationNodeExists" :
+                Log.i(TAG, databaseError.getMessage());
+                break;
+        }
+    }
+
+    @Override
+    public void onChange(String tag, int condition, Container container) {
+
+    }
 }

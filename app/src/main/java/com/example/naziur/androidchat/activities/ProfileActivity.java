@@ -29,9 +29,11 @@ import com.bumptech.glide.request.RequestOptions;
 import com.example.naziur.androidchat.R;
 import com.example.naziur.androidchat.adapter.MyContactsAdapter;
 import com.example.naziur.androidchat.database.ContactDBHelper;
+import com.example.naziur.androidchat.database.FirebaseHelper;
 import com.example.naziur.androidchat.database.MyContactsContract;
 import com.example.naziur.androidchat.models.Contact;
 import com.example.naziur.androidchat.models.FirebaseUserModel;
+import com.example.naziur.androidchat.utils.Container;
 import com.example.naziur.androidchat.utils.FadingActionBarHelper;
 import com.example.naziur.androidchat.models.User;
 import com.example.naziur.androidchat.utils.Network;
@@ -58,14 +60,12 @@ import java.util.List;
 import pl.aprilapps.easyphotopicker.DefaultCallback;
 import pl.aprilapps.easyphotopicker.EasyImage;
 
-public class ProfileActivity extends AppCompatActivity {
+public class ProfileActivity extends AppCompatActivity implements FirebaseHelper.FirebaseHelperListener{
 
     private static final int REQUEST_CODE_GALLERY_CAMERA = 0;
     private static final String TAG = ProfileActivity.class.getSimpleName();
 
     private StorageReference mStorageRef;
-    private FirebaseDatabase database;
-    private DatabaseReference userRef;
 
     private ContactDBHelper db;
 
@@ -80,15 +80,15 @@ public class ProfileActivity extends AppCompatActivity {
     private File myImageFile;
     private ProgressDialog progressBar;
     private boolean reset = false;
+    private MyContactsAdapter contactsAdapter;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setTitle(user.profileName);
+        FirebaseHelper.setFirebaseHelperListener(this);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        database = FirebaseDatabase.getInstance();
         mStorageRef = FirebaseStorage.getInstance().getReference();
-        userRef = database.getReference("users");
         db = new ContactDBHelper(getApplicationContext());
         progressBar = new ProgressDialog(ProfileActivity.this, R.layout.progress_dialog, true);
         FadingActionBarHelper helper = new FadingActionBarHelper()
@@ -186,61 +186,27 @@ public class ProfileActivity extends AppCompatActivity {
 
     private void showContacts() {
         progressBar.toggleDialog(true);
-        //ArrayAdapter<String> adapterContacts = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, new ArrayList<String>());
         emptyContactsList = (TextView) findViewById(R.id.no_contacts);
-        final List<Contact> allContacts = updateContacts ();
         myContacts = (RecyclerView) findViewById(R.id.profile_contacts_list);
-        MyContactsAdapter contactsAdapter = new MyContactsAdapter(ProfileActivity.this, allContacts , null);
-        LinearLayoutManager l = new LinearLayoutManager(ProfileActivity.this);
-        myContacts.setLayoutManager(l);
-        myContacts.setAdapter(contactsAdapter);
+        updateContacts ();
 
     }
 
-    private List<Contact> updateContacts () {
-        final List<Contact> allContacts = new ArrayList<>();
+    private void updateContacts () {
+        contactsAdapter = new MyContactsAdapter(this, null);
         final Cursor c = db.getAllMyContacts(null);
         boolean hasInternet = Network.isInternetAvailable(this, true);
         try {
             while (c.moveToNext()) {
-                final String friendUsername = c.getString(c.getColumnIndex(MyContactsContract.MyContactsContractEntry.COLUMN_USERNAME));
-                final String friendProfileName = c.getString(c.getColumnIndex(MyContactsContract.MyContactsContractEntry.COLUMN_PROFILE));
-                final String friendProfilePic = c.getString(c.getColumnIndex(MyContactsContract.MyContactsContractEntry.COLUMN_PROFILE_PIC));
-
+                FirebaseUserModel fbModel = new FirebaseUserModel();
+                fbModel.setUsername(c.getString(c.getColumnIndex(MyContactsContract.MyContactsContractEntry.COLUMN_USERNAME)));
+                fbModel.setProfileName(c.getString(c.getColumnIndex(MyContactsContract.MyContactsContractEntry.COLUMN_PROFILE)));
+                fbModel.setProfilePic(c.getString(c.getColumnIndex(MyContactsContract.MyContactsContractEntry.COLUMN_PROFILE_PIC)));
                 if (hasInternet) {
-                    userRef.orderByChild("username").equalTo(friendUsername)
-                            .addListenerForSingleValueEvent(new ValueEventListener() {
-                                @Override
-                                public void onDataChange(DataSnapshot dataSnapshot) {
-                                    if(dataSnapshot.exists()){
-                                        for (DataSnapshot userSnapshot : dataSnapshot.getChildren()) {
-                                            FirebaseUserModel firebaseUserModel = userSnapshot.getValue(FirebaseUserModel.class);
-                                            boolean res = db.updateProfile(firebaseUserModel.getUsername(), firebaseUserModel.getProfileName(), firebaseUserModel.getProfilePic());
-                                            if (!res) {
-                                                Log.i(TAG, "Failed to update local data for : " + firebaseUserModel.getUsername());
-                                            }
-                                            allContacts.add(new Contact(firebaseUserModel));
-                                            if (emptyContactsList.getVisibility() != View.GONE) {
-                                                emptyContactsList.setVisibility(View.GONE);
-                                            }
-                                        }
-                                    } else {
-                                        allContacts.add(new Contact(makeOfflineFirebaseObj(friendUsername, friendProfileName, friendProfilePic), "", false));
-                                    }
-                                }
-
-                                @Override
-                                public void onCancelled(DatabaseError databaseError) {
-                                    if (allContacts.isEmpty())
-                                        emptyContactsList.setVisibility(View.VISIBLE);
-                                    else
-                                        emptyContactsList.setVisibility(View.GONE);
-                                    Log.i(TAG, "Failed to connect to real time database for: " + friendUsername + " reason: " + databaseError.getMessage());
-                                }
-                            });
+                    FirebaseHelper.updateLocalContactsFromFirebase("users", fbModel, db);
                 } else {
-                    allContacts.add(new Contact(makeOfflineFirebaseObj(friendUsername, friendProfileName, friendProfilePic), "", false));
-                    emptyContactsList.setVisibility(View.GONE);
+                    contactsAdapter.addNewItemContact(new Contact(fbModel, "", false));
+                    toggleEmptyState();
                 }
             }
 
@@ -249,15 +215,13 @@ public class ProfileActivity extends AppCompatActivity {
             progressBar.toggleDialog(false);
             c.close();
         }
-        return allContacts;
     }
 
-    private FirebaseUserModel makeOfflineFirebaseObj (String friendUsername, String profileName, String profilePic) {
-        FirebaseUserModel firebaseUserModel = new FirebaseUserModel();
-        firebaseUserModel.setUsername(friendUsername);
-        firebaseUserModel.setProfileName(profileName);
-        firebaseUserModel.setProfilePic(profilePic);
-        return firebaseUserModel;
+    private void toggleEmptyState () {
+        if (contactsAdapter.getItemCount() == 0)
+            emptyContactsList.setVisibility(View.VISIBLE);
+        else
+            emptyContactsList.setVisibility(View.GONE);
     }
 
     private void uploadImageToCloud () {
@@ -272,7 +236,7 @@ public class ProfileActivity extends AppCompatActivity {
                             // Get a URL to the uploaded content
                             @SuppressWarnings("VisibleForTests")
                             Uri downloadUrl = taskSnapshot.getDownloadUrl();
-                            updateUserInfo(downloadUrl);
+                            FirebaseHelper.updateUserInfo(user.name, downloadUrl, profileStatus.getSelectedItem().toString(), profileName.getText().toString(), reset);
                         }
                     })
                     .addOnFailureListener(new OnFailureListener() {
@@ -284,53 +248,8 @@ public class ProfileActivity extends AppCompatActivity {
                         }
                     });
         } else {
-            updateUserInfo(null);
+            FirebaseHelper.updateUserInfo(user.name, null, profileStatus.getSelectedItem().toString(), profileName.getText().toString(), reset);
         }
-
-    }
-
-    private void updateUserInfo(final Uri uploadedImgUri) {
-        userRef.orderByChild("username").equalTo(user.name).addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                for (DataSnapshot snapshot: dataSnapshot.getChildren()) {
-                    final FirebaseUserModel updatedUser = snapshot.getValue(FirebaseUserModel.class);
-                    updatedUser.setStatus(profileStatus.getSelectedItem().toString());
-                    updatedUser.setProfileName(profileName.getText().toString());
-
-                    if (uploadedImgUri != null && !reset) { // new profile pic upload
-                        updatedUser.setProfilePic(uploadedImgUri.toString());
-                    } else if (uploadedImgUri == null && reset) { // reset image back to unknown
-                        updatedUser.setProfilePic("");
-                    } else if (uploadedImgUri == null && !reset){ // keep current image but change other information
-                        // do nothing
-                    }
-
-                    snapshot.getRef().setValue(updatedUser, new DatabaseReference.CompletionListener() {
-                        @Override
-                        public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
-                            if (databaseError == null) {
-                                Toast.makeText(ProfileActivity.this, "Successfully updated profile", Toast.LENGTH_SHORT).show();
-                                user.login(updatedUser);
-                                finish();
-                            } else {
-                                Toast.makeText(ProfileActivity.this, "Error Uploading to Database", Toast.LENGTH_SHORT).show();
-                                Log.e(TAG, databaseError.toString());
-                            }
-                            progressBar.toggleDialog(false);
-
-                        }
-                    });
-                }
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-                progressBar.toggleDialog(false);
-                Toast.makeText(ProfileActivity.this, "Error Uploading to Database", Toast.LENGTH_SHORT).show();
-                Log.i(TAG, databaseError.toString());
-            }
-        });
 
     }
 
@@ -443,5 +362,62 @@ public class ProfileActivity extends AppCompatActivity {
     protected void onDestroy() {
         db.close();
         super.onDestroy();
+    }
+
+    @Override
+    public void onCompleteTask(String tag, int condition, Container container) {
+        if (tag.equals("updateLocalContactsFromFirebase")) {
+            switch (condition) {
+                case FirebaseHelper.CONDITION_1 :
+                    contactsAdapter.addNewItemContact(container.getContact());
+                    break;
+
+                case FirebaseHelper.CONDITION_2 :
+                    LinearLayoutManager l = new LinearLayoutManager(ProfileActivity.this);
+                    myContacts.setLayoutManager(l);
+                    myContacts.setAdapter(contactsAdapter);
+                    toggleEmptyState();
+                    break;
+            }
+        } else if (tag.equals("updateUserInfo")) {
+            switch (condition) {
+                case FirebaseHelper.CONDITION_1 :
+                    Toast.makeText(ProfileActivity.this, "Successfully updated profile", Toast.LENGTH_SHORT).show();
+                    user.login(container.getUserModel());
+                    finish();
+                    break;
+
+                case FirebaseHelper.CONDITION_2 :
+                    Toast.makeText(ProfileActivity.this, "Error Uploading to Database", Toast.LENGTH_SHORT).show();
+                    break;
+            }
+            progressBar.toggleDialog(false);
+        }
+    }
+
+    @Override
+    public void onFailureTask(String tag, DatabaseError databaseError) {
+        switch (tag) {
+            case "updateLocalContactsFromFirebase" :
+                toggleEmptyState();
+                break;
+
+            case "updateUserInfo" :
+                progressBar.toggleDialog(false);
+                Toast.makeText(ProfileActivity.this, "Error Uploading to Database", Toast.LENGTH_SHORT).show();
+                break;
+        }
+        Log.i(TAG, databaseError.getMessage());
+    }
+
+    @Override
+    public void onChange(String tag, int condition, Container container) {
+        if (tag.equals("updateLocalContactsFromFirebase")) {
+            switch (condition) {
+                case FirebaseHelper.CONDITION_1 :
+                    contactsAdapter.addNewItemContact(container.getContact());
+                    break;
+            }
+        }
     }
 }
