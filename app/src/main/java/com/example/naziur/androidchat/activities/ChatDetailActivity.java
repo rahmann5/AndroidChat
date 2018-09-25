@@ -23,24 +23,23 @@ import com.example.naziur.androidchat.models.FirebaseUserModel;
 import com.example.naziur.androidchat.utils.Container;
 import com.example.naziur.androidchat.utils.Network;
 import com.example.naziur.androidchat.utils.ProgressDialog;
-import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
+
 
 public class ChatDetailActivity extends AppCompatActivity implements FirebaseHelper.FirebaseHelperListener{
 
     private static final String TAG = ChatDetailActivity.class.getSimpleName();
     private FirebaseUserModel userBeingViewed;
     private FirebaseDatabase database;
-    private DatabaseReference userRef;
     private ContactDBHelper db;
     private boolean isInContacts;
     private FloatingActionButton fab;
     private Toolbar mToolbar;
     private Menu menu;
     private ProgressDialog progressBar;
+    FirebaseHelper firebaseHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,9 +47,9 @@ public class ChatDetailActivity extends AppCompatActivity implements FirebaseHel
         setContentView(R.layout.activity_chat_detail);
         db = new ContactDBHelper(this);
         database = FirebaseDatabase.getInstance();
-        userRef = database.getReference("users");
         progressBar = new ProgressDialog(ChatDetailActivity.this, R.layout.progress_dialog, true);
-        FirebaseHelper.setFirebaseHelperListener(this);
+        firebaseHelper = FirebaseHelper.getInstance();
+        firebaseHelper.setFirebaseHelperListener(this);
         Bundle extra = getIntent().getExtras();
         if (extra != null) {
             userBeingViewed = new FirebaseUserModel();
@@ -62,7 +61,6 @@ public class ChatDetailActivity extends AppCompatActivity implements FirebaseHel
         isInContacts = db.isUserAlreadyInContacts(userBeingViewed.getUsername());
 
         mToolbar = (Toolbar) findViewById(R.id.toolbar);
-
 
         if (Network.isInternetAvailable(this, true))
             getUsersInformationOnline();
@@ -106,13 +104,6 @@ public class ChatDetailActivity extends AppCompatActivity implements FirebaseHel
         });
     }
 
-    private void addUserAsContact(){
-        db.insertContact(userBeingViewed.getUsername(), userBeingViewed.getProfileName(), userBeingViewed.getProfilePic(), userBeingViewed.getDeviceToken());
-        isInContacts = true;
-        finish();
-        startActivity(getIntent().setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
-    }
-
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
@@ -120,6 +111,13 @@ public class ChatDetailActivity extends AppCompatActivity implements FirebaseHel
         getMenuInflater().inflate(R.menu.chat_detail_menu, menu);
         hideOption(R.id.action_info);
         return true;
+    }
+
+    private void addUserAsContact(){
+        db.insertContact(userBeingViewed.getUsername(), userBeingViewed.getProfileName(), userBeingViewed.getProfilePic(), userBeingViewed.getDeviceToken());
+        isInContacts = true;
+        finish();
+        startActivity(getIntent().setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
     }
 
     @Override
@@ -145,18 +143,6 @@ public class ChatDetailActivity extends AppCompatActivity implements FirebaseHel
         return super.onOptionsItemSelected(item);
     }
 
-    private void hideOption(int id) {
-        MenuItem item = menu.findItem(id);
-        item.setVisible(false);
-    }
-
-    private void showOption(int id) {
-        if(menu != null) {
-            MenuItem item = menu.findItem(id);
-            item.setVisible(true);
-        }
-    }
-
     private void getUsersInformationOffline (boolean notExistsInServer) {
         if(isInContacts) {
             String[] profileAndPic = db.getProfileNameAndPic(userBeingViewed.getUsername());
@@ -172,7 +158,13 @@ public class ChatDetailActivity extends AppCompatActivity implements FirebaseHel
 
     private void getUsersInformationOnline() {
         progressBar.toggleDialog(true);
-        FirebaseHelper.getOnlineInfoForUser(userBeingViewed.getUsername());
+        firebaseHelper.getOnlineInfoForUser(userBeingViewed.getUsername());
+    }
+
+    @Override
+    protected void onDestroy() {
+        db.close();
+        super.onDestroy();
     }
 
     private void putUserData() {
@@ -191,10 +183,18 @@ public class ChatDetailActivity extends AppCompatActivity implements FirebaseHel
         Glide.with(ChatDetailActivity.this).load(userBeingViewed.getProfilePic()).apply(new RequestOptions().placeholder(R.drawable.placeholder).error(R.drawable.unknown)).into(profilePicIv);
     }
 
-    @Override
-    protected void onDestroy() {
-        db.close();
-        super.onDestroy();
+    private void hideOption(int id) {
+        if(menu != null) {
+            MenuItem item = menu.findItem(id);
+            item.setVisible(false);
+        }
+    }
+
+    private void showOption(int id) {
+        if(menu != null) {
+            MenuItem item = menu.findItem(id);
+            item.setVisible(true);
+        }
     }
 
     @Override

@@ -18,6 +18,7 @@ public class Constants {
 
     public static final String MESSAGE_TYPE_TEXT = "TEXT";
     public static final String MESSAGE_TYPE_PIC = "PIC";
+    public static final String MESSAGE_TYPE_SYSTEM = "SYSTEM";
     public static final String ACTION_SEND = "Send";
     public static final String ACTION_DOWNLOAD = "Download";
 

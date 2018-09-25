@@ -259,7 +259,7 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
     @Override
     public void onStop() {
 
-        FirebaseHelper.removeListenerFor("users", userListener);
+        firebaseHelper.removeListenerFor("users", userListener);
 
         for(int i = 0; i < grpValueEventListeners.size(); i++){
             groupsRef.orderByChild("groupKey").equalTo(allGroupKeys.get(i)).removeEventListener(grpValueEventListeners.get(i));

@@ -10,15 +10,22 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
 import com.example.naziur.androidchat.R;
+import com.example.naziur.androidchat.adapter.MessagesListAdapter;
+import com.example.naziur.androidchat.database.FirebaseHelper;
 import com.example.naziur.androidchat.models.FirebaseGroupModel;
+import com.example.naziur.androidchat.models.FirebaseMessageModel;
 import com.example.naziur.androidchat.models.FirebaseUserModel;
+import com.example.naziur.androidchat.models.MessageCell;
 import com.example.naziur.androidchat.models.User;
+import com.example.naziur.androidchat.utils.Constants;
+import com.example.naziur.androidchat.utils.Container;
 import com.example.naziur.androidchat.utils.Network;
 import com.example.naziur.androidchat.utils.ProgressDialog;
 import com.google.firebase.database.DataSnapshot;
@@ -29,9 +36,14 @@ import com.google.firebase.database.MutableData;
 import com.google.firebase.database.Transaction;
 import com.google.firebase.database.ValueEventListener;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import de.hdodenhof.circleimageview.CircleImageView;
 
-public class GroupChatActivity extends AppCompatActivity {
+public class GroupChatActivity extends AppCompatActivity implements FirebaseHelper.FirebaseHelperListener{
     private static final String TAG = "GroupChatActivity";
     User user = User.getInstance();
 
@@ -40,10 +52,14 @@ public class GroupChatActivity extends AppCompatActivity {
     FloatingActionButton sendBottom;
     FirebaseDatabase database;
     DatabaseReference messagesRef;
+    ListView listView;
+    List<FirebaseMessageModel> messages = new ArrayList<FirebaseMessageModel>();
+    FirebaseGroupModel groupModel;
 
     private ActionBar actionBar;
     private ProgressDialog progressBar;
     private String groupKey = "";
+    private ValueEventListener msgValueEventListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,30 +71,15 @@ public class GroupChatActivity extends AppCompatActivity {
             finish();
             return;
         }
+        listView = (ListView) findViewById(R.id.chattingList);
+        textComment = (EditText) findViewById(R.id.comment_text);
+        btnSend = (CircleImageView) findViewById(R.id.send_button);
+        btnMedia = (CircleImageView) findViewById(R.id.media_button);
+        sendBottom = (FloatingActionButton) findViewById(R.id.action_send_bottom);
         database = FirebaseDatabase.getInstance();
         groupKey = extra.getString("group_uid");
         progressBar = new ProgressDialog(this, R.layout.progress_dialog, true);
-        messagesRef = database.getReference("messages")
-                .child("group")
-                .child(groupKey);
-
-
-        final ValueEventListener messageEventListener = new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
-                    // TO DO
-                }
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-                // TO DO
-            }
-        };
-
-
-
+        FirebaseHelper.setFirebaseHelperListener(this);
         createCustomActionBar ();
         // assuming that user is guaranteed member of group
         if (Network.isInternetAvailable(this, true)) {
@@ -108,6 +109,19 @@ public class GroupChatActivity extends AppCompatActivity {
             // TO DO
         }
 
+        msgValueEventListener = FirebaseHelper.createMessageEventListener();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (Network.isInternetAvailable(this, true)) {
+            //FirebaseHelper.setUpGroupChat();
+            progressBar.toggleDialog(true);
+            FirebaseHelper.toggleMsgEventListeners("group", groupKey, msgValueEventListener, true);
+        } else {
+
+        }
     }
 
     private void createCustomActionBar () {
@@ -228,5 +242,73 @@ public class GroupChatActivity extends AppCompatActivity {
                 }
             }
         });
+    }
+
+    public void updateListView() {
+        Log.i(TAG, "Inside prepareWishList()");
+
+        int totalWishes = messages.size();
+
+        Log.i(TAG, "Total Wishes : " + totalWishes);
+
+        MessageCell[] messageCells;
+        messageCells = new MessageCell[totalWishes];
+
+        for (int counter = 0; counter < totalWishes; counter++) {
+            final FirebaseMessageModel firebaseMessageModel = messages.get(counter);
+            MessageCell messageCell = new MessageCell(firebaseMessageModel.getSenderName() , firebaseMessageModel.getText(),
+                    ChatActivity.getDate(firebaseMessageModel.getCreatedDateLong()), firebaseMessageModel.getSenderDeviceId().equals(user.deviceId),
+                    firebaseMessageModel.getIsReceived(), firebaseMessageModel.getMediaType());
+            messageCell.setDateOnly( ChatActivity.getDateOnly(firebaseMessageModel.getCreatedDateLong()));
+            messageCells[counter] = messageCell;
+        }
+
+        MessagesListAdapter adapter = new MessagesListAdapter(this, messageCells);
+        // Assign adapter to ListView
+        listView.setAdapter(adapter);
+
+        listView.setSelection(listView.getCount() - 1);
+
+        listView.requestFocus();
+    }
+
+    @Override
+    public void onCompleteTask(String tag, int condition, Container container) {
+        switch(tag){
+            case "createMessageEventListener":
+                switch(condition){
+                    case FirebaseHelper.CONDITION_1:
+                        messages.clear();
+                        break;
+                    case FirebaseHelper.CONDITION_2 :
+                        updateListView();
+                        progressBar.toggleDialog(false);
+                        break;
+                }
+                break;
+        }
+    }
+
+    @Override
+    public void onFailureTask(String tag, DatabaseError databaseError) {
+        switch(tag){
+            case "createMessageEventListener":
+                Log.i(TAG, tag+" "+databaseError.getMessage());
+                progressBar.toggleDialog(false);
+                break;
+        }
+    }
+
+    @Override
+    public void onChange(String tag, int condition, Container container) {
+        switch(tag){
+            case "createMessageEventListener":
+                switch(condition){
+                    case FirebaseHelper.CONDITION_1:
+                        messages.add(container.getMsgModel());
+                        break;
+                }
+                break;
+        }
     }
 }
