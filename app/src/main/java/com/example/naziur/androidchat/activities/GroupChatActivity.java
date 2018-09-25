@@ -60,6 +60,7 @@ public class GroupChatActivity extends AppCompatActivity implements FirebaseHelp
     private ProgressDialog progressBar;
     private String groupKey = "";
     private ValueEventListener msgValueEventListener;
+    FirebaseHelper firebaseHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -79,7 +80,8 @@ public class GroupChatActivity extends AppCompatActivity implements FirebaseHelp
         database = FirebaseDatabase.getInstance();
         groupKey = extra.getString("group_uid");
         progressBar = new ProgressDialog(this, R.layout.progress_dialog, true);
-        FirebaseHelper.setFirebaseHelperListener(this);
+        firebaseHelper = FirebaseHelper.getInstance();
+        firebaseHelper.setFirebaseHelperListener(this);
         createCustomActionBar ();
         // assuming that user is guaranteed member of group
         if (Network.isInternetAvailable(this, true)) {
@@ -109,7 +111,7 @@ public class GroupChatActivity extends AppCompatActivity implements FirebaseHelp
             // TO DO
         }
 
-        msgValueEventListener = FirebaseHelper.createMessageEventListener();
+        msgValueEventListener = firebaseHelper.createMessageEventListener();
     }
 
     @Override
@@ -118,7 +120,7 @@ public class GroupChatActivity extends AppCompatActivity implements FirebaseHelp
         if (Network.isInternetAvailable(this, true)) {
             //FirebaseHelper.setUpGroupChat();
             progressBar.toggleDialog(true);
-            FirebaseHelper.toggleMsgEventListeners("group", groupKey, msgValueEventListener, true);
+            firebaseHelper.toggleMsgEventListeners("group", groupKey, msgValueEventListener, true);
         } else {
 
         }
