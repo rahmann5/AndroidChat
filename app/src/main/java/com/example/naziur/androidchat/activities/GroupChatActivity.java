@@ -96,7 +96,8 @@ public class GroupChatActivity extends AppCompatActivity implements FirebaseHelp
             @Override
             public void onClick(View view) {
                 btnSend.setEnabled(false);
-
+                progressBar.toggleDialog(true);
+                firebaseHelper.checkKeyListKey("users", FirebaseHelper.CONDITION_1, FirebaseHelper.CONDITION_2, groupKey, groupModel.getMembers().split(","));
             }
         });
     }
@@ -289,7 +290,22 @@ public class GroupChatActivity extends AppCompatActivity implements FirebaseHelp
                 }
                 break;
             case "getDeviceTokensFor":
-                registeredIds = container.getJsonArray();
+                switch (condition){
+                    case FirebaseHelper.CONDITION_1:
+                        registeredIds = container.getJsonArray();
+                        break;
+                }
+                break;
+            case "checkKeyListKey":
+                switch (condition){
+                    case FirebaseHelper.CONDITION_1:
+                        registeredIds = new JSONArray();
+                        break;
+                    case FirebaseHelper.CONDITION_2:
+                        System.out.println("Found " + registeredIds.length() + " users");
+                        progressBar.toggleDialog(false);
+                        break;
+                }
                 break;
         }
     }
@@ -297,6 +313,7 @@ public class GroupChatActivity extends AppCompatActivity implements FirebaseHelp
     @Override
     public void onFailureTask(String tag, DatabaseError databaseError) {
         switch(tag){
+            case "checkKeyListKey":
             case "createMessageEventListener":
                 progressBar.toggleDialog(false);
                 break;
@@ -311,6 +328,13 @@ public class GroupChatActivity extends AppCompatActivity implements FirebaseHelp
                 switch(condition){
                     case FirebaseHelper.CONDITION_1:
                         messages.add(container.getMsgModel());
+                        break;
+                }
+                break;
+            case "checkKeyListKey":
+                switch (condition){
+                    case FirebaseHelper.CONDITION_1:
+                        registeredIds.put(container.getString());
                         break;
                 }
                 break;

@@ -35,19 +35,15 @@ import com.example.naziur.androidchat.utils.Network;
 import com.example.naziur.androidchat.utils.ProgressDialog;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.MutableData;
-import com.google.firebase.database.Query;
-import com.google.firebase.database.Transaction;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -57,7 +53,6 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
 
     private static final String TAG = SingleSessionFragment.class.getSimpleName();
 
-    private FirebaseDatabase database;
     private ValueEventListener userListener;
     private AllChatsAdapter myChatsdapter;
     private RecyclerView recyclerView;
@@ -71,7 +66,6 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
     FirebaseHelper firebaseHelper;
 
     public SingleSessionFragment() {
-        super();
         // Required empty public constructor
     }
 
@@ -88,7 +82,6 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
         valueEventListeners = new ArrayList<>();
         allChats = new ArrayList<>();
         allChatKeys = new ArrayList<>();
-        database = FirebaseDatabase.getInstance();
         emptyChats = (TextView) rootView.findViewById(R.id.no_chats);
         recyclerView = rootView.findViewById(R.id.all_chats_list);
         progressBar = new ProgressDialog(getActivity(), R.layout.progress_dialog, true);
@@ -112,7 +105,8 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
                 return;
             }
         }
-        userListener = firebaseHelper.getValueEventListener("users", "username", user.name, FirebaseUserModel.class);
+        userListener = firebaseHelper.getValueEventListener(user.name, FirebaseUserModel.class);
+        firebaseHelper.toggleListenerFor("users", "username" , user.name, userListener, true);
     }
 
     private void updateExistingContacts (Cursor c) {
@@ -137,7 +131,7 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
         progressBar.toggleDialog(true);
             for (int i = 0; i < allChatKeys.size(); i++) {
                 final String chatKey = allChatKeys.get(i);
-                valueEventListeners.add(firebaseHelper.getMessageEventListener(user, db, getString(R.string.simple_date), chatKey));
+                valueEventListeners.add(firebaseHelper.getMessageEventListener(chatKey));
                 firebaseHelper.attachOrRemoveMessageEventListener("single", allChatKeys.get(i), valueEventListeners.get(i), true);
             }
         progressBar.toggleDialog(false);
@@ -270,7 +264,7 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
     public void onStop() {
 
         if (userListener != null) {
-            firebaseHelper.removeListenerFor("users", userListener);
+            firebaseHelper.toggleListenerFor("users", "username", user.name , userListener, false);
         }
         for(int i = 0; i < valueEventListeners.size(); i++){
             firebaseHelper.attachOrRemoveMessageEventListener("single", allChatKeys.get(i), valueEventListeners.get(i), false);
@@ -398,7 +392,12 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
             case "getMessageEventListener":
                 switch (condition) {
                     case FirebaseHelper.CONDITION_1:
-                        Chat chat = container.getChat();
+                        FirebaseMessageModel firebaseMessageModel = container.getMsgModel();
+                        String isChattingTo = (firebaseMessageModel.getSenderName().equals(user.name)) ? db.getProfileNameAndPic(firebaseMessageModel.getReceiverName())[0] : db.getProfileNameAndPic(firebaseMessageModel.getSenderName())[0];
+                        String username = (firebaseMessageModel.getSenderName().equals(user.name)) ? firebaseMessageModel.getReceiverName() : firebaseMessageModel.getSenderName();
+                        SimpleDateFormat formatter = new SimpleDateFormat(getString(R.string.simple_date));
+                        String dateString = formatter.format(new Date(firebaseMessageModel.getCreatedDateLong()));
+                        Chat chat = new Chat(isChattingTo, username, firebaseMessageModel.getText(), db.getProfileNameAndPic(username)[1], dateString, container.getString(), firebaseMessageModel.getIsReceived(), firebaseMessageModel.getMediaType());
                         for (int i = 0; i < allChats.size(); i++) {
                             if (allChats.get(i).getUsernameOfTheOneBeingSpokenTo().equals(chat.getUsernameOfTheOneBeingSpokenTo()))
                                 allChats.remove(i);
