@@ -64,13 +64,15 @@ public class MyContactsActivity extends AppCompatActivity implements AddContactD
     private TextView emptyState;
     private User user = User.getInstance();
     private ProgressDialog progressBar;
+    FirebaseHelper firebaseHelper;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_my_contacts);
 
         setTitle("My Contacts");
-        FirebaseHelper.setFirebaseHelperListener(this);
+        firebaseHelper = FirebaseHelper.getInstance();
+        firebaseHelper.setFirebaseHelperListener(this);
         db = new ContactDBHelper(getApplicationContext());
         myContactsRecycler = (RecyclerView) findViewById(R.id.contacts_recycler);
         progressBar = new ProgressDialog(MyContactsActivity.this, R.layout.progress_dialog, true);
@@ -133,7 +135,7 @@ public class MyContactsActivity extends AppCompatActivity implements AddContactD
                 fbModel.setProfileName(c.getString(c.getColumnIndex(MyContactsContract.MyContactsContractEntry.COLUMN_PROFILE)));
 
                 if (hasInternet) {
-                    FirebaseHelper.updateLocalContactsFromFirebase("users", fbModel, db);
+                    firebaseHelper.updateLocalContactsFromFirebase("users", fbModel, db);
                 } else {
                     fbModel.setProfilePic(c.getString(c.getColumnIndex(MyContactsContract.MyContactsContractEntry.COLUMN_PROFILE_PIC)));
                     myContactsAdapter.addNewItem(fbModel);
@@ -189,7 +191,7 @@ public class MyContactsActivity extends AppCompatActivity implements AddContactD
     public void onDialogPositiveClick(DialogFragment dialog, final String username) {
         progressBar.toggleDialog(true);
         if(!db.isUserAlreadyInContacts(username) && !username.equals(user.name)){
-           FirebaseHelper.addUserToContacts(username, db, 0);
+            firebaseHelper.addUserToContacts(username, db, 0);
         } else {
             progressBar.toggleDialog(false);
             Toast.makeText(MyContactsActivity.this, "User cannot be added as they may already exist or it is your username", Toast.LENGTH_LONG).show();
@@ -214,7 +216,7 @@ public class MyContactsActivity extends AppCompatActivity implements AddContactD
                 if (Network.isInternetAvailable(MyContactsActivity.this, true) && c.isActive()) {
                     progressBar.toggleDialog(true);
                     // checking where exists if it exists at all
-                    FirebaseHelper.setUpSingleChat("users", c.getContact().getUsername(), user.name);
+                    firebaseHelper.setUpSingleChat("users", c.getContact().getUsername(), user.name);
                 }
                 break;
             case 2 : // delete contact
@@ -254,7 +256,7 @@ public class MyContactsActivity extends AppCompatActivity implements AddContactD
 
     private void createKeyAndSendInvitation (final Contact contact) {
         String newChatKey = user.name + "-" + contact.getContact().getUsername();
-        FirebaseHelper.updateChatKeyFromContact(contact, newChatKey , true, false);
+        firebaseHelper.updateChatKeyFromContact(contact, newChatKey , true, false);
 
     }
 
@@ -349,12 +351,12 @@ public class MyContactsActivity extends AppCompatActivity implements AddContactD
                         progressBar.toggleDialog(false);
                         startChatActivity(currentUserChatKey);
                     } else if (currentUserChatKey.equals("") && !contactChatKey.equals("")) { // only contact has key
-                        FirebaseHelper.updateChatKeyFromContact(contact, contactChatKey , false, false);
+                        firebaseHelper.updateChatKeyFromContact(contact, contactChatKey , false, false);
                     } else { // neither has keys or maybe opposite of each others key
                         if (contactChatKey.equals("") && currentUserChatKey.equals("")) {
                             createKeyAndSendInvitation(contact);
                         } else {
-                            FirebaseHelper.notificationNodeExists(contact.getContact().getUsername(), currentUserChatKey, null);
+                            firebaseHelper.notificationNodeExists(contact.getContact().getUsername(), currentUserChatKey, null);
                         }
                     }
                     break;
@@ -368,11 +370,11 @@ public class MyContactsActivity extends AppCompatActivity implements AddContactD
         } else if (tag.equals("updateChatKeyFromContact")) {
             switch (condition) {
                 case FirebaseHelper.CONDITION_1 :
-                    FirebaseHelper.updateNotificationNode("chatKey", container.getContact().getContact(), container.getString());
+                    firebaseHelper.updateNotificationNode("chatKey", container.getContact().getContact(), container.getString());
                     break;
 
                 case FirebaseHelper.CONDITION_2 :
-                    FirebaseHelper.removeNotificationNode(container.getContact().getContact().getUsername(), container.getString(), true);
+                    firebaseHelper.removeNotificationNode(container.getContact().getContact().getUsername(), container.getString(), true);
                     break;
             }
         } else if (tag.equals("updateNotificationNode")) {

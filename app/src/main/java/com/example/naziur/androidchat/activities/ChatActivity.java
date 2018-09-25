@@ -99,6 +99,8 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
 
     private String chatKey;
 
+    private FirebaseHelper firebaseHelper;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -113,7 +115,8 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
             Toast.makeText(this, "Error occurred", Toast.LENGTH_LONG).show();
             finish();
         }
-        FirebaseHelper.setFirebaseHelperListener(this);
+        firebaseHelper = FirebaseHelper.getInstance();
+        firebaseHelper.setFirebaseHelperListener(this);
         createCustomActionBar();
 
 
@@ -172,7 +175,7 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
         progressBar = new ProgressDialog(this, R.layout.progress_dialog, true);
         progressBar.toggleDialog(true);
 
-        commentValueEventListener = FirebaseHelper.createMessageEventListener();
+        commentValueEventListener = firebaseHelper.createMessageEventListener();
 
 
         btnInvite.setOnClickListener(new View.OnClickListener() {
@@ -182,7 +185,7 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
                 return;
             } else {
                 btnInvite.setEnabled(false);
-                FirebaseHelper.checkKeyListKey("users", friend.getUsername(), FirebaseHelper.CONDITION_1, FirebaseHelper.CONDITION_2 ,chatKey);
+                firebaseHelper.checkKeyListKey("users", friend.getUsername(), FirebaseHelper.CONDITION_1, FirebaseHelper.CONDITION_2 ,chatKey);
             }
             }
         });
@@ -208,7 +211,7 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
                     btnSend.setEnabled(false);
                     // send text as wish
                     progressBar.toggleDialog(true);
-                    FirebaseHelper.checkKeyListKey("users", friend.getUsername(), FirebaseHelper.CONDITION_3, FirebaseHelper.CONDITION_5 ,chatKey);
+                    firebaseHelper.checkKeyListKey("users", friend.getUsername(), FirebaseHelper.CONDITION_3, FirebaseHelper.CONDITION_5 ,chatKey);
                 }
             }
         });
@@ -220,7 +223,7 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
         super.onResume();
         if (Network.isInternetAvailable(this, true)) {
             // improve for future search of users (need only the sender and receiver - currently looping through all users)
-            FirebaseHelper.setUpSingleChat("users", friend.getUsername(), user.name);
+            firebaseHelper.setUpSingleChat("users", friend.getUsername(), user.name);
         } else {
             loadLocalData();
         }
@@ -229,11 +232,11 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
     @Override
     protected void onStop() {
         super.onStop();
-        FirebaseHelper.toggleMsgEventListeners("single", chatKey, commentValueEventListener, false);
+        firebaseHelper.toggleMsgEventListeners("single", chatKey, commentValueEventListener, false);
     }
 
     private void sendMessage(final String wishMessage){
-        FirebaseHelper.updateMessageNode(this, "single", chatKey, wishMessage, friend, null, "");
+        firebaseHelper.updateMessageNode(this, "single", chatKey, wishMessage, friend, null, "");
         //messagesRef.removeEventListener(commentValueEventListener);
         // messagesRef.addValueEventListener(commentValueEventListener);
     }
@@ -391,7 +394,7 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
 
         MessagesListAdapter adapter = new MessagesListAdapter(this, messageCells);
         if(messegesThatNeedUpdating.size() > 0 && Network.isForeground(getApplicationContext()))
-            FirebaseHelper.updateFirebaseMessageStatus("single", chatKey, messegesThatNeedUpdating);
+            firebaseHelper.updateFirebaseMessageStatus("single", chatKey, messegesThatNeedUpdating);
         // Assign adapter to ListView
         listView.setAdapter(adapter);
 
@@ -429,7 +432,7 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
 
     @Override
     public void onActionPressed() {
-        FirebaseHelper.checkKeyListKey("users", friend.getUsername(), FirebaseHelper.CONDITION_4, FirebaseHelper.CONDITION_5 ,chatKey);
+        firebaseHelper.checkKeyListKey("users", friend.getUsername(), FirebaseHelper.CONDITION_4, FirebaseHelper.CONDITION_5 ,chatKey);
     }
 
     @Override
@@ -458,7 +461,7 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
 
                 case FirebaseHelper.CONDITION_2:
                     //String myKey = findChatKey(me, friend);
-                    FirebaseHelper.toggleMsgEventListeners("single", chatKey, commentValueEventListener, true);
+                    firebaseHelper.toggleMsgEventListeners("single", chatKey, commentValueEventListener, true);
                     String friendKey = findChatKey(friend, me);
                     btnInvite.setVisibility(View.GONE);
                     btnSend.setVisibility(View.VISIBLE);
@@ -488,7 +491,7 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
                     btnInvite.setEnabled(true);
                     break;
                 case FirebaseHelper.CONDITION_2:
-                    FirebaseHelper.updateNotificationNode("chatKey", friend, chatKey);
+                    firebaseHelper.updateNotificationNode("chatKey", friend, chatKey);
                     break;
                 case FirebaseHelper.CONDITION_3:
                     String wishMessage = textComment.getText().toString().trim();

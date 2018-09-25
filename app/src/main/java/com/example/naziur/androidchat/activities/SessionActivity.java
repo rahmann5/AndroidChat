@@ -38,11 +38,13 @@ public class SessionActivity extends AppCompatActivity implements NetworkChangeR
     private ValueEventListener notificationListener;
 
     SessionFragmentPagerAdapter sessionFragmentPagerAdapter;
+    private FirebaseHelper firebaseHelper;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_session);
-        FirebaseHelper.setFirebaseHelperListener(this);
+        firebaseHelper = FirebaseHelper.getInstance();
+        firebaseHelper.setFirebaseHelperListener(this);
         viewPager = (ViewPager) findViewById(R.id.viewpager);
         sessionFragmentPagerAdapter = new SessionFragmentPagerAdapter(getSupportFragmentManager());
 
@@ -54,7 +56,7 @@ public class SessionActivity extends AppCompatActivity implements NetworkChangeR
         TabLayout tabLayout = (TabLayout) findViewById(R.id.sliding_tabs);
         tabLayout.setupWithViewPager(viewPager);
 
-        notificationListener = FirebaseHelper.getNotificationChecker(null, null);
+        notificationListener = firebaseHelper.getNotificationChecker(null, null);
 
 
         viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
@@ -131,7 +133,7 @@ public class SessionActivity extends AppCompatActivity implements NetworkChangeR
     @Override
     protected void onResume() {
         super.onResume();
-        FirebaseHelper.notificationNodeExists(null, null, notificationListener);
+        firebaseHelper.notificationNodeExists(null, null, notificationListener);
 
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);

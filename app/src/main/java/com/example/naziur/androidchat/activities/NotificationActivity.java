@@ -45,7 +45,7 @@ public class NotificationActivity extends AppCompatActivity implements Notificat
 
     ValueEventListener notificationEvent;
     List<Notification> allNotifications;
-
+    private FirebaseHelper firebaseHelper;
     private TextView emptyText;
 
     @Override
@@ -57,7 +57,8 @@ public class NotificationActivity extends AppCompatActivity implements Notificat
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
         LinearLayoutManager mLayoutManager = new LinearLayoutManager(this);
-        FirebaseHelper.setFirebaseHelperListener(this);
+        firebaseHelper = FirebaseHelper.getInstance();
+        firebaseHelper.setFirebaseHelperListener(this);
         emptyText = (TextView) findViewById(R.id.empty_notifications);
         notificationRecycler = (RecyclerView) findViewById(R.id.notification_recycler);
         notificationRecycler.setLayoutManager(mLayoutManager);
@@ -66,14 +67,14 @@ public class NotificationActivity extends AppCompatActivity implements Notificat
 
         notificationRecycler.addItemDecoration(dividerItemDecoration);
 
-        notificationEvent = FirebaseHelper.getNotificationChecker(user.name, null);
+        notificationEvent = firebaseHelper.getNotificationChecker(user.name, null);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         if (Network.isInternetAvailable(this, true)) {
-            FirebaseHelper.notificationNodeExists(null, null, notificationEvent);
+            firebaseHelper.notificationNodeExists(null, null, notificationEvent);
         } else {
             toggleEmpty(null);
         }
@@ -125,9 +126,9 @@ public class NotificationActivity extends AppCompatActivity implements Notificat
         if (accept) {
             FirebaseUserModel temp = new FirebaseUserModel();
             temp.setUsername(notification.getSender());
-            FirebaseHelper.updateChatKeyFromContact(new Contact(temp), notification.getChatKey(), true, true);
+            firebaseHelper.updateChatKeyFromContact(new Contact(temp), notification.getChatKey(), true, true);
         } else { // reject
-            FirebaseHelper.removeNotificationNode(notification.getSender(), notification.getChatKey(), false);
+            firebaseHelper.removeNotificationNode(notification.getSender(), notification.getChatKey(), false);
         }
     }
 
@@ -154,7 +155,7 @@ public class NotificationActivity extends AppCompatActivity implements Notificat
         } else if (tag.equals("updateChatKeyFromContact")) {
             switch (condition) {
                 case FirebaseHelper.CONDITION_1:
-                    FirebaseHelper.removeNotificationNode(container.getContact().getContact().getUsername(), container.getString(), true);
+                    firebaseHelper.removeNotificationNode(container.getContact().getContact().getUsername(), container.getString(), true);
             }
         }
     }

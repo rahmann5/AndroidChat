@@ -37,14 +37,15 @@ public class MainActivity extends AppCompatActivity implements FirebaseHelper.Fi
 
     private static final String TAG = "MainActivity";
     String currentDeviceId;
-
+    private FirebaseHelper firebaseHelper;
     User user = User.getInstance();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         setTheme(R.style.AppTheme_Launcher);
         super.onCreate(savedInstanceState);
-        FirebaseHelper.setFirebaseHelperListener(this);
+        firebaseHelper = FirebaseHelper.getInstance();
+        firebaseHelper.setFirebaseHelperListener(this);
         if (!Network.isInternetAvailable(this, true)) {
             moveToLoginActivity ();
             return;
@@ -54,7 +55,7 @@ public class MainActivity extends AppCompatActivity implements FirebaseHelper.Fi
 
         currentDeviceId = Settings.Secure.getString(getApplicationContext().getContentResolver(), Settings.Secure.ANDROID_ID);
 
-        FirebaseHelper.autoLogin("users", currentDeviceId, user);
+        firebaseHelper.autoLogin("users", currentDeviceId, user);
 
     }
 

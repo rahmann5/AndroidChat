@@ -64,7 +64,7 @@ public class ProfileActivity extends AppCompatActivity implements FirebaseHelper
 
     private static final int REQUEST_CODE_GALLERY_CAMERA = 0;
     private static final String TAG = ProfileActivity.class.getSimpleName();
-
+    private FirebaseHelper firebaseHelper;
     private StorageReference mStorageRef;
 
     private ContactDBHelper db;
@@ -86,7 +86,8 @@ public class ProfileActivity extends AppCompatActivity implements FirebaseHelper
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setTitle(user.profileName);
-        FirebaseHelper.setFirebaseHelperListener(this);
+        firebaseHelper = FirebaseHelper.getInstance();
+        firebaseHelper.setFirebaseHelperListener(this);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         mStorageRef = FirebaseStorage.getInstance().getReference();
         db = new ContactDBHelper(getApplicationContext());
@@ -203,7 +204,7 @@ public class ProfileActivity extends AppCompatActivity implements FirebaseHelper
                 fbModel.setProfileName(c.getString(c.getColumnIndex(MyContactsContract.MyContactsContractEntry.COLUMN_PROFILE)));
                 fbModel.setProfilePic(c.getString(c.getColumnIndex(MyContactsContract.MyContactsContractEntry.COLUMN_PROFILE_PIC)));
                 if (hasInternet) {
-                    FirebaseHelper.updateLocalContactsFromFirebase("users", fbModel, db);
+                    firebaseHelper.updateLocalContactsFromFirebase("users", fbModel, db);
                 } else {
                     contactsAdapter.addNewItemContact(new Contact(fbModel, "", false));
                     toggleEmptyState();
@@ -236,7 +237,7 @@ public class ProfileActivity extends AppCompatActivity implements FirebaseHelper
                             // Get a URL to the uploaded content
                             @SuppressWarnings("VisibleForTests")
                             Uri downloadUrl = taskSnapshot.getDownloadUrl();
-                            FirebaseHelper.updateUserInfo(user.name, downloadUrl, profileStatus.getSelectedItem().toString(), profileName.getText().toString(), reset);
+                            firebaseHelper.updateUserInfo(user.name, downloadUrl, profileStatus.getSelectedItem().toString(), profileName.getText().toString(), reset);
                         }
                     })
                     .addOnFailureListener(new OnFailureListener() {
@@ -248,7 +249,7 @@ public class ProfileActivity extends AppCompatActivity implements FirebaseHelper
                         }
                     });
         } else {
-            FirebaseHelper.updateUserInfo(user.name, null, profileStatus.getSelectedItem().toString(), profileName.getText().toString(), reset);
+            firebaseHelper.updateUserInfo(user.name, null, profileStatus.getSelectedItem().toString(), profileName.getText().toString(), reset);
         }
 
     }

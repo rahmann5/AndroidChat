@@ -51,6 +51,7 @@ import cz.msebera.android.httpclient.entity.StringEntity;
 public class ImageViewDialogFragment extends DialogFragment implements FirebaseHelper.FirebaseHelperListener{
 
     private static final String TAG = "ImageViewDialogFragment";
+    private FirebaseHelper firebaseHelper;
 
     public interface ImageViewDialogListener {
         void onActionPressed();
@@ -91,7 +92,8 @@ public class ImageViewDialogFragment extends DialogFragment implements FirebaseH
         progressBar = (ProgressBar) v.findViewById(R.id.upload_progress);
 
         ImageView display = (ImageView) v.findViewById(R.id.image_viewer);
-
+        firebaseHelper = FirebaseHelper.getInstance();
+        firebaseHelper.setFirebaseHelperListener(this);
         if (imageFile != null) {
             Glide.with(getActivity()).load(imageFile)
                     .apply(new RequestOptions().placeholder(R.drawable.placeholder).error(R.drawable.unknown))
@@ -167,7 +169,7 @@ public class ImageViewDialogFragment extends DialogFragment implements FirebaseH
                     @SuppressWarnings("VisibleForTests")
                     final Uri downloadUrl = taskSnapshot.getDownloadUrl();
                     getDialog().dismiss();
-                    FirebaseHelper.createImageUploadMessageNode("single", chatKey, context, downloadUrl.toString(), friend);
+                    firebaseHelper.createImageUploadMessageNode("single", chatKey, context, downloadUrl.toString(), friend);
                 }
             }).addOnFailureListener(new OnFailureListener() {
                 @Override
