@@ -150,7 +150,7 @@ public class SessionActivity extends AppCompatActivity implements NetworkChangeR
     @Override
     public void onNetworkStateChanged(boolean connected) {
         if(connected) {
-            sessionFragmentPagerAdapter.getItemPosition(new SingleSessionFragment());
+            sessionFragmentPagerAdapter.getItemPosition(sessionFragmentPagerAdapter.getCurrentFragment());
             sessionFragmentPagerAdapter.notifyDataSetChanged();
         }
     }

@@ -17,6 +17,7 @@ public class SessionFragmentPagerAdapter extends FragmentPagerAdapter {
 
     private String tabTitles [];
     SparseArray<Fragment> registeredFragments = new SparseArray<>();
+    private Fragment currentFragment;
 
     public SessionFragmentPagerAdapter(FragmentManager fm) {
         super(fm);
@@ -27,12 +28,19 @@ public class SessionFragmentPagerAdapter extends FragmentPagerAdapter {
     public Fragment getItem(int position) {
         switch (position) {
             case 0 :
-                return new SingleSessionFragment();
+                currentFragment = new SingleSessionFragment();
+                return (SingleSessionFragment)currentFragment;
             case 1 :
-                return new GroupSessionFragment();
+                currentFragment = new GroupSessionFragment();
+                return (GroupSessionFragment) currentFragment;
             default:
-                return new SingleSessionFragment();
+                currentFragment = new SingleSessionFragment();
+                return (SingleSessionFragment)currentFragment;
         }
+    }
+
+    public Fragment getCurrentFragment(){
+        return currentFragment;
     }
 
     @Override

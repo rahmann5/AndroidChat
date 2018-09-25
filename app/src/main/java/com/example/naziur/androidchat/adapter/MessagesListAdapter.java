@@ -41,6 +41,7 @@ public class MessagesListAdapter extends ArrayAdapter<MessageCell> {
         LayoutInflater inflater = ((Activity)context).getLayoutInflater();
         if(cellItem[position].getMessageType().equals(Constants.MESSAGE_TYPE_SYSTEM)) {
             convertView = inflater.inflate(R.layout.system_message_cell, parent, false);
+            setTextMsg(position, convertView);
         } else if (cellItem[position].getSender()) {
             if (cellItem[position].getMessageType().equals(Constants.MESSAGE_TYPE_TEXT)) {
                 convertView = inflater.inflate(R.layout.my_message_cell, parent, false);

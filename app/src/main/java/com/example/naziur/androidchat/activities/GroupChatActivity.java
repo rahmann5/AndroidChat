@@ -118,7 +118,6 @@ public class GroupChatActivity extends AppCompatActivity implements FirebaseHelp
     protected void onResume() {
         super.onResume();
         if (Network.isInternetAvailable(this, true)) {
-            //FirebaseHelper.setUpGroupChat();
             progressBar.toggleDialog(true);
             firebaseHelper.toggleMsgEventListeners("group", groupKey, msgValueEventListener, true);
         } else {
