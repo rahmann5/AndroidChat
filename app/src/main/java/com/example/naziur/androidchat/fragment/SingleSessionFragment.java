@@ -68,8 +68,10 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
     private ContactDBHelper db;
     private ProgressDialog progressBar;
     private List<ValueEventListener> valueEventListeners;
+    FirebaseHelper firebaseHelper;
 
     public SingleSessionFragment() {
+        super();
         // Required empty public constructor
     }
 
@@ -81,7 +83,8 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
         getActivity().setTitle("All Chats");
 
         View rootView = inflater.inflate(R.layout.fragment_session_all_chats, container, false);
-        FirebaseHelper.setFirebaseHelperListener(this);
+        firebaseHelper = FirebaseHelper.getInstance();
+        firebaseHelper.setFirebaseHelperListener(this);
         valueEventListeners = new ArrayList<>();
         allChats = new ArrayList<>();
         allChatKeys = new ArrayList<>();
@@ -109,7 +112,7 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
                 return;
             }
         }
-        userListener = FirebaseHelper.getUsersValueEventListener(user);
+        userListener = firebaseHelper.getValueEventListener("users", "username", user.name);
     }
 
     private void updateExistingContacts (Cursor c) {
@@ -134,7 +137,6 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
         progressBar.toggleDialog(true);
             for (int i = 0; i < allChatKeys.size(); i++) {
                 final String chatKey = allChatKeys.get(i);
-
                 valueEventListeners.add(FirebaseHelper.getMessageEventListener(user, db, getString(R.string.simple_date), chatKey));
                 FirebaseHelper.attachOrRemoveMessageEventListener("single", allChatKeys.get(i), valueEventListeners.get(i), true);
             }
@@ -301,10 +303,11 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
                         break;
                 }
                 break;
-            case "getUsersValueEventListener":
+            case "getValueEventListener":
                 switch(condition){
                     case FirebaseHelper.CONDITION_1:
-                        String[] allKeys = container.getString().split(",");
+                        System.out.println("SingleSessionFragment");
+                        String[] allKeys = container.getUserModel().getChatKeys().split(",");
                         allChatKeys.clear();
                         for(String key: allKeys){
                             if(!key.equals(""))
@@ -370,7 +373,7 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
     public void onFailureTask(String tag, DatabaseError databaseError) {
         switch (tag){
             case "getMessageEventListener":
-            case "getUsersValueEventListener":
+            case "getValueEventListener":
             case "updateChatKeys":
                 progressBar.toggleDialog(false);
                 break;

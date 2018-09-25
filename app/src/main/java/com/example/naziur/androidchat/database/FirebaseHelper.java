@@ -62,15 +62,19 @@ public class FirebaseHelper {
     public static final int CONDITION_4 = 3;
     public static final int CONDITION_5 = 4;
 
-    private static FirebaseHelperListener listener;
+    private FirebaseHelperListener listener;
 
     private FirebaseHelper () {};
 
-    public static void setFirebaseHelperListener (FirebaseHelperListener fbListener) {
+    public static FirebaseHelper getInstance () {
+        return new FirebaseHelper();
+    }
+
+    public void setFirebaseHelperListener (FirebaseHelperListener fbListener) {
         listener = fbListener;
     }
 
-    public static void autoLogin(String node, final String currentDeviceId, final User user) {
+    public void autoLogin(String node, final String currentDeviceId, final User user) {
         DatabaseReference usersRef = database.getReference(node);
         usersRef.addListenerForSingleValueEvent(new com.google.firebase.database.ValueEventListener() {
             @Override
@@ -103,7 +107,7 @@ public class FirebaseHelper {
         });
     }
 
-    public static void manualLogin(final User user, final String username, final String profileName, final String currentDeviceId){
+    public void manualLogin(final User user, final String username, final String profileName, final String currentDeviceId){
         DatabaseReference reference = database.getReference("users");
         reference.orderByChild("username").equalTo(username).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
@@ -144,7 +148,7 @@ public class FirebaseHelper {
         });
     }
 
-    public static void registerNewUser(final FirebaseUserModel firebaseUserModel){
+    public void registerNewUser(final FirebaseUserModel firebaseUserModel){
         DatabaseReference reference = database.getReference("users");
         final DatabaseReference newRef = reference.push();
         newRef.setValue(firebaseUserModel, new DatabaseReference.CompletionListener() {
@@ -162,7 +166,7 @@ public class FirebaseHelper {
     }
 
 
-    public static void updateLocalContactsFromFirebase (String node, final FirebaseUserModel fbModel, final ContactDBHelper db) {
+    public void updateLocalContactsFromFirebase (String node, final FirebaseUserModel fbModel, final ContactDBHelper db) {
         DatabaseReference usersRef = database.getReference(node);
         Query query = usersRef.orderByChild("username").equalTo(fbModel.getUsername());
         query.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -196,7 +200,7 @@ public class FirebaseHelper {
         });
     }
 
-    public static ValueEventListener createMessageEventListener () {
+    public ValueEventListener createMessageEventListener () {
         return new ValueEventListener() {
 
             @Override
@@ -224,7 +228,7 @@ public class FirebaseHelper {
     }
 
     // get users and contacts latest chat keys (needs to be optimised)
-    public static void setUpSingleChat(String node, final String friendUsername, final String usersUsername) {
+    public void setUpSingleChat(String node, final String friendUsername, final String usersUsername) {
         DatabaseReference usersRef = database.getReference(node);
         usersRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
@@ -269,7 +273,7 @@ public class FirebaseHelper {
         });
     }
 
-    public static void toggleMsgEventListeners (String node, String chatKey, ValueEventListener commentValueEventListener, boolean add) {
+    public void toggleMsgEventListeners (String node, String chatKey, ValueEventListener commentValueEventListener, boolean add) {
         DatabaseReference messagesRef = database.getReference("messages")
                 .child(node)
                 .child(chatKey);
@@ -281,7 +285,7 @@ public class FirebaseHelper {
         }
     }
 
-    public static void checkKeyListKey (String node, String username, final int myCondition1, final int myCondition2 , final String chatKey) {
+    public void checkKeyListKey (String node, String username, final int myCondition1, final int myCondition2 , final String chatKey) {
         DatabaseReference usersRef = database.getReference(node);
         usersRef.orderByChild("username").equalTo(username).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
@@ -313,7 +317,7 @@ public class FirebaseHelper {
         });
     }
 
-    public static void createImageUploadMessageNode (String node, final String chatKey, final Context context, final String downloadUrl, final FirebaseUserModel friend) {
+    public void createImageUploadMessageNode (String node, final String chatKey, final Context context, final String downloadUrl, final FirebaseUserModel friend) {
         DatabaseReference messagesRef = FirebaseDatabase.getInstance().getReference("messages")
                 .child(node)
                 .child(chatKey);
@@ -356,7 +360,7 @@ public class FirebaseHelper {
         });
     }
 
-    public static ValueEventListener getMessageEventListener(final User user, final ContactDBHelper db, final String dateFormat, final String chatKey){
+    public ValueEventListener getMessageEventListener(final User user, final ContactDBHelper db, final String dateFormat, final String chatKey){
         ValueEventListener valueEventListener = new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -386,7 +390,7 @@ public class FirebaseHelper {
         return valueEventListener;
     }
 
-    public static void attachOrRemoveMessageEventListener(String node, String chatKey, ValueEventListener valueEventListener, boolean add){
+    public void attachOrRemoveMessageEventListener(String node, String chatKey, ValueEventListener valueEventListener, boolean add){
         DatabaseReference messagesRef = database.getReference("messages");
         Query pendingQuery = messagesRef.child(node).child(chatKey).limitToLast(1);
         if(add)
@@ -396,42 +400,41 @@ public class FirebaseHelper {
 
     }
 
-    public static void removeListenerFor(String reference, ValueEventListener valueEventListener){
+    public void removeListenerFor(String reference, ValueEventListener valueEventListener){
         DatabaseReference databaseReference = database.getReference(reference);
         databaseReference.removeEventListener(valueEventListener);
     }
 
-    public static ValueEventListener getUsersValueEventListener(final User user){
-        DatabaseReference usersRef = database.getReference("users");
+    public ValueEventListener getValueEventListener(final String node, String child , final String target){
+        DatabaseReference dataRef = database.getReference(node);
         ValueEventListener valueEventListener = new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if(dataSnapshot.exists()) {
                     for (com.google.firebase.database.DataSnapshot userSnapshot : dataSnapshot.getChildren()) {
                         FirebaseUserModel firebaseUserModel = userSnapshot.getValue(FirebaseUserModel.class);
-                        if (firebaseUserModel.getUsername().equals(user.name)) {
+                        if (firebaseUserModel.getUsername().equals(target)) {
                             Container container = new Container();
-                            container.setString(firebaseUserModel.getChatKeys());
-                            listener.onCompleteTask("getUsersValueEventListener", CONDITION_1, container);
+                            container.setUserModel(firebaseUserModel);
+                            listener.onCompleteTask("getValueEventListener", CONDITION_1, container);
                             break;
                         }
                     }
                 } else {
-                    listener.onCompleteTask("getUsersValueEventListener", CONDITION_2, null);
+                    listener.onCompleteTask("getValueEventListener", CONDITION_2, null);
                 }
             }
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
-                listener.onFailureTask("getUsersValueEventListener", databaseError);
+                listener.onFailureTask("getValueEventListener", databaseError);
             }
         };
-        usersRef.orderByChild("username").equalTo(user.name).addValueEventListener(valueEventListener);
-
+        dataRef.orderByChild(child).equalTo(target).addValueEventListener(valueEventListener);
         return valueEventListener;
     }
 
-    public static void updateChatKeys(final User user, final String updatedKeys, final Chat chat){
+    public void updateChatKeys(final User user, final String updatedKeys, final Chat chat){
         DatabaseReference pendingTasks = database.getReference("users").orderByChild("username").equalTo(user.name).getRef();
         pendingTasks.runTransaction(new Transaction.Handler() {
             @Override
@@ -465,7 +468,7 @@ public class FirebaseHelper {
         });
     }
 
-    public static void addUserToContacts(final String contactsUsername, final ContactDBHelper db, final int positionInAdapter){
+    public void addUserToContacts(final String contactsUsername, final ContactDBHelper db, final int positionInAdapter){
         Query query = database.getReference("users").orderByChild("username").equalTo(contactsUsername);
         query.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
@@ -502,7 +505,7 @@ public class FirebaseHelper {
         });
     }
 
-    public static void collectAllImagesForDeletionThenDeleteRelatedMessages(final String node, final String key){
+    public void collectAllImagesForDeletionThenDeleteRelatedMessages(final String node, final String key){
         final DatabaseReference reference = database.getReference("messages").child(node).child(key);
         reference.orderByChild("mediaType").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
@@ -528,7 +531,7 @@ public class FirebaseHelper {
         });
     }
 
-    public static void cleanDeleteAllMessages(String node, String key){
+    public void cleanDeleteAllMessages(String node, String key){
         DatabaseReference reference = database.getReference("messages").child(node).child(key);
         reference.setValue(null).addOnSuccessListener(new OnSuccessListener<Void>() {
             @Override
@@ -546,7 +549,7 @@ public class FirebaseHelper {
     }
 
 
-    public static void updateNotificationNode (String node, final FirebaseUserModel target, final String chatKey) {
+    public void updateNotificationNode (String node, final FirebaseUserModel target, final String chatKey) {
         final User user = User.getInstance();
         final DatabaseReference notificationRef = database.getReference("notifications").child(target.getUsername());
         notificationRef.orderByChild(node).equalTo(chatKey).addListenerForSingleValueEvent(new ValueEventListener() {
@@ -581,7 +584,7 @@ public class FirebaseHelper {
         });
     }
 
-    public static void removeNotificationNode (final String target, final String chatKey, final boolean action) {
+    public void removeNotificationNode (final String target, final String chatKey, final boolean action) {
         User user = User.getInstance();
         DatabaseReference notificationRef = FirebaseDatabase.getInstance().getReference("notifications").child(user.name);
         notificationRef.orderByChild("sender").equalTo(target).getRef().runTransaction(new Transaction.Handler() {
@@ -617,7 +620,7 @@ public class FirebaseHelper {
         });
     }
 
-    public static void notificationNodeExists(final String target, final String chatKey, ValueEventListener eventListener) {
+    public void notificationNodeExists(final String target, final String chatKey, ValueEventListener eventListener) {
         User user = User.getInstance();
         DatabaseReference notificationRef = FirebaseDatabase.getInstance().getReference("notifications").child(user.name);
         if (eventListener == null)
@@ -632,7 +635,7 @@ public class FirebaseHelper {
         notificationRef.removeEventListener(eventListener);
     }
 
-    public static ValueEventListener getNotificationChecker (final String target, final String chatKey) {
+    public ValueEventListener getNotificationChecker (final String target, final String chatKey) {
         return new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -670,7 +673,7 @@ public class FirebaseHelper {
         };
     }
 
-    public static void updateFirebaseMessageStatus (final String node, final String chatKey, final Map<Long, Map<String, Object>> messages) {
+    public void updateFirebaseMessageStatus (final String node, final String chatKey, final Map<Long, Map<String, Object>> messages) {
         final DatabaseReference messagesRef = database.getReference("messages").child(node).child(chatKey);
         messagesRef.limitToLast(messages.size()).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
@@ -691,7 +694,7 @@ public class FirebaseHelper {
         });
     }
 
-    public static void updateMessageNode (final Context context, final String node, final String chatKey, final String wishMessage, final FirebaseUserModel friend, final JSONArray membersDeviceTokens, final String grpTitle) {
+    public void updateMessageNode (final Context context, final String node, final String chatKey, final String wishMessage, final FirebaseUserModel friend, final JSONArray membersDeviceTokens, final String grpTitle) {
         final DatabaseReference messagesRef = database.getReference("messages").child(node).child(chatKey);
         DatabaseReference newRef = messagesRef.push();
             newRef.setValue(
@@ -759,7 +762,7 @@ public class FirebaseHelper {
         });
     }
 
-    public static void updateChatKeyFromContact (final Contact c, final String chatKey, final boolean invite, final boolean duplicationCheck) {
+    public void updateChatKeyFromContact (final Contact c, final String chatKey, final boolean invite, final boolean duplicationCheck) {
         final User user = User.getInstance();
         database.getReference("users").orderByChild("username").equalTo(user.name).getRef().runTransaction(new Transaction.Handler() {
             @Override
@@ -819,7 +822,7 @@ public class FirebaseHelper {
         return newKeys;
     }
 
-    public static void getOnlineInfoForUser(final String userBeingViewed){
+    public void getOnlineInfoForUser(final String userBeingViewed){
         DatabaseReference reference = database.getReference("users");
         reference.orderByChild("username").equalTo(userBeingViewed).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
@@ -846,7 +849,7 @@ public class FirebaseHelper {
         });
     }
 
-    public static void createGroup(final FirebaseGroupModel firebaseGroupModel){
+    public void createGroup(final FirebaseGroupModel firebaseGroupModel){
         DatabaseReference newRef = database.getReference("groups").push();
         newRef.setValue(firebaseGroupModel, new DatabaseReference.CompletionListener() {
             @Override
@@ -862,7 +865,7 @@ public class FirebaseHelper {
         });
     }
 
-    public static void getDeviceTokensFor(final List<String> allMembers, final String title, final String uniqueId){
+    public void getDeviceTokensFor(final List<String> allMembers, final String title, final String uniqueId){
         DatabaseReference reference = database.getReference("users");
         reference.orderByChild("username").startAt(allMembers.get(0)).endAt(allMembers.get(allMembers.size()-1)).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
@@ -890,7 +893,7 @@ public class FirebaseHelper {
         });
     }
 
-    public static void updateGroupKeyForMembers(final List<String> allMembers, final String uniqueID, final User user){
+    public void updateGroupKeyForMembers(final List<String> allMembers, final String uniqueID, final User user){
         DatabaseReference reference = database.getReference("users");
         reference.orderByChild("username").getRef().runTransaction(new Transaction.Handler() {
             @Override
@@ -928,7 +931,7 @@ public class FirebaseHelper {
         });
     }
 
-    public static void updateUserInfo (String target, final Uri uploadedImgUri, final String status, final String profileName, final boolean reset) {
+    public void updateUserInfo (String target, final Uri uploadedImgUri, final String status, final String profileName, final boolean reset) {
         DatabaseReference userRef = database.getReference("users");
         userRef.orderByChild("username").equalTo(target).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override

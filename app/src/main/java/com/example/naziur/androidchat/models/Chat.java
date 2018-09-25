@@ -17,6 +17,8 @@ public class Chat {
     private String timeOfMsg;
     private int isSeen;
 
+    private String admin;
+
     private boolean isGroup;
 
     private String msgType;
@@ -35,7 +37,7 @@ public class Chat {
         isGroup = false;
     }
 
-    public Chat(String groupTitle, String username, String lastMsg, String pic, String time, String chatKey, String msgType, boolean group){
+    public Chat(String groupTitle, String username, String lastMsg, String pic, String time, String chatKey, String msgType, String admin){
         this.title = groupTitle;
         senderName = username;
         lastMsgInThisChat = lastMsg;
@@ -44,7 +46,8 @@ public class Chat {
         this.chatKey = chatKey;
         isSeen = Constants.MESSAGE_RECEIVED;
         this.msgType = msgType;
-        isGroup = group;
+        this.admin = admin;
+        isGroup = true;
 
     }
 
@@ -98,4 +101,8 @@ public class Chat {
     public String getTitle (){return title;}
 
     public String getSenderName (){return senderName;}
+
+    public String getAdmin() {
+        return admin;
+    }
 }

@@ -20,11 +20,13 @@ import com.example.naziur.androidchat.R;
 import com.example.naziur.androidchat.activities.GroupChatActivity;
 import com.example.naziur.androidchat.adapter.AllChatsAdapter;
 import com.example.naziur.androidchat.database.ContactDBHelper;
+import com.example.naziur.androidchat.database.FirebaseHelper;
 import com.example.naziur.androidchat.models.Chat;
 import com.example.naziur.androidchat.models.FirebaseGroupMessageModel;
 import com.example.naziur.androidchat.models.FirebaseGroupModel;
 import com.example.naziur.androidchat.models.FirebaseUserModel;
 import com.example.naziur.androidchat.models.User;
+import com.example.naziur.androidchat.utils.Container;
 import com.example.naziur.androidchat.utils.Network;
 import com.example.naziur.androidchat.utils.ProgressDialog;
 import com.google.firebase.database.DataSnapshot;
@@ -41,7 +43,7 @@ import java.util.List;
 /**
  * A simple {@link Fragment} subclass.
  */
-public class GroupSessionFragment extends Fragment {
+public class GroupSessionFragment extends Fragment implements FirebaseHelper.FirebaseHelperListener{
 
     private static final String TAG = GroupSessionFragment.class.getSimpleName();
 
@@ -58,8 +60,10 @@ public class GroupSessionFragment extends Fragment {
     private ContactDBHelper db;
     private ProgressDialog progressBar;
     private List<ValueEventListener> grpValueEventListeners, grpMsgValueEventListeners;
+    FirebaseHelper firebaseHelper;
 
     public GroupSessionFragment() {
+        super();
         // Required empty public constructor
     }
 
@@ -69,10 +73,12 @@ public class GroupSessionFragment extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View rootView = inflater.inflate(R.layout.fragment_session_all_chats, container, false);
-        grpValueEventListeners = new ArrayList<>();
-        grpMsgValueEventListeners = new ArrayList<>();
+        firebaseHelper = FirebaseHelper.getInstance();
+        firebaseHelper.setFirebaseHelperListener(this);
         allChats = new ArrayList<>();
         allGroups = new ArrayList<>();
+        grpValueEventListeners = new ArrayList<>();
+        grpMsgValueEventListeners = new ArrayList<>();
         allGroupKeys = new ArrayList<>();
         database = FirebaseDatabase.getInstance();
         usersRef = database.getReference("users");
@@ -82,7 +88,6 @@ public class GroupSessionFragment extends Fragment {
         recyclerView = rootView.findViewById(R.id.all_chats_list);
         progressBar = new ProgressDialog(getActivity(), R.layout.progress_dialog, true);
         setUpAdapterWithRecyclerView();
-
         return rootView;
     }
 
@@ -95,53 +100,29 @@ public class GroupSessionFragment extends Fragment {
                 return;
             }
         }
-        fetchUsersGroupKeys();
-    }
-
-    private void fetchUsersGroupKeys(){
-        userListener = new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                for (com.google.firebase.database.DataSnapshot userSnapshot : dataSnapshot.getChildren()) {
-                    FirebaseUserModel firebaseUserModel = userSnapshot.getValue(FirebaseUserModel.class);
-                    if(firebaseUserModel.getUsername().equals(user.name)){
-                        String[] allKeys = firebaseUserModel.getGroupKeys().split(",");
-                        allGroupKeys.clear();
-                        for(String key: allKeys){
-                            if(!key.equals(""))
-                                allGroupKeys.add(key);
-                        }
-                        setUpGrpEventListeners();
-                        break;
-                    }
-                }
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-                Log.i(TAG, "fetchUsersGroupKeys: "+databaseError.getMessage());
-            }
-        };
-
-        usersRef.orderByChild("username").equalTo(user.name).addValueEventListener(userListener);
+        userListener = firebaseHelper.getValueEventListener("users", "username" , user.name);
     }
 
     private void setUpGrpEventListeners() {
+        grpValueEventListeners = new ArrayList<>();
+        grpMsgValueEventListeners = new ArrayList<>();
         if(allGroupKeys.size() > 0){
             allGroups.clear();
             for(int i = 0 ; i < allGroupKeys.size(); i++){
-                final int index = i;
                 final String currentGroupKey = allGroupKeys.get(i);
+                //ValueEventListener valueEventListener = FirebaseHelper.getValueEventListener("groups", "groupKey", currentGroupKey);
                 ValueEventListener valueEventListener = new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
                         if (dataSnapshot.exists()) {
                             for (com.google.firebase.database.DataSnapshot grpSnapshot : dataSnapshot.getChildren()) {
                                 FirebaseGroupModel firebaseGroupModel = grpSnapshot.getValue(FirebaseGroupModel.class);
-                                if(firebaseGroupModel.getGroupKey().equals(currentGroupKey))
+                                if(firebaseGroupModel.getGroupKey().equals(currentGroupKey)) {
                                     allGroups.add(firebaseGroupModel);
+                                    setUpGrpMSgEventListeners(currentGroupKey);
+                                    break;
+                                }
                             }
-                            setUpGrpMSgEventListeners(index, currentGroupKey);
                         }
                     }
 
@@ -152,44 +133,61 @@ public class GroupSessionFragment extends Fragment {
                 };
 
                 grpValueEventListeners.add(valueEventListener);
-                groupsRef.orderByChild("groupKey").equalTo(allGroupKeys.get(i)).addValueEventListener(valueEventListener);
+                groupsRef.orderByChild("groupKey").equalTo(currentGroupKey).addValueEventListener(valueEventListener);
             }
         }
     }
 
-    private void setUpGrpMSgEventListeners(int index, final String groupKey){
-        final String title  = allGroups.get(index).getTitle();
-        final String picUrl  = allGroups.get(index).getPic();
-        grpMsgValueEventListeners.add(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                for (DataSnapshot msgData : dataSnapshot.getChildren()) {
-                    FirebaseGroupMessageModel groupMessageModel = msgData.getValue(FirebaseGroupMessageModel.class);
-                    db = new ContactDBHelper(getActivity());
-                    String senderName = (groupMessageModel.getSenderName().equals(user.name))? user.profileName : db.getProfileNameAndPic(groupMessageModel.getSenderName())[0];
-                    db.close();
-                    SimpleDateFormat formatter = new SimpleDateFormat(getString(R.string.simple_date));
-                    String dateString = formatter.format(new Date(groupMessageModel.getCreatedDateLong()));
-                    Chat chat = new Chat(title, senderName, groupMessageModel.getText(), picUrl, dateString, groupKey ,groupMessageModel.getMediaType(), true);
-                    allChats.add(chat);
-                    myChatsdapter.setAllMyChats(allChats);
-                    myChatsdapter.notifyDataSetChanged();
-                    if (myChatsdapter.getItemCount() == 0) {
-                        emptyChats.setVisibility(View.VISIBLE);
-                    } else {
-                        emptyChats.setVisibility(View.GONE);
+    private void setUpGrpMSgEventListeners(final String groupKey){
+        int index = findIndexForGroup(groupKey);
+        if (index != -1) {
+            final String title  = allGroups.get(index).getTitle();
+            final String picUrl  = allGroups.get(index).getPic();
+            final String admin = allGroups.get(index).getAdmin();
+            ValueEventListener valueEventListener = new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    for (DataSnapshot msgData : dataSnapshot.getChildren()) {
+                        FirebaseGroupMessageModel groupMessageModel = msgData.getValue(FirebaseGroupMessageModel.class);
+                        db = new ContactDBHelper(getActivity());
+                        String senderName = (groupMessageModel.getSenderName().equals(user.name))? user.profileName : db.getProfileNameAndPic(groupMessageModel.getSenderName())[0];
+                        db.close();
+                        SimpleDateFormat formatter = new SimpleDateFormat(getString(R.string.simple_date));
+                        String dateString = formatter.format(new Date(groupMessageModel.getCreatedDateLong()));
+                        Chat chat = new Chat(title, senderName, groupMessageModel.getText(), picUrl, dateString, groupKey ,groupMessageModel.getMediaType(), admin);
+                        allChats.add(chat);
+                        myChatsdapter.setAllMyChats(allChats);
+                        myChatsdapter.notifyDataSetChanged();
+                        if (myChatsdapter.getItemCount() == 0) {
+                            emptyChats.setVisibility(View.VISIBLE);
+                        } else {
+                            emptyChats.setVisibility(View.GONE);
+                        }
                     }
                 }
+
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
+                    Log.i(TAG, "setUpGrpMSgEventListeners: "+databaseError.getMessage());
+                }
+            };
+
+            grpMsgValueEventListeners.add(valueEventListener);
+            messagesRef.child("group").child(groupKey).limitToLast(1).addValueEventListener(valueEventListener);
+        }
+
+    }
+
+    private int findIndexForGroup (String groupKey) {
+        int index = -1;
+        for (int i = 0; i < allGroups.size(); i++) {
+            if (allGroups.get(i).getGroupKey().equals(groupKey)) {
+                index = i;
+                break;
             }
 
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-                Log.i(TAG, "setUpGrpMSgEventListeners: "+databaseError.getMessage());
-            }
-        });
-
-        messagesRef.child("group").child(groupKey).limitToLast(1).addValueEventListener(grpMsgValueEventListeners.get(index));
-
+        }
+        return index;
     }
 
     private void setUpAdapterWithRecyclerView(){
@@ -220,17 +218,18 @@ public class GroupSessionFragment extends Fragment {
 
     private AlertDialog createDialog (final Chat chat, final int position) {
         final AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        final boolean isAdmin = chat.getAdmin().equals(user.name);
+        int groupDialogItemsRes = (isAdmin) ?  R.array.admin_group_chat_dialog_actions :  R.array.member_group_chat_dialog_actions ;
         builder.setTitle(R.string.dialog_chat_select_action)
-                .setItems(R.array.chat_dialog_actions, new DialogInterface.OnClickListener() {
+                .setItems(groupDialogItemsRes, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
-                        // String[] actions = getResources().getStringArray(R.array.contact_dialog_actions);
                         onActionSelected(which, chat, position);
                         dialog.dismiss();
                     }
 
                     private void onActionSelected(int which, Chat chat, int position) {
                         switch (which) {
-                            case 0 : // see profile info
+                            case 0 : // see group info
                                 Toast.makeText(getActivity(), "View Group Details", Toast.LENGTH_SHORT).show();
                                 break;
 
@@ -242,9 +241,15 @@ public class GroupSessionFragment extends Fragment {
                                 startActivity(chatActivity);
                                 break;
 
-                            case 2 : // delete Chat
-                                Toast.makeText(getActivity(), "Leave Group", Toast.LENGTH_SHORT).show();
+                            case 2 : // leave/delete Chat
+                                if (isAdmin) {
+                                    Toast.makeText(getActivity(), "Delete Group", Toast.LENGTH_SHORT).show();
+                                } else {
+                                    Toast.makeText(getActivity(), "Leave Group", Toast.LENGTH_SHORT).show();
+                                }
+
                                 break;
+
                         }
                     }
                 });
@@ -254,16 +259,45 @@ public class GroupSessionFragment extends Fragment {
     @Override
     public void onStop() {
 
-        if (userListener != null) {
-            usersRef.removeEventListener(userListener);
-        }
+        FirebaseHelper.removeListenerFor("users", userListener);
 
         for(int i = 0; i < grpValueEventListeners.size(); i++){
             groupsRef.orderByChild("groupKey").equalTo(allGroupKeys.get(i)).removeEventListener(grpValueEventListeners.get(i));
-            messagesRef.child("group").child(allGroupKeys.get(i)).limitToLast(1).removeEventListener(grpValueEventListeners.get(i));
+            messagesRef.child("group").child(allGroupKeys.get(i)).limitToLast(1).removeEventListener(grpMsgValueEventListeners.get(i));
 
         }
         super.onStop();
+
+    }
+
+    @Override
+    public void onCompleteTask(String tag, int condition, Container container) {
+        if (tag.equals("getValueEventListener")) {
+            switch (condition) {
+                case FirebaseHelper.CONDITION_1 :
+                    System.out.println("GroupSessionFragment");
+                    String[] allKeys = container.getUserModel().getGroupKeys().split(",");
+                    allGroupKeys.clear();
+                    for(String key: allKeys){
+                        if(!key.equals(""))
+                            allGroupKeys.add(key);
+                    }
+                    setUpGrpEventListeners();
+                    break;
+            }
+        }
+    }
+
+    @Override
+    public void onFailureTask(String tag, DatabaseError databaseError) {
+        switch (tag) {
+
+        }
+        Log.i(TAG, databaseError.getMessage());
+    }
+
+    @Override
+    public void onChange(String tag, int condition, Container container) {
 
     }
 }
