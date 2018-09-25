@@ -34,6 +34,7 @@ public class LoginActivity extends AppCompatActivity implements FirebaseHelper.F
     FirebaseDatabase database;
     String currentDeviceId;
     ProgressDialog progressDialog;
+    FirebaseHelper firebaseHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,7 +42,8 @@ public class LoginActivity extends AppCompatActivity implements FirebaseHelper.F
         setContentView(R.layout.activity_login);
 
         user.sharedpreferences = getSharedPreferences(user.appPreferences, Context.MODE_PRIVATE);
-        FirebaseHelper.setFirebaseHelperListener(this);
+        firebaseHelper = FirebaseHelper.getInstance();
+        firebaseHelper.setFirebaseHelperListener(this);
         currentDeviceId = Settings.Secure.getString(getApplicationContext().getContentResolver(), Settings.Secure.ANDROID_ID);
 
         database = FirebaseDatabase.getInstance();
@@ -65,7 +67,7 @@ public class LoginActivity extends AppCompatActivity implements FirebaseHelper.F
             progressDialog = new ProgressDialog(this, R.layout.progress_dialog, true);
             progressDialog.toggleDialog(true);
             String currentDeviceId = Settings.Secure.getString(getApplicationContext().getContentResolver(), Settings.Secure.ANDROID_ID);
-            FirebaseHelper.manualLogin(user, strUsername, strProfileName, currentDeviceId);
+            firebaseHelper.manualLogin(user, strUsername, strProfileName, currentDeviceId);
         }
     }
 
@@ -77,7 +79,7 @@ public class LoginActivity extends AppCompatActivity implements FirebaseHelper.F
         firebaseUserModel.setStatus(getResources().getString(R.string.status_available));
         firebaseUserModel.setDeviceId(currentDeviceId);
         firebaseUserModel.setDeviceToken(FirebaseInstanceId.getInstance().getToken());
-        FirebaseHelper.registerNewUser(firebaseUserModel);
+        firebaseHelper.registerNewUser(firebaseUserModel);
     }
 
     @Override

@@ -39,6 +39,7 @@ public class ChatDetailActivity extends AppCompatActivity implements FirebaseHel
     private Toolbar mToolbar;
     private Menu menu;
     private ProgressDialog progressBar;
+    FirebaseHelper firebaseHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,7 +48,8 @@ public class ChatDetailActivity extends AppCompatActivity implements FirebaseHel
         db = new ContactDBHelper(this);
         database = FirebaseDatabase.getInstance();
         progressBar = new ProgressDialog(ChatDetailActivity.this, R.layout.progress_dialog, true);
-        FirebaseHelper.setFirebaseHelperListener(this);
+        firebaseHelper = FirebaseHelper.getInstance();
+        firebaseHelper.setFirebaseHelperListener(this);
         Bundle extra = getIntent().getExtras();
         if (extra != null) {
             userBeingViewed = new FirebaseUserModel();
@@ -156,7 +158,7 @@ public class ChatDetailActivity extends AppCompatActivity implements FirebaseHel
 
     private void getUsersInformationOnline() {
         progressBar.toggleDialog(true);
-        FirebaseHelper.getOnlineInfoForUser(userBeingViewed.getUsername());
+        firebaseHelper.getOnlineInfoForUser(userBeingViewed.getUsername());
     }
 
     @Override

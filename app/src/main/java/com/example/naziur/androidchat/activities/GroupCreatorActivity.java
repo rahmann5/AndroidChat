@@ -82,6 +82,7 @@ public class GroupCreatorActivity extends AppCompatActivity implements FirebaseH
     private User user = User.getInstance();
     private CircleImageView groupImage;
     private ProgressDialog progressBar;
+    private FirebaseHelper firebaseHelper;
 
     @Override
     public void onCompleteTask(String tag, int condition, Container container) {
@@ -108,7 +109,7 @@ public class GroupCreatorActivity extends AppCompatActivity implements FirebaseH
                         String uniqueID = container.getString().split(",")[1];
                         final List<String> allMembers = getAllMembersTogether();
                         Collections.sort(allMembers);
-                        FirebaseHelper.getDeviceTokensFor(allMembers, title, uniqueID);
+                        firebaseHelper.getDeviceTokensFor(allMembers, title, uniqueID);
                         break;
                 }
                 break;
@@ -118,7 +119,7 @@ public class GroupCreatorActivity extends AppCompatActivity implements FirebaseH
                         Toast.makeText(GroupCreatorActivity.this, "Failed to make background notification", Toast.LENGTH_SHORT).show();
                         break;
                 }
-                FirebaseHelper.updateGroupKeyForMembers(getAllMembersTogether(), container.getString(), user);
+                firebaseHelper.updateGroupKeyForMembers(getAllMembersTogether(), container.getString(), user);
                 break;
             case "getDeviceTokensFor":
                 switch(condition){
@@ -185,7 +186,8 @@ public class GroupCreatorActivity extends AppCompatActivity implements FirebaseH
         membersSelectedFromContacts = new ArrayList<>();
         newUsersNotInContacts = new ArrayList<>();
         mStorageRef = FirebaseStorage.getInstance().getReference();
-        FirebaseHelper.setFirebaseHelperListener(this);
+        firebaseHelper = FirebaseHelper.getInstance();
+        firebaseHelper.setFirebaseHelperListener(this);
         groupImage = (CircleImageView) findViewById(R.id.group_photo);
         CircleImageView refreshImage = (CircleImageView) findViewById(R.id.refresh);
         final EditText groupNameEt = (EditText) findViewById(R.id.group_name);
@@ -235,7 +237,7 @@ public class GroupCreatorActivity extends AppCompatActivity implements FirebaseH
                 }
 
                 if(!searchedUsernameEt.getText().toString().trim().isEmpty() && !searchedUsernameEt.getText().toString().trim().equals(user.name)){
-                    FirebaseHelper.addUserToContacts(searchedUsernameEt.getText().toString().trim(), null, 0); // TEST
+                    firebaseHelper.addUserToContacts(searchedUsernameEt.getText().toString().trim(), null, 0); // TEST
                 }else {
                     Toast.makeText(GroupCreatorActivity.this, "You must enter a username before searching for one", Toast.LENGTH_SHORT).show();
                 }
@@ -332,12 +334,12 @@ public class GroupCreatorActivity extends AppCompatActivity implements FirebaseH
         firebaseGroupModel.setPic(imgUrl);
         firebaseGroupModel.setGroupKey(uniqueID);
         firebaseGroupModel.setMembers(getAllMembersAsString());
-        FirebaseHelper.createGroup(firebaseGroupModel);
+        firebaseHelper.createGroup(firebaseGroupModel);
     }
 
     private void sendAdminMsg(JSONArray membersDeviceTokens, String title, final String uniqueId){
         String inviteMessage = "Group invite to: " + title + " by " + user.name;
-        FirebaseHelper.updateMessageNode(this, "group", uniqueId, inviteMessage, null, membersDeviceTokens, title);
+        firebaseHelper.updateMessageNode(this, "group", uniqueId, inviteMessage, null, membersDeviceTokens, title);
     }
 
     private String getAllMembersAsString(){

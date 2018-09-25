@@ -26,6 +26,7 @@ public class Container {
     private List<String> stringList;
     private List<Notification> notifications;
     private JSONArray jsonArray;
+    private Object object;
 
     public Container () {
         // empty
@@ -109,5 +110,13 @@ public class Container {
 
     public void setNotifications(List<Notification> notifications) {
         this.notifications = notifications;
+    }
+
+    public Object getObject() {
+        return object;
+    }
+
+    public void setObject(Object object) {
+        this.object = object;
     }
 }
