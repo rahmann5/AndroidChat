@@ -24,6 +24,7 @@
     <!-- My Contacts Class -->
     <string name="dialog_friend_select_action">Actions</string>
     <string name="dialog_chat_select_action">Chat Actions</string>
+    <string name="dialog_group_chat_select_action">Group Chat Actions</string>
     <string name="dialog_op1">See Profile</string>
     <string name="dialog_op2">Chat</string>
     <string name="dialog_op3">Delete Contact</string>

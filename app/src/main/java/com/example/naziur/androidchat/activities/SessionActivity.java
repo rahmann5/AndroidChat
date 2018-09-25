@@ -142,8 +142,8 @@ public class SessionActivity extends AppCompatActivity implements NetworkChangeR
 
     @Override
     protected void onStop() {
-        super.onStop();
         FirebaseHelper.removeNotificationListener(notificationListener);
+        super.onStop();
 
     }
 

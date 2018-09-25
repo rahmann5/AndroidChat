@@ -360,20 +360,16 @@ public class FirebaseHelper {
         });
     }
 
-    public ValueEventListener getMessageEventListener(final User user, final ContactDBHelper db, final String dateFormat, final String chatKey){
+    public ValueEventListener getMessageEventListener(final String chatKey){
         ValueEventListener valueEventListener = new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if (dataSnapshot.exists()) {
                     for (com.google.firebase.database.DataSnapshot msgSnapshot : dataSnapshot.getChildren()) {
                         FirebaseMessageModel firebaseMessageModel = msgSnapshot.getValue(FirebaseMessageModel.class);
-                        String isChattingTo = (firebaseMessageModel.getSenderName().equals(user.name)) ? db.getProfileNameAndPic(firebaseMessageModel.getReceiverName())[0] : db.getProfileNameAndPic(firebaseMessageModel.getSenderName())[0];
-                        String username = (firebaseMessageModel.getSenderName().equals(user.name)) ? firebaseMessageModel.getReceiverName() : firebaseMessageModel.getSenderName();
-                        SimpleDateFormat formatter = new SimpleDateFormat(dateFormat);
-                        String dateString = formatter.format(new Date(firebaseMessageModel.getCreatedDateLong()));
-                        Chat chat = new Chat(isChattingTo, username, firebaseMessageModel.getText(), db.getProfileNameAndPic(username)[1], dateString, chatKey, firebaseMessageModel.getIsReceived(), firebaseMessageModel.getMediaType());
                         Container container = new Container();
-                        container.setChat(chat);
+                        container.setMsgModel(firebaseMessageModel);
+                        container.setString(chatKey);
                         listener.onChange("getMessageEventListener", CONDITION_1, container);
                     }
                     listener.onCompleteTask("getMessageEventListener", CONDITION_1, null);
@@ -400,14 +396,17 @@ public class FirebaseHelper {
 
     }
 
-    public void removeListenerFor(String reference, ValueEventListener valueEventListener){
+    public void toggleListenerFor(String reference, String child, String target, ValueEventListener valueEventListener, boolean add){
         DatabaseReference databaseReference = database.getReference(reference);
-        databaseReference.removeEventListener(valueEventListener);
+        if (add) {
+            databaseReference.orderByChild(child).equalTo(target).addValueEventListener(valueEventListener);
+        } else {
+            databaseReference.orderByChild(child).equalTo(target).removeEventListener(valueEventListener);
+        }
     }
 
-    public ValueEventListener getValueEventListener(final String node, String child , final String target, final Class obj){
-        DatabaseReference dataRef = database.getReference(node);
-        ValueEventListener valueEventListener = new ValueEventListener() {
+    public ValueEventListener getValueEventListener(final String target, final Class obj){
+        return new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if(dataSnapshot.exists()) {
@@ -427,8 +426,6 @@ public class FirebaseHelper {
                 listener.onFailureTask("getValueEventListener", databaseError);
             }
         };
-        dataRef.orderByChild(child).equalTo(target).addValueEventListener(valueEventListener);
-        return valueEventListener;
     }
 
     public void updateChatKeys(final User user, final String updatedKeys, final Chat chat){
