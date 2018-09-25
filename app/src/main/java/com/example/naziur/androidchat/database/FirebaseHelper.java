@@ -269,6 +269,10 @@ public class FirebaseHelper {
         });
     }
 
+    public static void setUpGroupChat(){
+
+    }
+
     public static void toggleMsgEventListeners (String node, String chatKey, ValueEventListener commentValueEventListener, boolean add) {
         DatabaseReference messagesRef = database.getReference("messages")
                 .child(node)
@@ -695,7 +699,7 @@ public class FirebaseHelper {
         final DatabaseReference messagesRef = database.getReference("messages").child(node).child(chatKey);
         DatabaseReference newRef = messagesRef.push();
             newRef.setValue(
-                    (membersDeviceTokens == null)? Network.makeNewMessageNode(Constants.MESSAGE_TYPE_TEXT,wishMessage, friend) : Network.makeNewGroupMessageModel(chatKey, wishMessage, Constants.MESSAGE_TYPE_TEXT),
+                    (membersDeviceTokens == null)? Network.makeNewMessageNode(Constants.MESSAGE_TYPE_TEXT,wishMessage, friend) : Network.makeNewGroupMessageModel(chatKey, wishMessage, Constants.MESSAGE_TYPE_SYSTEM),
                     new DatabaseReference.CompletionListener() {
             @Override
             public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
@@ -970,6 +974,5 @@ public class FirebaseHelper {
             }
         });
     }
-
 
 }
