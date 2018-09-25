@@ -1,6 +1,5 @@
 package com.example.naziur.androidchat.fragment;
 
-
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;

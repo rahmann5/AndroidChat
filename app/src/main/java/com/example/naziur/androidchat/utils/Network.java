@@ -13,7 +13,6 @@ import android.widget.Toast;
 
 import com.example.naziur.androidchat.activities.ChatActivity;
 import com.example.naziur.androidchat.models.Contact;
-import com.example.naziur.androidchat.models.FirebaseGroupMessageModel;
 import com.example.naziur.androidchat.models.FirebaseGroupModel;
 import com.example.naziur.androidchat.models.FirebaseMessageModel;
 import com.example.naziur.androidchat.models.FirebaseUserModel;
@@ -233,15 +232,16 @@ public class Network {
         return  firebaseMessageModel;
     }
 
-    public static FirebaseGroupMessageModel makeNewGroupMessageModel(String uniqueId, String text, String type){
+    public static FirebaseMessageModel makeNewGroupMessageModel(String uniqueId, String text, String type){
         User user = User.getInstance();
-        FirebaseGroupMessageModel firebaseGroupMessageModel = new FirebaseGroupMessageModel();
-        firebaseGroupMessageModel.setCreatedDate(System.currentTimeMillis());
-        firebaseGroupMessageModel.setMediaType(type);
-        firebaseGroupMessageModel.setSenderDeviceId(user.deviceId);
-        firebaseGroupMessageModel.setSenderName(user.name);
-        firebaseGroupMessageModel.setId(uniqueId);
-        firebaseGroupMessageModel.setText(text);
-        return firebaseGroupMessageModel;
+        FirebaseMessageModel firebaseMessageModel = new FirebaseMessageModel();
+        firebaseMessageModel.setCreatedDate(System.currentTimeMillis());
+        firebaseMessageModel.setMediaType(type);
+        firebaseMessageModel.setIsReceived(0);
+        firebaseMessageModel.setSenderDeviceId(user.deviceId);
+        firebaseMessageModel.setSenderName(user.name);
+        firebaseMessageModel.setId(uniqueId);
+        firebaseMessageModel.setText(text);
+        return firebaseMessageModel;
     }
 }
