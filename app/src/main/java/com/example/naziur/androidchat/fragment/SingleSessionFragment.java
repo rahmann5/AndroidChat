@@ -105,8 +105,8 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
                 return;
             }
         }
-        userListener = firebaseHelper.getValueEventListener(user.name, FirebaseUserModel.class);
-        firebaseHelper.toggleListenerFor("users", "username" , user.name, userListener, true);
+        userListener = firebaseHelper.getValueEventListener(user.name, FirebaseHelper.CONDITION_1, FirebaseUserModel.class);
+        firebaseHelper.toggleListenerFor("users", "username" , user.name, userListener, true, false);
     }
 
     private void updateExistingContacts (Cursor c) {
@@ -264,7 +264,7 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
     public void onStop() {
 
         if (userListener != null) {
-            firebaseHelper.toggleListenerFor("users", "username", user.name , userListener, false);
+            firebaseHelper.toggleListenerFor("users", "username", user.name , userListener, false, false);
         }
         for(int i = 0; i < valueEventListeners.size(); i++){
             firebaseHelper.attachOrRemoveMessageEventListener("single", allChatKeys.get(i), valueEventListeners.get(i), false);

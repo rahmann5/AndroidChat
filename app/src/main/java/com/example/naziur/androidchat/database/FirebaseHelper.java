@@ -396,28 +396,32 @@ public class FirebaseHelper {
 
     }
 
-    public void toggleListenerFor(String reference, String child, String target, ValueEventListener valueEventListener, boolean add){
+    public void toggleListenerFor(String reference, String child, String target, ValueEventListener valueEventListener, boolean add, boolean single){
         DatabaseReference databaseReference = database.getReference(reference);
-        if (add) {
-            databaseReference.orderByChild(child).equalTo(target).addValueEventListener(valueEventListener);
+        if (!single) {
+            if (add) {
+                databaseReference.orderByChild(child).equalTo(target).addValueEventListener(valueEventListener);
+            } else {
+                databaseReference.orderByChild(child).equalTo(target).removeEventListener(valueEventListener);
+            }
         } else {
-            databaseReference.orderByChild(child).equalTo(target).removeEventListener(valueEventListener);
+            databaseReference.orderByChild(child).equalTo(target).addListenerForSingleValueEvent(valueEventListener);
         }
     }
 
-    public ValueEventListener getValueEventListener(final String target, final Class obj){
+    public ValueEventListener getValueEventListener(final String target, final int condition ,final Class obj){
         return new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
+                Container container = new Container();
+                container.setString(target);
                 if(dataSnapshot.exists()) {
                     for (com.google.firebase.database.DataSnapshot userSnapshot : dataSnapshot.getChildren()) {
-                        Container container = new Container();
                         container.setObject(userSnapshot.getValue(obj));
-                        container.setString(target);
-                        listener.onCompleteTask("getValueEventListener", CONDITION_1, container);
+                        listener.onCompleteTask("getValueEventListener", condition, container);
                     }
                 } else {
-                    listener.onCompleteTask("getValueEventListener", CONDITION_2, null);
+                    listener.onCompleteTask("getValueEventListener", CONDITION_2, container);
                 }
             }
 
@@ -966,6 +970,10 @@ public class FirebaseHelper {
                 listener.onFailureTask("updateUserInfo", databaseError);
             }
         });
+    }
+
+    public void exitGroup () {
+
     }
 
 
