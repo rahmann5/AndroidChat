@@ -111,7 +111,6 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
                 final String currentGroupKey = allGroupKeys.get(i);
                 ValueEventListener valueEventListener = firebaseHelper.getValueEventListener("groups", "groupKey", currentGroupKey, FirebaseGroupModel.class);
                 grpValueEventListeners.add(valueEventListener);
-                groupsRef.orderByChild("groupKey").equalTo(currentGroupKey).addValueEventListener(valueEventListener);
             }
         }
     }

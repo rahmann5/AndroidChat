@@ -185,7 +185,7 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
                 return;
             } else {
                 btnInvite.setEnabled(false);
-                firebaseHelper.checkKeyListKey("users", friend.getUsername(), FirebaseHelper.CONDITION_1, FirebaseHelper.CONDITION_2 ,chatKey);
+                firebaseHelper.checkKeyListKey("users", FirebaseHelper.CONDITION_1, FirebaseHelper.CONDITION_2 ,chatKey, friend.getUsername());
             }
             }
         });
@@ -211,7 +211,7 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
                     btnSend.setEnabled(false);
                     // send text as wish
                     progressBar.toggleDialog(true);
-                    firebaseHelper.checkKeyListKey("users", friend.getUsername(), FirebaseHelper.CONDITION_3, FirebaseHelper.CONDITION_5 ,chatKey);
+                    firebaseHelper.checkKeyListKey("users", FirebaseHelper.CONDITION_3, FirebaseHelper.CONDITION_5 ,chatKey,  friend.getUsername());
                 }
             }
         });
@@ -432,7 +432,7 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
 
     @Override
     public void onActionPressed() {
-        firebaseHelper.checkKeyListKey("users", friend.getUsername(), FirebaseHelper.CONDITION_4, FirebaseHelper.CONDITION_5 ,chatKey);
+        firebaseHelper.checkKeyListKey("users", FirebaseHelper.CONDITION_4, FirebaseHelper.CONDITION_5 ,chatKey, friend.getUsername());
     }
 
     @Override

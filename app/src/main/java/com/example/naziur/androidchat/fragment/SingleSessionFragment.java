@@ -334,7 +334,7 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
                 switch(condition){
                     case FirebaseHelper.CONDITION_1:
                         //verifying if all messages are deleteable
-                        firebaseHelper.checkKeyListKey("users", container.getChat().getUsernameOfTheOneBeingSpokenTo(), FirebaseHelper.CONDITION_1, FirebaseHelper.CONDITION_2, container.getChat().getChatKey());
+                        firebaseHelper.checkKeyListKey("users", FirebaseHelper.CONDITION_1, FirebaseHelper.CONDITION_2, container.getChat().getChatKey(),container.getChat().getUsernameOfTheOneBeingSpokenTo());
                         break;
                 }
                 break;

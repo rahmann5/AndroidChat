@@ -24,7 +24,6 @@ import com.example.naziur.androidchat.models.FirebaseMessageModel;
 import com.example.naziur.androidchat.models.FirebaseUserModel;
 import com.example.naziur.androidchat.models.MessageCell;
 import com.example.naziur.androidchat.models.User;
-import com.example.naziur.androidchat.utils.Constants;
 import com.example.naziur.androidchat.utils.Container;
 import com.example.naziur.androidchat.utils.Network;
 import com.example.naziur.androidchat.utils.ProgressDialog;
@@ -36,10 +35,11 @@ import com.google.firebase.database.MutableData;
 import com.google.firebase.database.Transaction;
 import com.google.firebase.database.ValueEventListener;
 
+import org.json.JSONArray;
+
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 
@@ -55,7 +55,7 @@ public class GroupChatActivity extends AppCompatActivity implements FirebaseHelp
     ListView listView;
     List<FirebaseMessageModel> messages = new ArrayList<FirebaseMessageModel>();
     FirebaseGroupModel groupModel;
-
+    JSONArray registeredIds;
     private ActionBar actionBar;
     private ProgressDialog progressBar;
     private String groupKey = "";
@@ -85,33 +85,20 @@ public class GroupChatActivity extends AppCompatActivity implements FirebaseHelp
         createCustomActionBar ();
         // assuming that user is guaranteed member of group
         if (Network.isInternetAvailable(this, true)) {
-            database.getReference("groups").orderByChild("groupKey").equalTo(groupKey).addListenerForSingleValueEvent(new ValueEventListener() {
-                @Override
-                public void onDataChange(DataSnapshot dataSnapshot) {
-                    for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
-                        FirebaseGroupModel groupModel = postSnapshot.getValue(FirebaseGroupModel.class);
-                        if (groupModel.getGroupKey().equals(groupKey)) {
-                            ((TextView) actionBar.getCustomView().findViewById(R.id.profile_name)).setText(groupModel.getTitle());
-                            Glide.with(getApplicationContext())
-                                    .load(groupModel.getPic())
-                                    .apply(new RequestOptions().placeholder(R.drawable.placeholder).error(R.drawable.unknown))
-                                    .into(((CircleImageView) actionBar.getCustomView().findViewById(R.id.profile_icon)));
-                            break;
-                        }
-                    }
-
-                }
-
-                @Override
-                public void onCancelled(DatabaseError databaseError) {
-                    // TO DO
-                }
-            });
+            firebaseHelper.getGroupInfo(groupKey);
         } else {
             // TO DO
         }
 
         msgValueEventListener = firebaseHelper.createMessageEventListener();
+
+        btnSend.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                btnSend.setEnabled(false);
+
+            }
+        });
     }
 
     @Override
@@ -287,6 +274,23 @@ public class GroupChatActivity extends AppCompatActivity implements FirebaseHelp
                         break;
                 }
                 break;
+            case "getGroupInfo":
+                switch (condition){
+                    case FirebaseHelper.CONDITION_1:
+                        groupModel = container.getGroupModel();
+                        ((TextView) actionBar.getCustomView().findViewById(R.id.profile_name)).setText(groupModel.getTitle());
+                        Glide.with(getApplicationContext())
+                                .load(groupModel.getPic())
+                                .apply(new RequestOptions().placeholder(R.drawable.placeholder).error(R.drawable.unknown))
+                                .into(((CircleImageView) actionBar.getCustomView().findViewById(R.id.profile_icon)));
+                        List<String> members = Arrays.asList(groupModel.getMembers().split(","));
+                        firebaseHelper.getDeviceTokensFor(members, groupModel.getTitle(), groupModel.getGroupKey());
+                        break;
+                }
+                break;
+            case "getDeviceTokensFor":
+                registeredIds = container.getJsonArray();
+                break;
         }
     }
 
@@ -294,10 +298,10 @@ public class GroupChatActivity extends AppCompatActivity implements FirebaseHelp
     public void onFailureTask(String tag, DatabaseError databaseError) {
         switch(tag){
             case "createMessageEventListener":
-                Log.i(TAG, tag+" "+databaseError.getMessage());
                 progressBar.toggleDialog(false);
                 break;
         }
+        Log.i(TAG, tag+" "+databaseError.getMessage());
     }
 
     @Override

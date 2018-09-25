@@ -2,6 +2,7 @@ package com.example.naziur.androidchat.utils;
 
 import com.example.naziur.androidchat.models.Chat;
 import com.example.naziur.androidchat.models.Contact;
+import com.example.naziur.androidchat.models.FirebaseGroupModel;
 import com.example.naziur.androidchat.models.FirebaseMessageModel;
 import com.example.naziur.androidchat.models.FirebaseUserModel;
 import com.example.naziur.androidchat.models.Notification;
@@ -19,6 +20,7 @@ public class Container {
     private Contact contact;
     private FirebaseMessageModel msgModel;
     private FirebaseUserModel userModel;
+    private FirebaseGroupModel groupModel;
     private String simpleString;
     private int simpleInt;
     private boolean simpleBoolean;
@@ -118,5 +120,13 @@ public class Container {
 
     public void setObject(Object object) {
         this.object = object;
+    }
+
+    public FirebaseGroupModel getGroupModel() {
+        return groupModel;
+    }
+
+    public void setGroupModel(FirebaseGroupModel groupModel) {
+        this.groupModel = groupModel;
     }
 }

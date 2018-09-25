@@ -33,6 +33,8 @@ import org.json.JSONArray;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 
 import java.util.Arrays;
@@ -285,27 +287,47 @@ public class FirebaseHelper {
         }
     }
 
-    public void checkKeyListKey (String node, String username, final int myCondition1, final int myCondition2 , final String chatKey) {
-        DatabaseReference usersRef = database.getReference(node);
-        usersRef.orderByChild("username").equalTo(username).addListenerForSingleValueEvent(new ValueEventListener() {
+    public void checkKeyListKey (String node, final int myCondition1, final int myCondition2 , final String msgId, final String... usernames) {
+        DatabaseReference usersRef;
+        final List<String> allMembers = Arrays.asList(usernames);
+        Collections.sort(allMembers);
+        if(usernames.length == 1) {
+            usersRef = database.getReference(node).orderByChild("username").equalTo(usernames[0]).getRef();
+        } else {
+            usersRef = database.getReference(node).orderByChild("username").startAt(allMembers.get(0)).endAt(allMembers.get(allMembers.size()-1)).getRef();
+        }
+        usersRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 boolean found = false;
                 if(dataSnapshot.exists()){
                     for(DataSnapshot snapshot : dataSnapshot.getChildren()){
                         FirebaseUserModel firebaseUserModel = snapshot.getValue(FirebaseUserModel.class);
-                        List<String> list = Arrays.asList(firebaseUserModel.getChatKeys().split(","));
-                        if(list.contains(chatKey)){
-                            found = true;
-                            listener.onCompleteTask("checkKeyListKey", myCondition1, null);
-                            break;
+                        List<String> list;
+                        if(usernames.length > 1){
+                            for(int i = 0; i < allMembers.size(); i++){
+                                if(allMembers.contains(firebaseUserModel.getUsername())){
+                                    if(Arrays.asList(firebaseUserModel.getGroupKeys().split(",")).contains(msgId)) {
+                                        Container container = new Container();
+                                        container.setString(firebaseUserModel.getDeviceToken());
+                                        listener.onChange("checkKeyListKey", myCondition1,container);
+                                    }
+                                }
+                            }
+                        } else {
+                            list = Arrays.asList(firebaseUserModel.getChatKeys().split(","));
+                            if (list.contains(msgId)) {
+                                found = true;
+                                listener.onCompleteTask("checkKeyListKey", myCondition1, null);
+                                break;
+                            }
                         }
                     }
                 }
 
                 if (!found) {
                     Container container = new Container();
-                    container.setString(chatKey);
+                    container.setString(msgId);
                     listener.onCompleteTask("checkKeyListKey", myCondition2, container);
                 }
             }
@@ -971,5 +993,25 @@ public class FirebaseHelper {
         });
     }
 
+    public void getGroupInfo(final String groupKey){
+        database.getReference("groups").orderByChild("groupKey").equalTo(groupKey).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
+                    FirebaseGroupModel groupModel = postSnapshot.getValue(FirebaseGroupModel.class);
+                    if (groupModel.getGroupKey().equals(groupKey)) {
+                        Container container = new Container();
+                        container.setGroupModel(groupModel);
+                        listener.onCompleteTask("getGroupInfo", CONDITION_1, container);
+                        break;
+                    }
+                }
+            }
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                listener.onFailureTask("getGroupInfo", databaseError);
+            }
+        });
+    }
 
 }
