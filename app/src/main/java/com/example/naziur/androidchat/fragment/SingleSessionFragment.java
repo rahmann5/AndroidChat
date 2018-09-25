@@ -112,7 +112,7 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
                 return;
             }
         }
-        userListener = firebaseHelper.getValueEventListener("users", "username", user.name);
+        userListener = firebaseHelper.getValueEventListener("users", "username", user.name, FirebaseUserModel.class);
     }
 
     private void updateExistingContacts (Cursor c) {
@@ -306,14 +306,16 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
             case "getValueEventListener":
                 switch(condition){
                     case FirebaseHelper.CONDITION_1:
-                        System.out.println("SingleSessionFragment");
-                        String[] allKeys = container.getUserModel().getChatKeys().split(",");
-                        allChatKeys.clear();
-                        for(String key: allKeys){
-                            if(!key.equals(""))
-                                allChatKeys.add(key);
+                        FirebaseUserModel userModel = (FirebaseUserModel) container.getObject();
+                        if (userModel.getUsername().equals(container.getString())) {
+                            String[] allKeys = userModel.getChatKeys().split(",");
+                            allChatKeys.clear();
+                            for(String key: allKeys){
+                                if(!key.equals(""))
+                                    allChatKeys.add(key);
+                            }
+                            setUpMsgEventListeners();
                         }
-                        setUpMsgEventListeners();
                         break;
                     case FirebaseHelper.CONDITION_2:
                         Toast.makeText(getContext(), "No chats found for this user, as the account may no longer exist", Toast.LENGTH_SHORT).show();

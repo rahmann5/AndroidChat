@@ -405,20 +405,17 @@ public class FirebaseHelper {
         databaseReference.removeEventListener(valueEventListener);
     }
 
-    public ValueEventListener getValueEventListener(final String node, String child , final String target){
+    public ValueEventListener getValueEventListener(final String node, String child , final String target, final Class obj){
         DatabaseReference dataRef = database.getReference(node);
         ValueEventListener valueEventListener = new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if(dataSnapshot.exists()) {
                     for (com.google.firebase.database.DataSnapshot userSnapshot : dataSnapshot.getChildren()) {
-                        FirebaseUserModel firebaseUserModel = userSnapshot.getValue(FirebaseUserModel.class);
-                        if (firebaseUserModel.getUsername().equals(target)) {
-                            Container container = new Container();
-                            container.setUserModel(firebaseUserModel);
-                            listener.onCompleteTask("getValueEventListener", CONDITION_1, container);
-                            break;
-                        }
+                        Container container = new Container();
+                        container.setObject(userSnapshot.getValue(obj));
+                        container.setString(target);
+                        listener.onCompleteTask("getValueEventListener", CONDITION_1, container);
                     }
                 } else {
                     listener.onCompleteTask("getValueEventListener", CONDITION_2, null);

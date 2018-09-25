@@ -22,8 +22,8 @@ import com.example.naziur.androidchat.adapter.AllChatsAdapter;
 import com.example.naziur.androidchat.database.ContactDBHelper;
 import com.example.naziur.androidchat.database.FirebaseHelper;
 import com.example.naziur.androidchat.models.Chat;
-import com.example.naziur.androidchat.models.FirebaseGroupMessageModel;
 import com.example.naziur.androidchat.models.FirebaseGroupModel;
+import com.example.naziur.androidchat.models.FirebaseMessageModel;
 import com.example.naziur.androidchat.models.FirebaseUserModel;
 import com.example.naziur.androidchat.models.User;
 import com.example.naziur.androidchat.utils.Container;
@@ -100,7 +100,7 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
                 return;
             }
         }
-        userListener = firebaseHelper.getValueEventListener("users", "username" , user.name);
+        userListener = firebaseHelper.getValueEventListener("users", "username" , user.name, FirebaseUserModel.class);
     }
 
     private void setUpGrpEventListeners() {
@@ -110,28 +110,7 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
             allGroups.clear();
             for(int i = 0 ; i < allGroupKeys.size(); i++){
                 final String currentGroupKey = allGroupKeys.get(i);
-                //ValueEventListener valueEventListener = FirebaseHelper.getValueEventListener("groups", "groupKey", currentGroupKey);
-                ValueEventListener valueEventListener = new ValueEventListener() {
-                    @Override
-                    public void onDataChange(DataSnapshot dataSnapshot) {
-                        if (dataSnapshot.exists()) {
-                            for (com.google.firebase.database.DataSnapshot grpSnapshot : dataSnapshot.getChildren()) {
-                                FirebaseGroupModel firebaseGroupModel = grpSnapshot.getValue(FirebaseGroupModel.class);
-                                if(firebaseGroupModel.getGroupKey().equals(currentGroupKey)) {
-                                    allGroups.add(firebaseGroupModel);
-                                    setUpGrpMSgEventListeners(currentGroupKey);
-                                    break;
-                                }
-                            }
-                        }
-                    }
-
-                    @Override
-                    public void onCancelled(DatabaseError databaseError) {
-                        Log.i(TAG, "setUpGrpEventListeners: "+databaseError.getMessage());
-                    }
-                };
-
+                ValueEventListener valueEventListener = firebaseHelper.getValueEventListener("groups", "groupKey", currentGroupKey, FirebaseGroupModel.class);
                 grpValueEventListeners.add(valueEventListener);
                 groupsRef.orderByChild("groupKey").equalTo(currentGroupKey).addValueEventListener(valueEventListener);
             }
@@ -148,7 +127,7 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
                 @Override
                 public void onDataChange(DataSnapshot dataSnapshot) {
                     for (DataSnapshot msgData : dataSnapshot.getChildren()) {
-                        FirebaseGroupMessageModel groupMessageModel = msgData.getValue(FirebaseGroupMessageModel.class);
+                        FirebaseMessageModel groupMessageModel = msgData.getValue(FirebaseMessageModel.class);
                         db = new ContactDBHelper(getActivity());
                         String senderName = (groupMessageModel.getSenderName().equals(user.name))? user.profileName : db.getProfileNameAndPic(groupMessageModel.getSenderName())[0];
                         db.close();
@@ -275,14 +254,24 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
         if (tag.equals("getValueEventListener")) {
             switch (condition) {
                 case FirebaseHelper.CONDITION_1 :
-                    System.out.println("GroupSessionFragment");
-                    String[] allKeys = container.getUserModel().getGroupKeys().split(",");
-                    allGroupKeys.clear();
-                    for(String key: allKeys){
-                        if(!key.equals(""))
-                            allGroupKeys.add(key);
+                    if (container.getObject() instanceof FirebaseUserModel) {
+                        FirebaseUserModel userModel = (FirebaseUserModel) container.getObject();
+                        if (userModel.getUsername().equals(container.getString())) {
+                            String[] allKeys = userModel.getGroupKeys().split(",");
+                            allGroupKeys.clear();
+                            for(String key: allKeys){
+                                if(!key.equals(""))
+                                    allGroupKeys.add(key);
+                            }
+                            setUpGrpEventListeners();
+                        }
+                    } else if (container.getObject() instanceof FirebaseGroupModel) {
+                        FirebaseGroupModel firebaseGroupModel = (FirebaseGroupModel) container.getObject();
+                        if(firebaseGroupModel.getGroupKey().equals(container.getString())) {
+                            allGroups.add(firebaseGroupModel);
+                            setUpGrpMSgEventListeners(container.getString());
+                        }
                     }
-                    setUpGrpEventListeners();
                     break;
             }
         }
