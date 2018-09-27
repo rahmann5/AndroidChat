@@ -209,7 +209,7 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
         progressBar.toggleDialog(true);
         allChatKeys.remove(chat.getChatKey());
         final String updatedKeys = getChatKeysAsString();
-        firebaseHelper.updateChatKeys(user, updatedKeys, chat); //  initiate deletion of chat
+        firebaseHelper.updateChatKeys(user, updatedKeys, chat, false); //  initiate deletion of chat
     }
 
     private void addUserToContacts(final Chat chat, final int position){
@@ -230,34 +230,6 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
                 keys += ",";
         }
         return keys;
-    }
-
-    private void collectAllRemovableImagesForMessages (final String chatKey) {
-        firebaseHelper.collectAllImagesForDeletionThenDeleteRelatedMessages("single", chatKey);
-    }
-
-    private void deleteUploadImages (final List<String> allUris, final String chatKey) {
-        if (!allUris.isEmpty()) {
-            String uri = allUris.remove(0);
-            StorageReference photoRef = FirebaseStorage.getInstance().getReferenceFromUrl(uri);
-            photoRef.delete().addOnSuccessListener(new OnSuccessListener<Void>() {
-                @Override
-                public void onSuccess(Void aVoid) {
-                deleteUploadImages(allUris, chatKey);
-                Log.i(TAG, "onSuccess: removed image from failed database update");
-                }
-            }).addOnFailureListener(new OnFailureListener() {
-                @Override
-                public void onFailure(@NonNull Exception e) {
-                Log.i(TAG, "onFailure: did not delete file in storage");
-                // store that image uri in a log to remove manually
-                e.printStackTrace();
-                }
-            });
-        } else {
-            firebaseHelper.cleanDeleteAllMessages("single", chatKey);
-        }
-
     }
 
     @Override
@@ -286,7 +258,6 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
                 switch (condition){
                     case FirebaseHelper.CONDITION_1:
                         myChatsdapter.setAllMyChats(allChats);
-                        myChatsdapter.notifyDataSetChanged();
                         break;
                     case FirebaseHelper.CONDITION_2:
                         if (myChatsdapter.getItemCount() == 0) {
@@ -320,14 +291,14 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
             case "checkKeyListKey":
                 switch(condition){
                     case FirebaseHelper.CONDITION_2:
-                        collectAllRemovableImagesForMessages (container.getString());
+                        firebaseHelper.collectAllImagesForDeletionThenDeleteRelatedMessages("single", container.getString());
                         break;
                 }
                 break;
             case "updateChatKeys":
                 switch(condition){
                     case FirebaseHelper.CONDITION_1:
-                        //verifying if all messages are deleteable
+                        //verifying if all messages are deletable if other user no longer has that key as well
                         firebaseHelper.checkKeyListKey("users", container.getChat().getUsernameOfTheOneBeingSpokenTo(), FirebaseHelper.CONDITION_1, FirebaseHelper.CONDITION_2, container.getChat().getChatKey());
                         break;
                 }
@@ -346,7 +317,7 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
             case "collectAllImagesForDeletionThenDeleteRelatedMessages":
                 switch (condition){
                     case FirebaseHelper.CONDITION_1:
-                        deleteUploadImages(container.getStringList(), container.getString());
+                        Network.deleteUploadImages(firebaseHelper, container.getStringList(), container.getString(), "single");
                         break;
                 }
                 break;
@@ -378,9 +349,6 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
                 break;
             case "addUserToContacts":
                 Toast.makeText(getActivity(), "Failed to add contact.", Toast.LENGTH_LONG).show();
-                break;
-            case "collectAllImagesForDeletionThenDeleteRelatedMessages":
-                Log.i(TAG, tag + " Failed to obtain reference to all previous messages");
                 break;
         }
         Log.i(TAG, tag + " "+ databaseError.getMessage());

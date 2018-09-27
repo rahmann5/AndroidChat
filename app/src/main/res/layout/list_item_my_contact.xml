@@ -40,7 +40,10 @@
             android:layout_marginTop="5dp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="username"/>
+            android:text="username"
+            android:maxLines="1"
+            android:ellipsize="marquee"
+            />
 
 
     </LinearLayout>

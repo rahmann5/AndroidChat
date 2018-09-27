@@ -27,11 +27,13 @@ import android.widget.Toast;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
 import com.example.naziur.androidchat.R;
+import com.example.naziur.androidchat.adapter.AllGroupsAdapter;
 import com.example.naziur.androidchat.adapter.MyContactsAdapter;
 import com.example.naziur.androidchat.database.ContactDBHelper;
 import com.example.naziur.androidchat.database.FirebaseHelper;
 import com.example.naziur.androidchat.database.MyContactsContract;
 import com.example.naziur.androidchat.models.Contact;
+import com.example.naziur.androidchat.models.FirebaseGroupModel;
 import com.example.naziur.androidchat.models.FirebaseUserModel;
 import com.example.naziur.androidchat.utils.Container;
 import com.example.naziur.androidchat.utils.FadingActionBarHelper;
@@ -71,6 +73,7 @@ public class ProfileActivity extends AppCompatActivity implements FirebaseHelper
 
     User user = User.getInstance();
     private RecyclerView myGroups, myContacts;
+    private List<String> groupKeys;
     private TextView emptyGroupsList, emptyContactsList, myUsername;
     private AppCompatButton saveButton;
     private ImageView editToggle, profilePic;
@@ -81,6 +84,7 @@ public class ProfileActivity extends AppCompatActivity implements FirebaseHelper
     private ProgressDialog progressBar;
     private boolean reset = false;
     private MyContactsAdapter contactsAdapter;
+    private AllGroupsAdapter groupsAdapter;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -149,7 +153,7 @@ public class ProfileActivity extends AppCompatActivity implements FirebaseHelper
         saveButton = (AppCompatButton) findViewById(R.id.save_profile_btn);
 
         showContacts();
-        showGroups(); //do inside showContacts for before hiding progress dialog
+        showGroups();
 
         editToggle.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -178,19 +182,29 @@ public class ProfileActivity extends AppCompatActivity implements FirebaseHelper
     }
 
     private void showGroups() {
+        groupKeys = new ArrayList<>();
+        groupsAdapter = new AllGroupsAdapter(this);
         emptyGroupsList = (TextView) findViewById(R.id.no_groups);
         myGroups = (RecyclerView) findViewById(R.id.profile_groups_list);
-        emptyGroupsList.setVisibility(View.VISIBLE);
-        //myGroups.setAdapter(adapterGroup);
+        LinearLayoutManager l = new LinearLayoutManager(ProfileActivity.this);
+        myGroups.setLayoutManager(l);
+        myGroups.setAdapter(groupsAdapter);
+        ValueEventListener userListener = firebaseHelper.getValueEventListener(user.name, FirebaseHelper.CONDITION_1 ,FirebaseUserModel.class);
+        firebaseHelper.toggleListenerFor("users", "username" , user.name, userListener, true, true); //  single event
+
+    }
+
+
+    private void getGroupInfo (String key) {
+        ValueEventListener userListener = firebaseHelper.getValueEventListener(key, FirebaseHelper.CONDITION_3 ,FirebaseGroupModel.class);
+        firebaseHelper.toggleListenerFor("groups", "groupKey" , key, userListener, true, true); //  single event
     }
 
 
     private void showContacts() {
-        progressBar.toggleDialog(true);
         emptyContactsList = (TextView) findViewById(R.id.no_contacts);
         myContacts = (RecyclerView) findViewById(R.id.profile_contacts_list);
         updateContacts ();
-
     }
 
     private void updateContacts () {
@@ -207,22 +221,21 @@ public class ProfileActivity extends AppCompatActivity implements FirebaseHelper
                     firebaseHelper.updateLocalContactsFromFirebase("users", fbModel, db);
                 } else {
                     contactsAdapter.addNewItemContact(new Contact(fbModel, "", false));
-                    toggleEmptyState();
+                    toggleEmptyState(emptyContactsList, contactsAdapter);
                 }
             }
 
         } finally {
             if (!hasInternet) Toast.makeText(this, "Data maybe outdated", Toast.LENGTH_LONG).show();
-            progressBar.toggleDialog(false);
             c.close();
         }
     }
 
-    private void toggleEmptyState () {
-        if (contactsAdapter.getItemCount() == 0)
-            emptyContactsList.setVisibility(View.VISIBLE);
+    private void toggleEmptyState (TextView emptystate, RecyclerView.Adapter<RecyclerView.ViewHolder> adapter) {
+        if (adapter.getItemCount() == 0)
+            emptystate.setVisibility(View.VISIBLE);
         else
-            emptyContactsList.setVisibility(View.GONE);
+            emptystate.setVisibility(View.GONE);
     }
 
     private void uploadImageToCloud () {
@@ -377,7 +390,7 @@ public class ProfileActivity extends AppCompatActivity implements FirebaseHelper
                     LinearLayoutManager l = new LinearLayoutManager(ProfileActivity.this);
                     myContacts.setLayoutManager(l);
                     myContacts.setAdapter(contactsAdapter);
-                    toggleEmptyState();
+                    toggleEmptyState(emptyContactsList, contactsAdapter);
                     break;
             }
         } else if (tag.equals("updateUserInfo")) {
@@ -393,6 +406,31 @@ public class ProfileActivity extends AppCompatActivity implements FirebaseHelper
                     break;
             }
             progressBar.toggleDialog(false);
+        } else if (tag.equals("getValueEventListener")) {
+            switch (condition) {
+                case FirebaseHelper.CONDITION_1 :
+                    FirebaseUserModel currentUser = (FirebaseUserModel) container.getObject();
+                    String[] allKeys = currentUser.getGroupKeys().split(",");
+                    for(String key: allKeys){
+                        if(!key.equals(""))
+                            groupKeys.add(key);
+                    }
+                    if (!groupKeys.isEmpty())
+                        getGroupInfo(groupKeys.get(0)); // first item
+                    else
+                        toggleEmptyState(emptyGroupsList, groupsAdapter);
+
+                    break;
+
+                case FirebaseHelper.CONDITION_3 :
+                    FirebaseGroupModel groupModel = (FirebaseGroupModel) container.getObject();
+                    groupsAdapter.addGroupItem(groupModel);
+                    toggleEmptyState(emptyGroupsList, groupsAdapter);
+                    int currentIndex = groupKeys.indexOf(groupModel.getGroupKey());
+                    if ((currentIndex + 1) < groupKeys.size())
+                        getGroupInfo(groupKeys.get(currentIndex + 1)); // subsequent item
+                    break;
+            }
         }
     }
 
@@ -400,7 +438,7 @@ public class ProfileActivity extends AppCompatActivity implements FirebaseHelper
     public void onFailureTask(String tag, DatabaseError databaseError) {
         switch (tag) {
             case "updateLocalContactsFromFirebase" :
-                toggleEmptyState();
+                toggleEmptyState(emptyContactsList, contactsAdapter);
                 break;
 
             case "updateUserInfo" :

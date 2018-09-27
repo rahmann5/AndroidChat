@@ -5,6 +5,8 @@ import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
@@ -17,20 +19,28 @@ import android.widget.Toast;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
 import com.example.naziur.androidchat.R;
+import com.example.naziur.androidchat.adapter.AllGroupsAdapter;
 import com.example.naziur.androidchat.database.ContactDBHelper;
 import com.example.naziur.androidchat.database.FirebaseHelper;
+import com.example.naziur.androidchat.models.FirebaseGroupModel;
 import com.example.naziur.androidchat.models.FirebaseUserModel;
+import com.example.naziur.androidchat.models.User;
 import com.example.naziur.androidchat.utils.Container;
 import com.example.naziur.androidchat.utils.Network;
 import com.example.naziur.androidchat.utils.ProgressDialog;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+
+import java.util.ArrayList;
+import java.util.List;
 
 
 public class ChatDetailActivity extends AppCompatActivity implements FirebaseHelper.FirebaseHelperListener{
 
     private static final String TAG = ChatDetailActivity.class.getSimpleName();
+    private User user = User.getInstance();
     private FirebaseUserModel userBeingViewed;
     private FirebaseDatabase database;
     private ContactDBHelper db;
@@ -40,6 +50,9 @@ public class ChatDetailActivity extends AppCompatActivity implements FirebaseHel
     private Menu menu;
     private ProgressDialog progressBar;
     FirebaseHelper firebaseHelper;
+    private AllGroupsAdapter groupsAdapter;
+    private List<String> groupKeys;
+    private TextView emptyGroupsList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,7 +94,7 @@ public class ChatDetailActivity extends AppCompatActivity implements FirebaseHel
                 }
             });
         }
-
+        findRelatedGroups ();
         AppBarLayout mAppBarLayout = (AppBarLayout) findViewById(R.id.app_bar);
         mAppBarLayout.addOnOffsetChangedListener(new AppBarLayout.OnOffsetChangedListener() {
             boolean isShow = false;
@@ -111,6 +124,41 @@ public class ChatDetailActivity extends AppCompatActivity implements FirebaseHel
         getMenuInflater().inflate(R.menu.chat_detail_menu, menu);
         hideOption(R.id.action_info);
         return true;
+    }
+
+    private void findRelatedGroups () {
+        groupKeys = new ArrayList<>();
+        groupsAdapter = new AllGroupsAdapter(this);
+        emptyGroupsList = (TextView) findViewById(R.id.no_groups);
+        RecyclerView myGroups = (RecyclerView) findViewById(R.id.chat_groups_list);
+        LinearLayoutManager l = new LinearLayoutManager(ChatDetailActivity.this);
+        myGroups.setLayoutManager(l);
+        myGroups.setAdapter(groupsAdapter);
+        ValueEventListener userListener = firebaseHelper.getValueEventListener(user.name, FirebaseHelper.CONDITION_1 ,FirebaseUserModel.class);
+        firebaseHelper.toggleListenerFor("users", "username" , user.name, userListener, true, true); //  single event
+    }
+
+    private void getGroupInfo (String key) {
+        ValueEventListener userListener = firebaseHelper.getValueEventListener(key, FirebaseHelper.CONDITION_3 ,FirebaseGroupModel.class);
+        firebaseHelper.toggleListenerFor("groups", "groupKey" , key, userListener, true, true); //  single event
+    }
+
+    private void isInSameGroup (FirebaseGroupModel groupModel) {
+        String [] members  = groupModel.getMembers().split("-");
+        for (String member : members) {
+            if (member.equals(userBeingViewed.getUsername())){
+                groupsAdapter.addGroupItem(groupModel);
+                break;
+            }else if (groupModel.getAdmin().equals(userBeingViewed.getUsername())) {
+                groupsAdapter.addGroupItem(groupModel);
+                break;
+            }
+        }
+        if (groupsAdapter.getItemCount() == 0)
+            emptyGroupsList.setVisibility(View.VISIBLE);
+        else
+            emptyGroupsList.setVisibility(View.GONE);
+
     }
 
     private void addUserAsContact(){
@@ -210,9 +258,34 @@ public class ChatDetailActivity extends AppCompatActivity implements FirebaseHel
                         getUsersInformationOffline(true);
                         break;
                 }
+                progressBar.toggleDialog(false);
                 break;
+
+            case "getValueEventListener" :
+            switch (condition) {
+                case FirebaseHelper.CONDITION_1 :
+                    FirebaseUserModel currentUser = (FirebaseUserModel) container.getObject();
+                    String[] allKeys = currentUser.getGroupKeys().split(",");
+                    for(String key: allKeys){
+                        if(!key.equals(""))
+                            groupKeys.add(key);
+                    }
+                    if (!groupKeys.isEmpty())
+                        getGroupInfo(groupKeys.get(0)); // first item
+                    else
+                        emptyGroupsList.setVisibility(View.VISIBLE);
+
+                    break;
+
+                case FirebaseHelper.CONDITION_3 :
+                    FirebaseGroupModel groupModel = (FirebaseGroupModel) container.getObject();
+                    isInSameGroup(groupModel);
+                    int currentIndex = groupKeys.indexOf(groupModel.getGroupKey());
+                    if ((currentIndex + 1) < groupKeys.size())
+                        getGroupInfo(groupKeys.get(currentIndex + 1)); // subsequent item
+                    break;
+            }
         }
-        progressBar.toggleDialog(false);
     }
 
     @Override

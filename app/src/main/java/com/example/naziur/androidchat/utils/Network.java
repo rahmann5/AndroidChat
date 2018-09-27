@@ -12,6 +12,7 @@ import android.net.NetworkInfo;
 import android.widget.Toast;
 
 import com.example.naziur.androidchat.activities.ChatActivity;
+import com.example.naziur.androidchat.database.FirebaseHelper;
 import com.example.naziur.androidchat.models.Contact;
 import com.example.naziur.androidchat.models.FirebaseGroupModel;
 import com.example.naziur.androidchat.models.FirebaseMessageModel;
@@ -106,6 +107,29 @@ public class Network {
             return false;
     }
 
+    public static void deleteUploadImages (final FirebaseHelper firebaseHelper, final List<String> allUris, final String chatKey, final String loc) {
+        if (!allUris.isEmpty()) {
+            String uri = allUris.remove(0);
+            StorageReference photoRef = FirebaseStorage.getInstance().getReferenceFromUrl(uri);
+            photoRef.delete().addOnSuccessListener(new OnSuccessListener<Void>() {
+                @Override
+                public void onSuccess(Void aVoid) {
+                    deleteUploadImages(firebaseHelper , allUris, chatKey, loc);
+                    Log.i(LOG_TAG, "onSuccess: removed image from failed database update");
+                }
+            }).addOnFailureListener(new OnFailureListener() {
+                @Override
+                public void onFailure(@NonNull Exception e) {
+                    Log.i(LOG_TAG, "onFailure: did not delete file in storage");
+                    // store that image uri in a log to remove manually
+                    e.printStackTrace();
+                }
+            });
+        } else {
+            firebaseHelper.cleanDeleteAllMessages(loc, chatKey);
+        }
+
+    }
 
     public static void downloadImageToPhone (Context context, String downloadUrlOfImage) {
         String DIR_NAME = "Android Chat";

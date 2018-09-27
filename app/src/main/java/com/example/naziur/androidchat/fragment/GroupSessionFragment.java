@@ -94,20 +94,18 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
     }
 
     private void setUpGrpEventListeners() {
-        grpValueEventListeners = new ArrayList<>();
-        grpMsgValueEventListeners = new ArrayList<>();
-        if(allGroupKeys.size() > 0){
-            allGroups.clear();
-            for(int i = 0 ; i < allGroupKeys.size(); i++){
-                final String currentGroupKey = allGroupKeys.get(i);
-                ValueEventListener valueEventListener = firebaseHelper.getValueEventListener(currentGroupKey, FirebaseHelper.CONDITION_3, FirebaseGroupModel.class);
-                grpValueEventListeners.add(valueEventListener);
-                firebaseHelper.toggleListenerFor("groups", "groupKey" , currentGroupKey, valueEventListener, true, false);
-            }
+        grpValueEventListeners.clear();
+        allGroups.clear();
+        for(int i = 0 ; i < allGroupKeys.size(); i++){
+            final String currentGroupKey = allGroupKeys.get(i);
+            ValueEventListener valueEventListener = firebaseHelper.getValueEventListener(currentGroupKey, FirebaseHelper.CONDITION_3, FirebaseGroupModel.class);
+            grpValueEventListeners.add(valueEventListener);
+            firebaseHelper.toggleListenerFor("groups", "groupKey" , currentGroupKey, valueEventListener, true, false);
         }
     }
 
     private void setUpGrpMSgEventListeners(String groupKey){
+        grpMsgValueEventListeners.clear();
         ValueEventListener valueEventListener = firebaseHelper.getMessageEventListener(groupKey);
         grpMsgValueEventListeners.add(valueEventListener);
         firebaseHelper.attachOrRemoveMessageEventListener("group", groupKey, valueEventListener, true);
@@ -120,7 +118,6 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
                 index = i;
                 break;
             }
-
         }
         return index;
     }
@@ -153,10 +150,8 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
 
     private AlertDialog createDialog (final Chat chat, final int position) {
         final AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-        final boolean isAdmin = chat.getAdmin().equals(user.name);
-        int groupDialogItemsRes = (isAdmin) ?  R.array.admin_group_chat_dialog_actions :  R.array.member_group_chat_dialog_actions ;
         builder.setTitle(R.string.dialog_group_chat_select_action)
-                .setItems(groupDialogItemsRes, new DialogInterface.OnClickListener() {
+                .setItems(R.array.member_group_chat_dialog_actions, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
                         onActionSelected(which, chat, position);
                         dialog.dismiss();
@@ -177,19 +172,23 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
                                 break;
 
                             case 2 : // leave/delete Chat
-                                if (isAdmin) {
-                                    Toast.makeText(getActivity(), "Delete Group", Toast.LENGTH_SHORT).show();
-                                } else {
-                                    ValueEventListener valueEventListener = firebaseHelper.getValueEventListener(chat.getChatKey(), FirebaseHelper.CONDITION_4, FirebaseGroupModel.class);
-                                    firebaseHelper.toggleListenerFor("groups", "groupKey" , chat.getChatKey(), valueEventListener, true, true);
-                                }
-
+                                firebaseHelper.exitGroup(chat.getChatKey(), user.name, chat.getAdmin().equals(user.name));
                                 break;
 
                         }
                     }
                 });
         return builder.create();
+    }
+
+    private String getChatKeysAsString(){
+        String keys = "";
+        for(int i = 0; i < allGroupKeys.size(); i++){
+            keys += allGroupKeys.get(i);
+            if(i < allGroupKeys.size()-1)
+                keys += ",";
+        }
+        return keys;
     }
 
     @Override
@@ -199,20 +198,42 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
         }
 
         for(int i = 0; i < grpValueEventListeners.size(); i++){
-            firebaseHelper.toggleListenerFor("groups", "groupKey", allGroupKeys.get(i) , (grpValueEventListeners.get(i)), false, false);
+            firebaseHelper.toggleListenerFor("groups", "groupKey", allGroupKeys.get(i) , grpValueEventListeners.get(i), false, false);
             firebaseHelper.attachOrRemoveMessageEventListener("group", allGroupKeys.get(i), grpMsgValueEventListeners.get(i), false);
         }
         super.onStop();
+    }
 
+    private void updateUserChatKeys (String chatKeyToRemove) {
+        allGroupKeys.remove(chatKeyToRemove);
+        String updatedKeys = getChatKeysAsString();
+        firebaseHelper.updateChatKeys(user, updatedKeys, null, true);
     }
 
     @Override
     public void onCompleteTask(String tag, int condition, Container container) {
-        if (tag.equals("getValueEventListener")) {
+        if (tag.equals("getMessageEventListener")) {
+            switch (condition) {
+                case FirebaseHelper.CONDITION_1:
+                    myChatsdapter.setAllMyChats(allChats);
+                    break;
+                case FirebaseHelper.CONDITION_2:
+                    if (myChatsdapter.getItemCount() == 0) {
+                        emptyChats.setVisibility(View.VISIBLE);
+                    } else {
+                        emptyChats.setVisibility(View.GONE);
+                    }
+                    break;
+                case FirebaseHelper.CONDITION_3:
+                    allChats.clear();
+                    break;
+            }
+        } else if (tag.equals("getValueEventListener")) {
             switch (condition) {
                 case FirebaseHelper.CONDITION_1 :
                     FirebaseUserModel userModel = (FirebaseUserModel) container.getObject();
                     if (userModel.getUsername().equals(container.getString())) {
+                        allGroups.clear(); // remove all previous groups
                         String[] allKeys = userModel.getGroupKeys().split(",");
                         allGroupKeys.clear();
                         for(String key: allKeys){
@@ -228,6 +249,7 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
                     break;
 
                 case FirebaseHelper.CONDITION_3:
+                    allChats.clear(); // remove all previous chats
                     FirebaseGroupModel firebaseGroupModel = (FirebaseGroupModel) container.getObject();
                     if(firebaseGroupModel.getGroupKey().equals(container.getString())) {
                         allGroups.add(firebaseGroupModel);
@@ -235,8 +257,41 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
                     }
                     break;
 
-                case FirebaseHelper.CONDITION_4:
+            }
+        } else if (tag.equals("exitGroup")) {
+            switch (condition) {
+                case FirebaseHelper.CONDITION_1 :
+                    updateUserChatKeys(container.getString());
+                    break;
+            }
+        } else if (tag.equals("updateChatKeys")) {
+            firebaseHelper.deleteGroup(container.getChat().getChatKey());
+        } else if (tag.equals("deleteGroup")) {
+            switch (condition) {
+                case FirebaseHelper.CONDITION_1 :
+                    // clean delete all messages + images
+                    firebaseHelper.collectAllImagesForDeletionThenDeleteRelatedMessages("group", container.getString());
+                    break;
 
+                case FirebaseHelper.CONDITION_2 :
+                    Toast.makeText(getActivity(), "Successfully left the group", Toast.LENGTH_SHORT).show();
+                    break;
+            }
+        } else if (tag.equals("collectAllImagesForDeletionThenDeleteRelatedMessages")) {
+            switch (condition) {
+                case FirebaseHelper.CONDITION_1:
+                    Network.deleteUploadImages(firebaseHelper, container.getStringList(), container.getString(), "group");
+                    break;
+            }
+        } else if (tag.equals("cleanDeleteAllMessages")) {
+            switch (condition){
+                case FirebaseHelper.CONDITION_1:
+                    progressBar.toggleDialog(false);
+                    Log.i(TAG, "Successfully removed all messages");
+                    break;
+                case FirebaseHelper.CONDITION_2:
+                    progressBar.toggleDialog(false);
+                    Log.i(TAG, "Failed to removed all messages with error: " +container.getString());
                     break;
             }
         }
@@ -244,10 +299,7 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
 
     @Override
     public void onFailureTask(String tag, DatabaseError databaseError) {
-        switch (tag) {
-
-        }
-        Log.i(TAG, databaseError.getMessage());
+        Log.i(TAG, tag + ": " + databaseError.getMessage());
     }
 
     @Override
@@ -273,14 +325,6 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
                     String dateString = formatter.format(new Date(groupMessageModel.getCreatedDateLong()));
                     Chat chat = new Chat(title, senderName, groupMessageModel.getText(), picUrl, dateString, groupKey, groupMessageModel.getMediaType(), admin);
                     allChats.add(chat);
-                    myChatsdapter.setAllMyChats(allChats);
-                    myChatsdapter.notifyDataSetChanged();
-                    if (myChatsdapter.getItemCount() == 0) {
-                        emptyChats.setVisibility(View.VISIBLE);
-                    } else {
-                        emptyChats.setVisibility(View.GONE);
-                    }
-
                     break;
             }
         }
