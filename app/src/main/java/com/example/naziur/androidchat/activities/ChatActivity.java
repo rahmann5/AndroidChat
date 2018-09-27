@@ -236,7 +236,7 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
     }
 
     private void sendMessage(final String wishMessage){
-        firebaseHelper.updateMessageNode(this, "single", chatKey, wishMessage, friend, null, "");
+        firebaseHelper.updateMessageNode(this, "single", chatKey, wishMessage, friend, Constants.MESSAGE_TYPE_TEXT,null, "");
         //messagesRef.removeEventListener(commentValueEventListener);
         // messagesRef.addValueEventListener(commentValueEventListener);
     }
@@ -498,7 +498,7 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
                     sendMessage(wishMessage);
                     break;
                 case FirebaseHelper.CONDITION_4:
-                    imageViewDialog.sendImageAndMessage(chatKey, friend, ChatActivity.this);
+                    imageViewDialog.sendImageAndMessage(chatKey, friend, ChatActivity.this, null, null);
                     break;
                 case FirebaseHelper.CONDITION_5:
                     textComment.setText("");

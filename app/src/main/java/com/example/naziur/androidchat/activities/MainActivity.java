@@ -71,7 +71,7 @@ public class MainActivity extends AppCompatActivity implements FirebaseHelper.Fi
                 intent = new Intent(this, NotificationActivity.class);
                 intent.putExtra("notification", extra.getString("notification"));
             } else if(extra.getString("group_uid") != null){
-                intent = new Intent(this, ChatActivity.class);
+                intent = new Intent(this, GroupChatActivity.class);
                 intent.putExtra("group_uid", extra.getString("group_uid"));
             }
         }

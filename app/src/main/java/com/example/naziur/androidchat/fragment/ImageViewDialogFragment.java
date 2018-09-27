@@ -23,6 +23,8 @@ import com.bumptech.glide.request.RequestOptions;
 import com.example.naziur.androidchat.R;
 import com.example.naziur.androidchat.activities.ChatActivity;
 import com.example.naziur.androidchat.database.FirebaseHelper;
+import com.example.naziur.androidchat.models.FirebaseGroupModel;
+import com.example.naziur.androidchat.models.FirebaseMessageModel;
 import com.example.naziur.androidchat.models.FirebaseUserModel;
 import com.example.naziur.androidchat.utils.Constants;
 import com.example.naziur.androidchat.utils.Container;
@@ -38,6 +40,8 @@ import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 import com.loopj.android.http.RequestParams;
 import com.loopj.android.http.TextHttpResponseHandler;
+
+import org.json.JSONArray;
 
 import java.io.File;
 
@@ -151,11 +155,17 @@ public class ImageViewDialogFragment extends DialogFragment implements FirebaseH
         }
     }
 
-    public void sendImageAndMessage(final String chatKey, final FirebaseUserModel friend, final Context context){
+    public void sendImageAndMessage(final String chatKey, final FirebaseUserModel friend, final Context context, final FirebaseGroupModel group, final JSONArray members){
         if (ImageViewDialogFragment.imageFile != null) {
             Uri imgUri = Uri.fromFile(ImageViewDialogFragment.imageFile);
+            String folder = "";
+            if(friend == null)
+                folder = "group/";
+            else
+                folder = "single/";
+
             StorageReference mStorageRef = FirebaseStorage.getInstance()
-                    .getReference().child("single/" + chatKey + "/pictures/" + imgUri.getLastPathSegment());
+                    .getReference().child(folder + chatKey + "/pictures/" + imgUri.getLastPathSegment());
             mStorageRef.putFile(imgUri).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
                 @Override
                 public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
@@ -169,7 +179,17 @@ public class ImageViewDialogFragment extends DialogFragment implements FirebaseH
                     @SuppressWarnings("VisibleForTests")
                     final Uri downloadUrl = taskSnapshot.getDownloadUrl();
                     getDialog().dismiss();
-                    firebaseHelper.createImageUploadMessageNode("single", chatKey, context, downloadUrl.toString(), friend);
+                    FirebaseMessageModel messageModel;
+                    StringEntity entity;
+                    if(friend != null) {
+                        entity = Network.generateSingleMsgEntity(context, Constants.MESSAGE_TYPE_PIC, downloadUrl.toString(), friend, chatKey);
+                        messageModel = Network.makeNewMessageNode(Constants.MESSAGE_TYPE_PIC, downloadUrl.toString(),friend);
+                        firebaseHelper.createImageUploadMessageNode("single", chatKey, context, downloadUrl.toString(), messageModel, entity);
+                    }else {
+                        entity = Network.generateGroupMsgEntity(context, Constants.MESSAGE_TYPE_PIC, members, group.getTitle(), group.getGroupKey(), downloadUrl.toString());
+                        messageModel = Network.makeNewGroupMessageModel(group.getGroupKey(), downloadUrl.toString(), Constants.MESSAGE_TYPE_PIC);
+                        firebaseHelper.createImageUploadMessageNode("group", chatKey, context, downloadUrl.toString(),messageModel, entity);
+                    }
                 }
             }).addOnFailureListener(new OnFailureListener() {
                 @Override
@@ -234,7 +254,5 @@ public class ImageViewDialogFragment extends DialogFragment implements FirebaseH
     }
 
     @Override
-    public void onChange(String tag, int condition, Container container) {
-
-    }
+    public void onChange(String tag, int condition, Container container) {}
 }

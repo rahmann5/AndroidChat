@@ -287,42 +287,19 @@ public class FirebaseHelper {
         }
     }
 
-    public void checkKeyListKey (String node, final int myCondition1, final int myCondition2 , final String msgId, final String... usernames) {
-        DatabaseReference usersRef;
-        final List<String> allMembers = Arrays.asList(usernames);
-        Collections.sort(allMembers);
-        if(usernames.length == 1) {
-            usersRef = database.getReference(node).orderByChild("username").equalTo(usernames[0]).getRef();
-        } else {
-            usersRef = database.getReference(node).orderByChild("username").startAt(allMembers.get(0)).endAt(allMembers.get(allMembers.size()-1)).getRef();
-        }
-        usersRef.addListenerForSingleValueEvent(new ValueEventListener() {
+    public void checkKeyListKey (String node, final int myCondition1, final int myCondition2 , final String msgId, final String username) {
+        database.getReference(node).orderByChild("username").equalTo(username).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 boolean found = false;
                 if(dataSnapshot.exists()){
                     for(DataSnapshot snapshot : dataSnapshot.getChildren()){
                         FirebaseUserModel firebaseUserModel = snapshot.getValue(FirebaseUserModel.class);
-                        List<String> list;
-                        if(usernames.length > 1){
+                        List<String> list = Arrays.asList(firebaseUserModel.getChatKeys().split(","));
+                        if (list.contains(msgId)) {
+                            found = true;
                             listener.onCompleteTask("checkKeyListKey", myCondition1, null);
-                            for(int i = 0; i < allMembers.size(); i++){
-                                if(allMembers.contains(firebaseUserModel.getUsername())){
-                                    if(Arrays.asList(firebaseUserModel.getGroupKeys().split(",")).contains(msgId)) {
-                                        Container container = new Container();
-                                        container.setString(firebaseUserModel.getDeviceToken());
-                                        listener.onChange("checkKeyListKey", myCondition1,container);
-                                    }
-                                }
-                            }
-                            listener.onCompleteTask("checkKeyListKey", myCondition2, null);
-                        } else {
-                            list = Arrays.asList(firebaseUserModel.getChatKeys().split(","));
-                            if (list.contains(msgId)) {
-                                found = true;
-                                listener.onCompleteTask("checkKeyListKey", myCondition1, null);
-                                break;
-                            }
+                            break;
                         }
                     }
                 }
@@ -341,12 +318,45 @@ public class FirebaseHelper {
         });
     }
 
-    public void createImageUploadMessageNode (String node, final String chatKey, final Context context, final String downloadUrl, final FirebaseUserModel friend) {
+    public void checkGroupsKeys(String node, final int myCondition1, final int myCondition2 , final String msgId, final String... usernames){
+        final List<String> allMembers = Arrays.asList(usernames);
+        Collections.sort(allMembers);
+
+        database.getReference(node).orderByChild("username").startAt(allMembers.get(0)).endAt(allMembers.get(allMembers.size()-1)).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if(dataSnapshot.exists()){
+                    listener.onCompleteTask("checkGroupsKeys", myCondition1, null);
+                    for(DataSnapshot snapshot : dataSnapshot.getChildren()){
+                        FirebaseUserModel firebaseUserModel = snapshot.getValue(FirebaseUserModel.class);
+                        for(int i = 0; i < allMembers.size(); i++){
+                            if(allMembers.contains(firebaseUserModel.getUsername())){
+                                if(Arrays.asList(firebaseUserModel.getGroupKeys().split(",")).contains(msgId)) {
+                                    Container container = new Container();
+                                    container.setString(firebaseUserModel.getDeviceToken());
+                                    listener.onChange("checkGroupsKeys", myCondition1,container);
+                                }
+                            }
+                        }
+                    }
+                    listener.onCompleteTask("checkGroupsKeys", myCondition2, null);
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                listener.onFailureTask("checkKeyListKey", databaseError);
+            }
+        });
+
+    }
+
+    public void createImageUploadMessageNode (String node, final String chatKey, final Context context, final String downloadUrl, FirebaseMessageModel messageModel, final StringEntity entity) {
         DatabaseReference messagesRef = FirebaseDatabase.getInstance().getReference("messages")
                 .child(node)
                 .child(chatKey);
         DatabaseReference newRef = messagesRef.push();
-        newRef.setValue(Network.makeNewMessageNode(Constants.MESSAGE_TYPE_PIC, downloadUrl,friend), new DatabaseReference.CompletionListener() {
+        newRef.setValue(messageModel, new DatabaseReference.CompletionListener() {
 
             @Override
             public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
@@ -357,7 +367,6 @@ public class FirebaseHelper {
                     // show message failed to send (icon)
                     listener.onFailureTask("createImageUploadMessageNode", databaseError);
                 } else {
-                    StringEntity entity = Network.generateSingleMsgEntity(context, Constants.MESSAGE_TYPE_PIC, downloadUrl, friend, chatKey);
                     if (entity == null){
                         Toast.makeText(context, "Failed to make notification", Toast.LENGTH_SHORT).show();
                         return;
@@ -420,28 +429,32 @@ public class FirebaseHelper {
 
     }
 
-    public void toggleListenerFor(String reference, String child, String target, ValueEventListener valueEventListener, boolean add){
+    public void toggleListenerFor(String reference, String child, String target, ValueEventListener valueEventListener, boolean add, boolean single){
         DatabaseReference databaseReference = database.getReference(reference);
-        if (add) {
-            databaseReference.orderByChild(child).equalTo(target).addValueEventListener(valueEventListener);
+        if (!single) {
+            if (add) {
+                databaseReference.orderByChild(child).equalTo(target).addValueEventListener(valueEventListener);
+            } else {
+                databaseReference.orderByChild(child).equalTo(target).removeEventListener(valueEventListener);
+            }
         } else {
-            databaseReference.orderByChild(child).equalTo(target).removeEventListener(valueEventListener);
+            databaseReference.orderByChild(child).equalTo(target).addListenerForSingleValueEvent(valueEventListener);
         }
     }
 
-    public ValueEventListener getValueEventListener(final String target, final Class obj){
+    public ValueEventListener getValueEventListener(final String target, final int condition ,final Class obj){
         return new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
+                Container container = new Container();
+                container.setString(target);
                 if(dataSnapshot.exists()) {
                     for (com.google.firebase.database.DataSnapshot userSnapshot : dataSnapshot.getChildren()) {
-                        Container container = new Container();
                         container.setObject(userSnapshot.getValue(obj));
-                        container.setString(target);
-                        listener.onCompleteTask("getValueEventListener", CONDITION_1, container);
+                        listener.onCompleteTask("getValueEventListener", condition, container);
                     }
                 } else {
-                    listener.onCompleteTask("getValueEventListener", CONDITION_2, null);
+                    listener.onCompleteTask("getValueEventListener", CONDITION_2, container);
                 }
             }
 
@@ -712,11 +725,11 @@ public class FirebaseHelper {
         });
     }
 
-    public void updateMessageNode (final Context context, final String node, final String chatKey, final String wishMessage, final FirebaseUserModel friend, final JSONArray membersDeviceTokens, final String grpTitle) {
+    public void updateMessageNode (final Context context, final String node, final String chatKey, final String wishMessage, final FirebaseUserModel friend, final String msgType, final JSONArray membersDeviceTokens, final String grpTitle) {
         final DatabaseReference messagesRef = database.getReference("messages").child(node).child(chatKey);
         DatabaseReference newRef = messagesRef.push();
             newRef.setValue(
-                    (membersDeviceTokens == null)? Network.makeNewMessageNode(Constants.MESSAGE_TYPE_TEXT,wishMessage, friend) : Network.makeNewGroupMessageModel(chatKey, wishMessage, Constants.MESSAGE_TYPE_TEXT),
+                    (membersDeviceTokens == null)? Network.makeNewMessageNode(msgType,wishMessage, friend) : Network.makeNewGroupMessageModel(chatKey, wishMessage, msgType),
                     new DatabaseReference.CompletionListener() {
             @Override
             public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
@@ -730,14 +743,14 @@ public class FirebaseHelper {
                         try {
                             StringEntity entity;
                             if(membersDeviceTokens == null)
-                               entity = Network.generateSingleMsgEntity(context, Constants.MESSAGE_TYPE_TEXT, wishMessage, friend, chatKey);
+                               entity = Network.generateSingleMsgEntity(context,msgType, wishMessage, friend, chatKey);
                             else
-                               entity = Network.generateGroupMsgEntity(membersDeviceTokens, grpTitle, chatKey, wishMessage);
+                               entity = Network.generateGroupMsgEntity(context, msgType, membersDeviceTokens, grpTitle, chatKey, wishMessage);
 
                             if (entity == null){
                                 if(membersDeviceTokens == null)
                                     container.setString("Failed to make notification");
-                                listener.onCompleteTask("updateMessageNode", CONDITION_1, container);
+                                listener.onCompleteTask("updateMessageNode", CONDITION_2, container);
                                 return;
                             }
 
@@ -884,6 +897,7 @@ public class FirebaseHelper {
     }
 
     public void getDeviceTokensFor(final List<String> allMembers, final String title, final String uniqueId){
+        Collections.sort(allMembers);
         DatabaseReference reference = database.getReference("users");
         reference.orderByChild("username").startAt(allMembers.get(0)).endAt(allMembers.get(allMembers.size()-1)).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
@@ -1012,5 +1026,9 @@ public class FirebaseHelper {
             }
         });
     }
+    public void exitGroup () {
+
+    }
+
 
 }
