@@ -256,7 +256,7 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
                     break;
             }
         } else if (tag.equals("updateChatKeys")) {
-            firebaseHelper.deleteGroup(container.getChat().getChatKey());
+            firebaseHelper.deleteGroup(container.getString());
         } else if (tag.equals("deleteGroup")) {
             switch (condition) {
                 case FirebaseHelper.CONDITION_1 :
