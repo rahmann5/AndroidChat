@@ -218,7 +218,7 @@ public class Network {
         return entity;
     }
 
-    public static StringEntity generateGroupMsgEntity (JSONArray membersDeviceTokens, String title, String uniqueId, String inviteMsg) {
+    public static StringEntity generateGroupMsgEntity (Context c, String type, JSONArray membersDeviceTokens, String title, String uniqueId, String wishMessage) {
         JSONObject params = new JSONObject();
         // params.put("to", c.getContact().getDeviceToken());
         StringEntity entity = null;
@@ -230,7 +230,7 @@ public class Network {
             payload.put("group_uid", uniqueId); // used for extra intent in main activity
             JSONObject notificationObject = new JSONObject();
             notificationObject.put("click_action", ".MainActivity");
-            notificationObject.put("body", inviteMsg);
+            notificationObject.put("body", Constants.generateMediaText(c, type, wishMessage));
             notificationObject.put("title", title);
             notificationObject.put("tag", uniqueId);
             params.put("data", payload);

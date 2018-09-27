@@ -59,9 +59,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
-
-import cz.msebera.android.httpclient.Header;
-import cz.msebera.android.httpclient.entity.StringEntity;
 import de.hdodenhof.circleimageview.CircleImageView;
 import pl.aprilapps.easyphotopicker.DefaultCallback;
 import pl.aprilapps.easyphotopicker.EasyImage;
@@ -106,9 +103,7 @@ public class GroupCreatorActivity extends AppCompatActivity implements FirebaseH
                     case FirebaseHelper.CONDITION_1:
                         String title = container.getString().split(",")[0];
                         String uniqueID = container.getString().split(",")[1];
-                        final List<String> allMembers = getAllMembersTogether();
-                        Collections.sort(allMembers);
-                        firebaseHelper.getDeviceTokensFor(allMembers, title, uniqueID);
+                        firebaseHelper.getDeviceTokensFor(getAllMembersTogether(), title, uniqueID);
                         break;
                 }
                 break;
@@ -338,7 +333,7 @@ public class GroupCreatorActivity extends AppCompatActivity implements FirebaseH
 
     private void sendAdminMsg(JSONArray membersDeviceTokens, String title, final String uniqueId){
         String inviteMessage = "Group invite to: " + title + " by " + user.name;
-        firebaseHelper.updateMessageNode(this, "group", uniqueId, inviteMessage, null, membersDeviceTokens, title);
+        firebaseHelper.updateMessageNode(this, "group", uniqueId, inviteMessage, null, Constants.MESSAGE_TYPE_SYSTEM,membersDeviceTokens, title);
     }
 
     private String getAllMembersAsString(){

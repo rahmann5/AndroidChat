@@ -298,8 +298,8 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
             case "updateChatKeys":
                 switch(condition){
                     case FirebaseHelper.CONDITION_1:
-                        //verifying if all messages are deletable if other user no longer has that key as well
-                        firebaseHelper.checkKeyListKey("users", container.getChat().getUsernameOfTheOneBeingSpokenTo(), FirebaseHelper.CONDITION_1, FirebaseHelper.CONDITION_2, container.getChat().getChatKey());
+                        //verifying if all messages are deleteable
+                        firebaseHelper.checkKeyListKey("users", FirebaseHelper.CONDITION_1, FirebaseHelper.CONDITION_2, container.getChat().getChatKey(),container.getChat().getUsernameOfTheOneBeingSpokenTo());
                         break;
                 }
                 break;

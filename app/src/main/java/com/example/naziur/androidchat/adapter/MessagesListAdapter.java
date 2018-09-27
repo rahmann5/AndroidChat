@@ -59,9 +59,13 @@ public class MessagesListAdapter extends ArrayAdapter<MessageCell> {
         } else {
             if (cellItem[position].getMessageType().equals(Constants.MESSAGE_TYPE_TEXT)) {
                 convertView = inflater.inflate(R.layout.receiving_message_cell, parent, false);
+                TextView senderName = convertView.findViewById(R.id.sender_id);
+                senderName.setText(cellItem[position].getMessageSender());
                 setTextMsg(position, convertView);
             } else if (cellItem[position].getMessageType().equals(Constants.MESSAGE_TYPE_PIC)) {
                 convertView = inflater.inflate(R.layout.receiving_image_message_cell, parent, false);
+                TextView senderName = convertView.findViewById(R.id.sender_id);
+                senderName.setText(cellItem[position].getMessageSender());
                 ImageView msgPic =  (ImageView) convertView.findViewById(R.id.receiving_img_cell);
                 putImageUsingGlide(msgPic, cellItem[position].getMessageText());
             }

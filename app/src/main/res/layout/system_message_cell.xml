@@ -18,27 +18,28 @@
         android:paddingRight="10dp"
         android:layout_margin="5dp"
         android:layout_gravity="center"
-        android:visibility="gone"
+
         />
 
-    <RelativeLayout
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:background="@drawable/button_shape"
-        android:backgroundTint="@color/itemDividerColor"
+        android:backgroundTint="@color/system_msg_color"
         android:layout_gravity="center_horizontal"
-        android:layout_margin="5dp"
-        android:padding="10dp">
+        android:layout_marginRight="10dp"
+        android:layout_marginLeft="10dp"
+        android:padding="10dp"
+        android:orientation="vertical">
 
     <TextView
         android:id="@+id/wishMessage"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Test System Message"
-        android:textSize="24sp"
+        android:textSize="16sp"
         android:layout_gravity="start"
         />
-
 
     <TextView
         android:id="@+id/dateTime"
@@ -46,11 +47,10 @@
         android:layout_height="wrap_content"
         android:text="13 May 2017, 1:19 AM"
         android:textColor="@color/cardDividerColor"
-        android:layout_below="@+id/system_message"
-        android:layout_alignParentEnd="true"
+        android:layout_gravity="right"
         android:layout_marginTop="3dp"
-        android:layout_alignParentRight="true" />
+       />
 
-    </RelativeLayout>
+    </LinearLayout>
 
 </LinearLayout>
