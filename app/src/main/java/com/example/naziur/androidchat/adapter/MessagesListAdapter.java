@@ -12,6 +12,7 @@ import android.widget.TextView;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
 import com.example.naziur.androidchat.R;
+import com.example.naziur.androidchat.activities.GroupChatActivity;
 import com.example.naziur.androidchat.models.MessageCell;
 import com.example.naziur.androidchat.utils.Constants;
 
@@ -57,15 +58,14 @@ public class MessagesListAdapter extends ArrayAdapter<MessageCell> {
                 receiveStatusIv.setImageResource(R.drawable.ic_thumb_up_green);
 
         } else {
+
             if (cellItem[position].getMessageType().equals(Constants.MESSAGE_TYPE_TEXT)) {
                 convertView = inflater.inflate(R.layout.receiving_message_cell, parent, false);
-                TextView senderName = convertView.findViewById(R.id.sender_id);
-                senderName.setText(cellItem[position].getMessageSender());
                 setTextMsg(position, convertView);
+                setSenderName(convertView, position);
             } else if (cellItem[position].getMessageType().equals(Constants.MESSAGE_TYPE_PIC)) {
                 convertView = inflater.inflate(R.layout.receiving_image_message_cell, parent, false);
-                TextView senderName = convertView.findViewById(R.id.sender_id);
-                senderName.setText(cellItem[position].getMessageSender());
+                setSenderName(convertView, position);
                 ImageView msgPic =  (ImageView) convertView.findViewById(R.id.receiving_img_cell);
                 putImageUsingGlide(msgPic, cellItem[position].getMessageText());
             }
@@ -96,6 +96,14 @@ public class MessagesListAdapter extends ArrayAdapter<MessageCell> {
         Glide.with(getContext()).load(pic)
                 .apply(new RequestOptions().placeholder(R.drawable.placeholder).error(R.drawable.placeholder))
                 .into(img);
+    }
+
+    private void setSenderName(View convertView, int position){
+        if(context.getClass().getSimpleName().equals(GroupChatActivity.class.getSimpleName())){
+            TextView senderName = convertView.findViewById(R.id.sender_id);
+            senderName.setText(cellItem[position].getMessageSender());
+            senderName.setVisibility(View.VISIBLE);
+        }
     }
 
 
