@@ -417,7 +417,8 @@ public class GroupChatActivity extends AppCompatActivity implements ImageViewDia
             return membersIngroup;
         else {
             int counter = 0;
-            members[counter] = groupModel.getAdmin();
+            if(!groupModel.getAdmin().isEmpty())
+                members[counter] = groupModel.getAdmin();
             for (int i = 0; i < membersIngroup.length; i++) {
                 if (!membersIngroup[i].equals(user.name)) {
                     counter++;
