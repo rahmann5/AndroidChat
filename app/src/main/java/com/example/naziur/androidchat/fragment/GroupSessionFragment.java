@@ -49,7 +49,6 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
     private TextView emptyChats;
     private User user = User.getInstance();
     private List<String> allGroupKeys;
-    private List<Chat> allChats;
     private List<FirebaseGroupModel> allGroups;
     private ContactDBHelper db;
     private ProgressDialog progressBar;
@@ -68,7 +67,6 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
         View rootView = inflater.inflate(R.layout.fragment_session_all_chats, container, false);
         firebaseHelper = FirebaseHelper.getInstance();
         firebaseHelper.setFirebaseHelperListener(this);
-        allChats = new ArrayList<>();
         allGroups = new ArrayList<>();
         grpValueEventListeners = new ArrayList<>();
         grpMsgValueEventListeners = new ArrayList<>();
@@ -95,6 +93,7 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
 
     private void setUpGrpEventListeners() {
         grpValueEventListeners.clear();
+        grpMsgValueEventListeners.clear();
         allGroups.clear();
         for(int i = 0 ; i < allGroupKeys.size(); i++){
             final String currentGroupKey = allGroupKeys.get(i);
@@ -105,7 +104,6 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
     }
 
     private void setUpGrpMSgEventListeners(String groupKey){
-        grpMsgValueEventListeners.clear();
         ValueEventListener valueEventListener = firebaseHelper.getMessageEventListener(groupKey);
         grpMsgValueEventListeners.add(valueEventListener);
         firebaseHelper.attachOrRemoveMessageEventListener("group", groupKey, valueEventListener, true);
@@ -214,18 +212,12 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
     public void onCompleteTask(String tag, int condition, Container container) {
         if (tag.equals("getMessageEventListener")) {
             switch (condition) {
-                case FirebaseHelper.CONDITION_1:
-                    myChatsdapter.setAllMyChats(allChats);
-                    break;
                 case FirebaseHelper.CONDITION_2:
                     if (myChatsdapter.getItemCount() == 0) {
                         emptyChats.setVisibility(View.VISIBLE);
                     } else {
                         emptyChats.setVisibility(View.GONE);
                     }
-                    break;
-                case FirebaseHelper.CONDITION_3:
-                    allChats.clear();
                     break;
             }
         } else if (tag.equals("getValueEventListener")) {
@@ -248,8 +240,7 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
                     Log.i(TAG, container.getString() + " does not exist");
                     break;
 
-                case FirebaseHelper.CONDITION_3:
-                    allChats.clear(); // remove all previous chats
+                case FirebaseHelper.CONDITION_3: // setUpGrpEventListeners comes here
                     FirebaseGroupModel firebaseGroupModel = (FirebaseGroupModel) container.getObject();
                     if(firebaseGroupModel.getGroupKey().equals(container.getString())) {
                         allGroups.add(firebaseGroupModel);
@@ -324,7 +315,7 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
                     SimpleDateFormat formatter = new SimpleDateFormat(getString(R.string.simple_date));
                     String dateString = formatter.format(new Date(groupMessageModel.getCreatedDateLong()));
                     Chat chat = new Chat(title, senderName, groupMessageModel.getText(), picUrl, dateString, groupKey, groupMessageModel.getMediaType(), admin);
-                    allChats.add(chat);
+                    myChatsdapter.addChat(chat);
                     break;
             }
         }

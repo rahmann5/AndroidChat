@@ -66,6 +66,16 @@ public class AllChatsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         notifyDataSetChanged();
     }
 
+    public void addChat (Chat chat) {
+        for (int i = 0; i < allMyChats.size(); i++) {
+            if (allMyChats.get(i).getChatKey().equals(chat.getChatKey()))
+                allMyChats.remove(i);
+        }
+        allMyChats.add(chat);
+        notifyDataSetChanged();
+    }
+
+
     public void clearAllChats () {
         this.allMyChats.clear();
         notifyDataSetChanged();

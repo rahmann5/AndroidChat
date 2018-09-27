@@ -138,6 +138,7 @@ public class NotificationActivity extends AppCompatActivity implements Notificat
             switch (condition) {
                 case FirebaseHelper.CONDITION_1 :
                 case FirebaseHelper.CONDITION_2 :
+                    allNotifications = container.getNotifications();
                     notificationAdapter = new NotificationAdapter(NotificationActivity.this, NotificationActivity.this, allNotifications);
                     notificationRecycler.setAdapter(notificationAdapter);
                     toggleEmpty(allNotifications);
@@ -182,12 +183,6 @@ public class NotificationActivity extends AppCompatActivity implements Notificat
 
     @Override
     public void onChange(String tag, int condition, Container container) {
-        if (tag.equals("notificationNodeExists")) {
-            switch (condition) {
-                case FirebaseHelper.CONDITION_3 :
-                    allNotifications = container.getNotifications();
-                    break;
-            }
-        }
+
     }
 }

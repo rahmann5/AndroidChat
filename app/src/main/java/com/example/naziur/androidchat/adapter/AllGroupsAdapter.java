@@ -11,6 +11,7 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
 import com.example.naziur.androidchat.R;
 import com.example.naziur.androidchat.models.FirebaseGroupModel;
+import com.example.naziur.androidchat.models.User;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,7 +23,6 @@ import de.hdodenhof.circleimageview.CircleImageView;
  */
 
 public class AllGroupsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
-
     private List<FirebaseGroupModel> allMyGroups;
     private Context context;
 
@@ -53,7 +53,7 @@ public class AllGroupsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     }
 
     private static class MyGroupViewHolder extends RecyclerView.ViewHolder {
-
+        private User user = User.getInstance();
         private TextView membersTv, titleTv, activeTv;
         private CircleImageView groupPicIv;
 
@@ -66,10 +66,24 @@ public class AllGroupsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         }
 
         public void bind (Context context, FirebaseGroupModel group) {
-            membersTv.setText(group.getMembers());
+            membersTv.setText(getMembersText(group.getMembers().split("-"), group.getAdmin()));
             titleTv.setText(group.getTitle());
             Glide.with(context).load(group.getPic()).apply(new RequestOptions().placeholder(R.drawable.placeholder).error(R.drawable.unknown)).into(groupPicIv);
         }
+
+        private String getMembersText (String[] members, String admin) {
+            String newMembersList = "you";
+            if (!admin.equals(user.name)) {
+                newMembersList += ","+admin;
+            }
+            for (String m : members) {
+                if (!m.equals(user.name)) {
+                    newMembersList += "," +m;
+                }
+            }
+            return newMembersList;
+        }
+
 
     }
 }
