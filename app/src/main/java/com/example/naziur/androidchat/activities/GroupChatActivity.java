@@ -186,11 +186,15 @@ public class GroupChatActivity extends AppCompatActivity implements ImageViewDia
             progressBar.toggleDialog(true);
             firebaseHelper.toggleMsgEventListeners("group", groupKey, msgValueEventListener, true);
         } else {
-
+            Toast.makeText(this,"You need internet to view or send messages", Toast.LENGTH_SHORT).show();
         }
     }
 
-
+    @Override
+    protected void onStop() {
+        super.onStop();
+        firebaseHelper.toggleMsgEventListeners("single", groupKey, msgValueEventListener, false);
+    }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
