@@ -31,11 +31,8 @@ import com.loopj.android.http.TextHttpResponseHandler;
 
 import org.json.JSONArray;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.Date;
 
 import java.util.Arrays;
 import java.util.List;
@@ -191,7 +188,7 @@ public class FirebaseHelper {
                     }
                 } else {
                     Container container = new Container();
-                    container.setContact(new Contact(fbModel, "", false));
+                    container.setContact(new Contact(fbModel, false));
                     listener.onCompleteTask("updateLocalContactsFromFirebase", CONDITION_1, container);
                 }
 

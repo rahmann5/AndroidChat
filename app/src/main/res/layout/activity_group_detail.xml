@@ -89,7 +89,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Andoid Dev"
-                    android:textSize="16sp"
+                    android:textSize="12sp"
                     android:textColor="@color/white"/>
 
             </RelativeLayout>
@@ -127,8 +127,8 @@
                     android:layout_below="@id/admin_header"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Bob"
-                    android:textSize="16sp"
+                    android:text="No Admin Found"
+                    android:textSize="12sp"
                     android:textColor="@color/white"/>
 
             </RelativeLayout>
@@ -162,15 +162,18 @@
                         android:textColor="@color/white"/>
 
                     <TextView
+                        android:id="@+id/empty_view"
                         android:layout_below="@id/members_header"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="No Members Found"
-                        android:textSize="16sp"
-                        android:textColor="@color/white"/>
+                        android:textSize="12sp"
+                        android:textColor="@color/white"
+                        android:visibility="gone"/>
 
-                    <android.support.v7.widget.RecyclerView
-                        android:id="@+id/members_recycler_view"
+                    <ListView
+                        android:layout_marginTop="15dp"
+                        android:id="@+id/members_list_view"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"/>
 
