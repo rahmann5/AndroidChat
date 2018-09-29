@@ -1047,12 +1047,12 @@ public class FirebaseHelper {
 
             @Override
             public void onComplete(DatabaseError databaseError, boolean b, DataSnapshot dataSnapshot) {
+                Container container = new Container();
+                container.setString(chatKey); // key to remove
                 if (databaseError == null) {
-                    Container container = new Container();
-                    container.setString(chatKey); // key to remove
                     listener.onCompleteTask("exitGroup", CONDITION_1, container);
                 } else {
-                    listener.onFailureTask("exitGroup", databaseError);
+                    listener.onCompleteTask("exitGroup", CONDITION_2, container);
                 }
             }
         });
@@ -1070,11 +1070,12 @@ public class FirebaseHelper {
 
                     if (groupModel.getGroupKey().equals(chatKey)) {
                         if (groupModel.getAdmin().equals("") && groupModel.getMembers().equals("")) { // no admin and members left
-                            data = null;
+                            groupModel = null;
+                            data.setValue(groupModel);
+                            break;
                         }
                     }
 
-                    mutableData.setValue(data);
                 }
 
                 return Transaction.success(mutableData);

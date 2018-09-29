@@ -94,22 +94,21 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
         firebaseHelper.toggleListenerFor("users", "username" , user.name, userListener, true, false);
     }
 
-    private void setUpGrpEventListeners(int index, boolean singel, int loop, int complete) {
+    private void setUpGrpEventListeners(int index, boolean single, int loop, int complete) {
         /*grpValueEventListeners.clear();
         grpMsgValueEventListeners.clear();
         myChatsdapter.clearAllChats ();*/
         final String currentGroupKey = allGroupKeys.get(index);
         ValueEventListener valueEventListener = firebaseHelper.getValueEventListener(currentGroupKey, loop, FirebaseHelper.NON_CONDITION, complete, FirebaseGroupModel.class);
         grpValueEventListeners.put(currentGroupKey, valueEventListener);
-        firebaseHelper.toggleListenerFor("groups", "groupKey" , currentGroupKey, valueEventListener, true, singel);
+        firebaseHelper.toggleListenerFor("groups", "groupKey" , currentGroupKey, valueEventListener, true, single);
 
     }
 
     private void setUpGrpMSgEventListeners(String groupKey){
         ValueEventListener valueEventListener = firebaseHelper.getMessageEventListener(groupKey);
         grpMsgValueEventListeners.put(groupKey,valueEventListener);
-        //System.out.println("Messages: " + grpMsgValueEventListeners.size());
-        firebaseHelper.attachOrRemoveMessageEventListener("group", groupKey, valueEventListener, false);
+        //System.out.println("Messages: " + grpMsgValueEventListeners.size());=
         firebaseHelper.attachOrRemoveMessageEventListener("group", groupKey, valueEventListener, true);
     }
 
@@ -174,6 +173,7 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
                                 break;
 
                             case 2 : // leave/delete Chat
+                                firebaseHelper.toggleListenerFor("groups", "groupKey" , chat.getChatKey(), grpValueEventListeners.get(chat.getChatKey()), false, false);
                                 firebaseHelper.exitGroup(chat.getChatKey(), user.name, chat.getAdmin().equals(user.name));
                                 break;
 
@@ -199,27 +199,12 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
             firebaseHelper.toggleListenerFor("users", "username", user.name , userListener, false, false);
         }
 
-        emptyEventListeners ();
-        super.onStop();
-    }
-
-    private void emptyEventListeners () {
-        System.out.println("adapter: " + myChatsdapter.getItemCount());
-        System.out.println("allGroups: " + allGroups.size());
-        System.out.println("allGroupKeys: " + allGroupKeys.size());
-        System.out.println("grpValueEventListeners: " + grpValueEventListeners.size());
-        System.out.println("grpMsgValueEventListeners: " + grpValueEventListeners.size());
-
         for(int i = 0; i < allGroupKeys.size(); i++){
             String key = allGroupKeys.get(i);
             firebaseHelper.toggleListenerFor("groups", "groupKey", key , grpValueEventListeners.get(key), false, false);
             firebaseHelper.attachOrRemoveMessageEventListener("group", key, grpMsgValueEventListeners.get(key), false);
         }
-        grpValueEventListeners.clear();
-        allGroupKeys.clear();
-        allGroups.clear();
-        grpMsgValueEventListeners.clear();
-
+        super.onStop();
     }
 
     private void updateUserChatKeys (String chatKeyToRemove) {
@@ -238,17 +223,6 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
         }
     }
 
-    private boolean isAMember (String username, String[] members, String admin) {
-        if (username.equals(admin)) {
-            for (String member : members) {
-                if (member.equals(username)){
-                    return true;
-                }
-            }
-            return true;
-        }
-        return false;
-    }
 
     @Override
     public void onCompleteTask(String tag, int condition, Container container) {
@@ -288,11 +262,24 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
         } else if (tag.equals("exitGroup")) {
             switch (condition) {
                 case FirebaseHelper.CONDITION_1 :
-                    //updateUserChatKeys(container.getString());
+                    updateUserChatKeys(container.getString());
+                    break;
+
+                case FirebaseHelper.CONDITION_2 : // failure reattach listener for that previously removed group listener
+                    firebaseHelper.toggleListenerFor("groups", "groupKey" , container.getString(), grpValueEventListeners.get(container.getString()), true, false);
                     break;
             }
         } else if (tag.equals("updateChatKeys")) {
-            //firebaseHelper.deleteGroup(container.getString());
+            switch (condition) {
+                case FirebaseHelper.CONDITION_1 :
+                    System.out.println("deleteGroup");
+                    firebaseHelper.deleteGroup(container.getString());
+                    break;
+
+                case FirebaseHelper.CONDITION_2 :
+                    System.out.println("failed deleteGroup");
+                    break;
+            }
         } else if (tag.equals("deleteGroup")) {
             switch (condition) {
                 case FirebaseHelper.CONDITION_1 :
@@ -361,7 +348,8 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
                     FirebaseUserModel userModel = (FirebaseUserModel) container.getObject();
                     if (userModel.getUsername().equals(container.getString())) {
                         String[] allKeys = userModel.getGroupKeys().split(",");
-                        emptyEventListeners ();
+                        allGroups.clear();
+                        allGroupKeys.clear();
                         for(String key: allKeys){
                             if(!key.equals(""))
                                 allGroupKeys.add(key);
