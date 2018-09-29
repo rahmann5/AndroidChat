@@ -77,7 +77,9 @@
 
         <activity android:name=".activities.GroupCreatorActivity" />
         <activity android:name=".activities.GroupChatActivity" />
-        <activity android:name=".activities.NotificationActivity"/>
+        <activity android:name=".activities.NotificationActivity" />
+        <activity android:name=".activities.GroupDetailActivity"
+            android:theme="@style/AppTheme.NoActionBar"/>
     </application>
 
 </manifest>

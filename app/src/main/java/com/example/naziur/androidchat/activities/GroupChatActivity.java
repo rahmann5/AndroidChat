@@ -72,7 +72,7 @@ public class GroupChatActivity extends AppCompatActivity implements ImageViewDia
     private ActionBar actionBar;
     private ProgressDialog progressBar;
     private String groupKey = "";
-    private ValueEventListener msgValueEventListener;
+    private ValueEventListener msgValueEventListener, groupListener;
     FirebaseHelper firebaseHelper;
     private ImageViewDialogFragment imageViewDialog;
     private ContactDBHelper db;
@@ -98,12 +98,12 @@ public class GroupChatActivity extends AppCompatActivity implements ImageViewDia
         progressBar = new ProgressDialog(this, R.layout.progress_dialog, true);
         firebaseHelper = FirebaseHelper.getInstance();
         firebaseHelper.setFirebaseHelperListener(this);
+        registeredIds = new JSONArray();
         // assuming that user is guaranteed member of group
         if (Network.isInternetAvailable(this, true)) {
-            firebaseHelper.getGroupInfo(groupKey);
+            groupListener = firebaseHelper.getGroupInfo(groupKey);
         } else {
             finish();
-            // TO DO
         }
 
         msgValueEventListener = firebaseHelper.createMessageEventListener();
@@ -117,10 +117,13 @@ public class GroupChatActivity extends AppCompatActivity implements ImageViewDia
                 }
 
                 if(!textComment.getText().toString().trim().isEmpty()) {
-                    hideKeyboard();
-                    btnSend.setEnabled(false);
-                    progressBar.toggleDialog(true);
-                    firebaseHelper.checkGroupsKeys("users", FirebaseHelper.CONDITION_1, FirebaseHelper.CONDITION_2, groupKey, getMembersThatNeedToReceiveMessage());
+                    if(registeredIds.length() > 0) {
+                        hideKeyboard();
+                        btnSend.setEnabled(false);
+                        progressBar.toggleDialog(true);
+                        firebaseHelper.checkGroupsKeys("users", FirebaseHelper.CONDITION_1, FirebaseHelper.CONDITION_2, groupKey, getMembersThatNeedToReceiveMessage());
+                    }else
+                        Toast.makeText(GroupChatActivity.this, "Their is nobody else in this chat to speak to", Toast.LENGTH_SHORT).show();
                 } else {
                     Toast.makeText(GroupChatActivity.this, "You must enter some text before sending a message", Toast.LENGTH_SHORT).show();
                 }
@@ -194,6 +197,7 @@ public class GroupChatActivity extends AppCompatActivity implements ImageViewDia
     protected void onStop() {
         super.onStop();
         firebaseHelper.toggleMsgEventListeners("single", groupKey, msgValueEventListener, false);
+        firebaseHelper.toggleListenerFor("groups", "groupKey", groupKey, groupListener, false, false);
     }
 
     @Override
@@ -246,8 +250,9 @@ public class GroupChatActivity extends AppCompatActivity implements ImageViewDia
             }
         });
         TextView textView = (TextView) actionBar.getCustomView().findViewById(R.id.group_members);
-        String members = "You, ";
         String[] membersArr = getMembersThatNeedToReceiveMessage();
+        String members = "You";
+        if(membersArr.length>0)members+=",";
         for(int i =0 ; i < membersArr.length; i++ ){
             if(db.isUserAlreadyInContacts(membersArr[i]))
                 members += db.getProfileNameAndPic(membersArr[i])[0];
@@ -276,6 +281,10 @@ public class GroupChatActivity extends AppCompatActivity implements ImageViewDia
                 finish();
                 break;
             case R.id.view_details :
+                Intent intent = new Intent(GroupChatActivity.this, GroupDetailActivity.class);
+                intent.putExtra("g_uid", groupKey);
+                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                startActivity(intent);
                 break;
             case R.id.leave_group :
                 leaveGroup();
@@ -406,26 +415,25 @@ public class GroupChatActivity extends AppCompatActivity implements ImageViewDia
     }
 
     private void sendMessage(String wishMessage) {
-        System.out.println("Sending messages to "+registeredIds.length());
         firebaseHelper.updateMessageNode(this, "group", groupKey, wishMessage, null, Constants.MESSAGE_TYPE_TEXT,registeredIds, groupModel.getTitle());
     }
 
     private String[] getMembersThatNeedToReceiveMessage(){
         String [] membersIngroup = groupModel.getMembers().split(",");
-        String [] members = new String[membersIngroup.length];
+        List<String> members = new ArrayList<>();
         if(groupModel.getAdmin().equals(user.name))
             return membersIngroup;
         else {
-            int counter = 0;
             if(!groupModel.getAdmin().isEmpty())
-                members[counter] = groupModel.getAdmin();
+                members.add(groupModel.getAdmin());
             for (int i = 0; i < membersIngroup.length; i++) {
                 if (!membersIngroup[i].equals(user.name)) {
-                    counter++;
-                    members[counter] = membersIngroup[i];
+                    members.add(membersIngroup[i]);
                 }
             }
-            return members;
+            String[] stockArr = new String[members.size()];
+            stockArr = members.toArray(stockArr);
+            return stockArr;
         }
     }
 
@@ -459,7 +467,9 @@ public class GroupChatActivity extends AppCompatActivity implements ImageViewDia
                                 .apply(new RequestOptions().placeholder(R.drawable.placeholder).error(R.drawable.unknown))
                                 .into(((CircleImageView) actionBar.getCustomView().findViewById(R.id.profile_icon)));
                         List<String> members = Arrays.asList(getMembersThatNeedToReceiveMessage());
-                        firebaseHelper.getDeviceTokensFor(members, groupModel.getTitle(), groupModel.getGroupKey());
+                        System.out.println("Found members "+ members.size());
+                        if(members.size() > 0)
+                            firebaseHelper.getDeviceTokensFor(members, groupModel.getTitle(), groupModel.getGroupKey());
                         break;
                 }
                 break;
@@ -467,6 +477,7 @@ public class GroupChatActivity extends AppCompatActivity implements ImageViewDia
                 switch (condition){
                     case FirebaseHelper.CONDITION_1:
                         registeredIds = container.getJsonArray();
+                        System.out.println("Registering ids now have members"+ registeredIds.length());
                         break;
                 }
                 break;

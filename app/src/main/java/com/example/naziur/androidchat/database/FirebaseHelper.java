@@ -1096,8 +1096,8 @@ public class FirebaseHelper {
         });
     }
 
-    public void getGroupInfo(final String groupKey){
-        database.getReference("groups").orderByChild("groupKey").equalTo(groupKey).addListenerForSingleValueEvent(new ValueEventListener() {
+    public ValueEventListener getGroupInfo(final String groupKey){
+        return database.getReference("groups").orderByChild("groupKey").equalTo(groupKey).addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
