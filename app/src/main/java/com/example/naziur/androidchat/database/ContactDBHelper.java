@@ -66,7 +66,7 @@ public class ContactDBHelper extends SQLiteOpenHelper {
     }
 
     public boolean isUserAlreadyInContacts(String username){
-        SQLiteDatabase db = this.getWritableDatabase();
+        SQLiteDatabase db = getWritableDatabase();
 
         String[] projection = {
                 BaseColumns._ID
@@ -92,7 +92,7 @@ public class ContactDBHelper extends SQLiteOpenHelper {
     public String[] getProfileNameAndPic(String username){
         String profileName = username;
         String profilePic = "";
-        SQLiteDatabase db = this.getWritableDatabase();
+        SQLiteDatabase db = getWritableDatabase();
 
         String[] projection = {
                 MyContactsContract.MyContactsContractEntry.COLUMN_PROFILE,
