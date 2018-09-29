@@ -58,11 +58,15 @@ public class FirebaseHelper {
         void onChange(String tag, int condition, Container container);
     }
 
+
+    public static final int NON_CONDITION = -1;
     public static final int CONDITION_1 = 0;
     public static final int CONDITION_2 = 1;
     public static final int CONDITION_3 = 2;
     public static final int CONDITION_4 = 3;
     public static final int CONDITION_5 = 4;
+    public static final int CONDITION_6 = 5;
+    public static final int CONDITION_7 = 6;
 
     private FirebaseHelperListener listener;
 
@@ -443,7 +447,7 @@ public class FirebaseHelper {
         }
     }
 
-    public ValueEventListener getValueEventListener(final String target, final int condition ,final Class obj){
+    public ValueEventListener getValueEventListener(final String target, final int loopCond, final int notExistCond, final int completeCond ,final Class obj){
         return new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -452,10 +456,11 @@ public class FirebaseHelper {
                 if(dataSnapshot.exists()) {
                     for (com.google.firebase.database.DataSnapshot userSnapshot : dataSnapshot.getChildren()) {
                         container.setObject(userSnapshot.getValue(obj));
-                        listener.onCompleteTask("getValueEventListener", condition, container);
+                        listener.onChange("getValueEventListener", loopCond, container);
                     }
+                    listener.onCompleteTask("getValueEventListener", completeCond, container);
                 } else {
-                    listener.onCompleteTask("getValueEventListener", CONDITION_2, container);
+                    listener.onCompleteTask("getValueEventListener", notExistCond, container);
                 }
             }
 

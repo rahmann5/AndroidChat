@@ -134,12 +134,12 @@ public class ChatDetailActivity extends AppCompatActivity implements FirebaseHel
         LinearLayoutManager l = new LinearLayoutManager(ChatDetailActivity.this);
         myGroups.setLayoutManager(l);
         myGroups.setAdapter(groupsAdapter);
-        ValueEventListener userListener = firebaseHelper.getValueEventListener(user.name, FirebaseHelper.CONDITION_1 ,FirebaseUserModel.class);
+        ValueEventListener userListener = firebaseHelper.getValueEventListener(user.name, FirebaseHelper.CONDITION_1, FirebaseHelper.NON_CONDITION, FirebaseHelper.NON_CONDITION,FirebaseUserModel.class);
         firebaseHelper.toggleListenerFor("users", "username" , user.name, userListener, true, true); //  single event
     }
 
     private void getGroupInfo (String key) {
-        ValueEventListener userListener = firebaseHelper.getValueEventListener(key, FirebaseHelper.CONDITION_3 ,FirebaseGroupModel.class);
+        ValueEventListener userListener = firebaseHelper.getValueEventListener(key, FirebaseHelper.CONDITION_3 , FirebaseHelper.NON_CONDITION, FirebaseHelper.NON_CONDITION, FirebaseGroupModel.class);
         firebaseHelper.toggleListenerFor("groups", "groupKey" , key, userListener, true, true); //  single event
     }
 
@@ -260,31 +260,6 @@ public class ChatDetailActivity extends AppCompatActivity implements FirebaseHel
                 }
                 progressBar.toggleDialog(false);
                 break;
-
-            case "getValueEventListener" :
-            switch (condition) {
-                case FirebaseHelper.CONDITION_1 :
-                    FirebaseUserModel currentUser = (FirebaseUserModel) container.getObject();
-                    String[] allKeys = currentUser.getGroupKeys().split(",");
-                    for(String key: allKeys){
-                        if(!key.equals(""))
-                            groupKeys.add(key);
-                    }
-                    if (!groupKeys.isEmpty())
-                        getGroupInfo(groupKeys.get(0)); // first item
-                    else
-                        emptyGroupsList.setVisibility(View.VISIBLE);
-
-                    break;
-
-                case FirebaseHelper.CONDITION_3 :
-                    FirebaseGroupModel groupModel = (FirebaseGroupModel) container.getObject();
-                    isInSameGroup(groupModel);
-                    int currentIndex = groupKeys.indexOf(groupModel.getGroupKey());
-                    if ((currentIndex + 1) < groupKeys.size())
-                        getGroupInfo(groupKeys.get(currentIndex + 1)); // subsequent item
-                    break;
-            }
         }
     }
 
@@ -301,6 +276,32 @@ public class ChatDetailActivity extends AppCompatActivity implements FirebaseHel
 
     @Override
     public void onChange(String tag, int condition, Container container) {
+        switch (tag) {
+            case "getValueEventListener" :
+                switch (condition) {
+                    case FirebaseHelper.CONDITION_1 :
+                        FirebaseUserModel currentUser = (FirebaseUserModel) container.getObject();
+                        String[] allKeys = currentUser.getGroupKeys().split(",");
+                        for(String key: allKeys){
+                            if(!key.equals(""))
+                                groupKeys.add(key);
+                        }
+                        if (!groupKeys.isEmpty())
+                            getGroupInfo(groupKeys.get(0)); // first item
+                        else
+                            emptyGroupsList.setVisibility(View.VISIBLE);
+
+                        break;
+
+                    case FirebaseHelper.CONDITION_3 :
+                        FirebaseGroupModel groupModel = (FirebaseGroupModel) container.getObject();
+                        isInSameGroup(groupModel);
+                        int currentIndex = groupKeys.indexOf(groupModel.getGroupKey());
+                        if ((currentIndex + 1) < groupKeys.size())
+                            getGroupInfo(groupKeys.get(currentIndex + 1)); // subsequent item
+                        break;
+                }
+        }
 
     }
 }
