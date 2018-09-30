@@ -357,6 +357,7 @@ public class GroupCreatorActivity extends AppCompatActivity implements FirebaseH
         intent.putExtra("group_uid", id);
         intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         startActivity(intent);
+        finish();
     }
 
     private List<String> getAllMembersTogether(){

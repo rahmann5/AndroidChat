@@ -252,16 +252,16 @@ public class GroupChatActivity extends AppCompatActivity implements ImageViewDia
         TextView textView = (TextView) actionBar.getCustomView().findViewById(R.id.group_members);
         String[] membersArr = getMembersThatNeedToReceiveMessage();
         String members = "You";
-        if(membersArr.length>0)members+=", ";
+
         for(int i =0 ; i < membersArr.length; i++ ){
+            if(i < membersArr.length && members.length() > 0){
+                members += ", ";
+            }
+
             if(db.isUserAlreadyInContacts(membersArr[i]))
                 members += db.getProfileNameAndPic(membersArr[i])[0];
             else
                 members += membersArr[i];
-
-            if(i < membersArr.length-1){
-                members += ", ";
-            }
         }
         textView.setText(members);
         actionBar.getCustomView().findViewById(R.id.group_members).setVisibility(View.VISIBLE);
@@ -432,8 +432,8 @@ public class GroupChatActivity extends AppCompatActivity implements ImageViewDia
                 }
             }
             String[] stockArr = new String[members.size()];
-            stockArr = members.toArray(stockArr);
-            return stockArr;
+
+            return  members.toArray(stockArr);
         }
     }
 
@@ -467,7 +467,6 @@ public class GroupChatActivity extends AppCompatActivity implements ImageViewDia
                                 .apply(new RequestOptions().placeholder(R.drawable.placeholder).error(R.drawable.unknown))
                                 .into(((CircleImageView) actionBar.getCustomView().findViewById(R.id.profile_icon)));
                         List<String> members = Arrays.asList(getMembersThatNeedToReceiveMessage());
-                        System.out.println("Found members "+ members.size());
                         if(members.size() > 0)
                             firebaseHelper.getDeviceTokensFor(members, groupModel.getTitle(), groupModel.getGroupKey());
                         break;
@@ -477,7 +476,6 @@ public class GroupChatActivity extends AppCompatActivity implements ImageViewDia
                 switch (condition){
                     case FirebaseHelper.CONDITION_1:
                         registeredIds = container.getJsonArray();
-                        System.out.println("Registering ids now have members"+ registeredIds.length());
                         break;
                 }
                 break;
