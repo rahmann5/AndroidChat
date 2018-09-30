@@ -25,7 +25,7 @@
            android:layout_height="wrap_content"
            android:layout_weight="0.5"
            android:text="Accept"
-           android:background="@drawable/bottom_border"
+           android:background="@drawable/rounded_shadow"
            android:layout_margin="1dp"
            android:textColor="@color/green"
            />
@@ -37,7 +37,7 @@
            android:layout_weight="0.5"
            android:text="Reject"
            android:textColor="@color/red"
-           android:background="@drawable/bottom_border"
+           android:background="@drawable/rounded_shadow"
            android:layout_margin="1dp"
            />
 

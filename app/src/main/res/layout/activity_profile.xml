@@ -1,16 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:card_view="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    xmlns:card_view="http://schemas.android.com/apk/res-auto"
-    android:background="?android:attr/windowBackground">
+    android:background="@color/group_detail_bg">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:padding="5dp"
-        >
+        android:layout_alignParentTop="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true">
 
         <android.support.v7.widget.CardView
             android:layout_marginTop="10dp"
@@ -23,76 +26,128 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="10dp">
-
-                <TextView
-                    android:layout_marginTop="10dp"
-                    android:id="@+id/my_username"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Username: "
-                    android:textAppearance="@android:style/TextAppearance.Medium" />
+                >
 
                 <LinearLayout
-                    android:layout_marginTop="15dp"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical">
+                    android:orientation="horizontal">
+
+                    <FrameLayout
+                        android:layout_width="45dp"
+                        android:layout_height="45dp"
+                        android:background="@drawable/splash_screen_bck"
+                        android:layout_marginRight="5dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="P"
+                            android:textSize="18sp"
+                            android:layout_gravity="center"
+                            android:textStyle="bold"
+                            android:textColor="@color/white"
+                            />
+
+                    </FrameLayout>
 
                     <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="rofile"
+                        android:textSize="25sp"
+                        android:layout_gravity="center"
+                        android:textStyle="bold"
+                        android:textColor="@color/login_btn"
+                        />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="10dp"
+                   >
+
+                    <LinearLayout
+                        android:layout_marginTop="15dp"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Profile Name:"
-                        android:textAppearance="@android:style/TextAppearance.Medium"
-                        />
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/my_username"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Username: "
+                            android:textAppearance="@android:style/TextAppearance.Medium"
+                            android:layout_marginBottom="8dp"
+                            />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Profile Name:"
+                            android:textAppearance="@android:style/TextAppearance.Medium"
+                            />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal">
+
+                            <android.support.v7.widget.AppCompatEditText
+                                android:id="@+id/edit_prof_name"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:layout_gravity="center_vertical"
+                                android:background="@drawable/bottom_border_white"
+                                android:enabled="false"
+                                android:hint="Enter profile Name..."/>
+
+                            <ImageView
+                                android:id="@+id/edit_button_prof_name"
+                                android:layout_width="48dp"
+                                android:layout_height="48dp"
+                                android:layout_gravity="center_vertical"
+                                android:scaleType="center"
+                                android:src="@android:drawable/ic_menu_edit"
+                                android:background="@color/login_btn"
+                                />
+
+                        </LinearLayout>
+
+                    </LinearLayout>
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal">
+                        android:layout_marginTop="15dp"
+                        android:orientation="vertical">
 
-                        <android.support.v7.widget.AppCompatEditText
-                            android:id="@+id/edit_prof_name"
-                            android:layout_width="0dp"
+                        <TextView
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:layout_gravity="center_vertical"
-                            android:enabled="false"/>
+                            android:text="Profile Status:"
+                            android:textAppearance="@android:style/TextAppearance.Medium" />
 
-                        <ImageView
-                            android:id="@+id/edit_button_prof_name"
-                            android:layout_width="48dp"
-                            android:layout_height="48dp"
+                        <Spinner
+                            android:id="@+id/prof_status"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
                             android:layout_gravity="center_vertical"
-                            android:scaleType="center"
-                            android:src="@android:drawable/ic_menu_edit"
-                            />
+                            android:entries="@array/profile_status"
+                            android:padding="10dp"/>
 
                     </LinearLayout>
-
                 </LinearLayout>
 
-                <LinearLayout
+                <View
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="15dp"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="Profile Status:"
-                        android:textAppearance="@android:style/TextAppearance.Medium" />
-
-                    <Spinner
-                        android:id="@+id/prof_status"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center_vertical"
-                        android:entries="@array/profile_status"
-                        android:padding="10dp"/>
-
-                </LinearLayout>
+                    android:layout_height="5dp"
+                    android:background="@color/login_btn" />
 
             </LinearLayout>
 
@@ -106,39 +161,74 @@
            card_view:cardUseCompatPadding="true"
            >
 
-           <RelativeLayout
+           <LinearLayout
                android:layout_width="match_parent"
                android:layout_height="match_parent"
-               android:padding="10dp">
+               android:orientation="vertical"
+               >
 
-               <TextView
-                   android:id="@+id/title_group_list"
-                   android:layout_marginTop="10dp"
-                   android:layout_width="match_parent"
-                   android:layout_height="wrap_content"
-                   android:text="My Groups:"
-                   android:textAppearance="@android:style/TextAppearance.Medium"
-                   />
+              <LinearLayout
+                  android:layout_width="match_parent"
+                  android:layout_height="wrap_content"
+                  android:orientation="horizontal">
+                  <FrameLayout
+                      android:layout_width="45dp"
+                      android:layout_height="45dp"
+                      android:background="@drawable/splash_screen_bck"
+                      android:layout_marginRight="5dp">
 
-               <android.support.v7.widget.RecyclerView
-                   android:layout_marginTop="5dp"
-                   android:layout_below="@+id/title_group_list"
-                   android:id="@+id/profile_groups_list"
+                      <TextView
+                          android:layout_width="wrap_content"
+                          android:layout_height="wrap_content"
+                          android:text="G"
+                          android:textSize="18sp"
+                          android:layout_gravity="center"
+                          android:textStyle="bold"
+                          android:textColor="@color/white"
+                          />
+
+                  </FrameLayout>
+
+                  <TextView
+                      android:layout_width="wrap_content"
+                      android:layout_height="wrap_content"
+                      android:text="roups"
+                      android:textSize="25sp"
+                      android:layout_gravity="center"
+                      android:textStyle="bold"
+                      android:textColor="@color/login_btn"
+                      />
+              </LinearLayout>
+
+               <RelativeLayout
                    android:layout_width="match_parent"
                    android:layout_height="match_parent"
-                   />
+                   android:padding="10dp">
 
-               <TextView
-                   android:id="@+id/no_groups"
-                   android:layout_width="wrap_content"
-                   android:layout_height="wrap_content"
-                   android:text="No Groups"
-                   android:layout_below="@+id/title_group_list"
-                   android:layout_centerInParent="true"
-                   android:padding="10dp"
-                   android:visibility="gone"/>
+                   <android.support.v7.widget.RecyclerView
+                       android:layout_marginTop="5dp"
+                       android:id="@+id/profile_groups_list"
+                       android:layout_width="match_parent"
+                       android:layout_height="match_parent"
+                       />
 
-           </RelativeLayout>
+                   <TextView
+                       android:id="@+id/no_groups"
+                       android:layout_width="wrap_content"
+                       android:layout_height="wrap_content"
+                       android:text="No Groups"
+                       android:layout_centerInParent="true"
+                       android:padding="10dp"
+                       android:visibility="gone"/>
+
+               </RelativeLayout>
+
+               <View
+                   android:layout_width="match_parent"
+                   android:layout_height="5dp"
+                   android:background="@color/login_btn" />
+
+           </LinearLayout>
 
        </android.support.v7.widget.CardView>
 
@@ -150,38 +240,75 @@
             card_view:cardElevation="4sp"
             card_view:cardUseCompatPadding="true">
 
-            <RelativeLayout
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:padding="10dp">
+                android:orientation="vertical">
 
-                <TextView
-                    android:id="@+id/title_contact_list"
-                    android:layout_marginTop="10dp"
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="My Contacts:"
-                    android:textAppearance="@android:style/TextAppearance.Medium"
-                    />
+                    android:orientation="horizontal">
 
-                <android.support.v7.widget.RecyclerView
-                    android:layout_marginTop="5dp"
-                    android:layout_below="@+id/title_contact_list"
-                    android:id="@+id/profile_contacts_list"
+                    <FrameLayout
+                        android:layout_width="45dp"
+                        android:layout_height="45dp"
+                        android:background="@drawable/splash_screen_bck"
+                        android:layout_marginRight="5dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="C"
+                            android:textSize="18sp"
+                            android:layout_gravity="center"
+                            android:textStyle="bold"
+                            android:textColor="@color/white"
+                            />
+
+                    </FrameLayout>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="ontacts"
+                        android:textSize="25sp"
+                        android:layout_gravity="center"
+                        android:textStyle="bold"
+                        android:textColor="@color/login_btn"
+                        />
+
+                </LinearLayout>
+
+                <RelativeLayout
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    />
+                    android:padding="10dp">
 
-                <TextView
-                    android:id="@+id/no_contacts"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="No Contacts"
-                    android:layout_below="@+id/title_contact_list"
-                    android:layout_centerInParent="true"
-                    android:padding="10dp" />
+                    <android.support.v7.widget.RecyclerView
+                        android:layout_marginTop="5dp"
+                        android:id="@+id/profile_contacts_list"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        />
 
-            </RelativeLayout>
+                    <TextView
+                        android:id="@+id/no_contacts"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="No Contacts"
+                        android:layout_centerInParent="true"
+                        android:padding="10dp"
+                        android:visibility="gone"/>
+
+                </RelativeLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="5dp"
+                    android:background="@color/login_btn" />
+
+            </LinearLayout>
 
         </android.support.v7.widget.CardView>
 
@@ -192,7 +319,7 @@
             android:layout_height="wrap_content"
             android:text="@string/save_btn"
             android:textColor="@color/white"
-            android:backgroundTint="@color/profile_save_button"/>
+            android:background="@color/login_btn"/>
 
     </LinearLayout>
 </RelativeLayout>

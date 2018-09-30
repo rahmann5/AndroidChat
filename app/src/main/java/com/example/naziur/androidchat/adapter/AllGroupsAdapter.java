@@ -66,7 +66,7 @@ public class AllGroupsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         }
 
         public void bind (Context context, FirebaseGroupModel group) {
-            membersTv.setText(getMembersText(group.getMembers().split("-"), group.getAdmin()));
+            membersTv.setText(getMembersText(group.getMembers().split(","), group.getAdmin()));
             titleTv.setText(group.getTitle());
             Glide.with(context).load(group.getPic()).apply(new RequestOptions().placeholder(R.drawable.placeholder).error(R.drawable.unknown)).into(groupPicIv);
         }
@@ -74,11 +74,11 @@ public class AllGroupsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         private String getMembersText (String[] members, String admin) {
             String newMembersList = "you";
             if (!admin.equals(user.name)) {
-                newMembersList += ","+admin;
+                newMembersList += ", "+admin;
             }
             for (String m : members) {
                 if (!m.equals(user.name)) {
-                    newMembersList += "," +m;
+                    newMembersList += ", " +m;
                 }
             }
             return newMembersList;

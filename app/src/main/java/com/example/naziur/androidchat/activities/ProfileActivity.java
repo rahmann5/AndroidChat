@@ -50,6 +50,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import de.hdodenhof.circleimageview.CircleImageView;
 import pl.aprilapps.easyphotopicker.DefaultCallback;
 import pl.aprilapps.easyphotopicker.EasyImage;
 
@@ -65,10 +66,10 @@ public class ProfileActivity extends AppCompatActivity implements FirebaseHelper
     User user = User.getInstance();
     private RecyclerView myGroups, myContacts;
     private List<String> groupKeys;
-    private TextView emptyGroupsList, emptyContactsList, myUsername;
+    private TextView emptyGroupsList, emptyContactsList, myUsername, resetPic, revertPic, profileInfoName, profileInfoStatus;
     private AppCompatButton saveButton;
-    private ImageView editToggle, profilePic;
-    private ImageButton updatePic, resetPic, revertPic;
+    private ImageView editToggle;
+    private CircleImageView updatePic;
     private AppCompatEditText profileName;
     private Spinner profileStatus;
     private File myImageFile;
@@ -94,31 +95,31 @@ public class ProfileActivity extends AppCompatActivity implements FirebaseHelper
                 .allowHeaderTouchEvents(true);
         setContentView(helper.createView(this));
         helper.initActionBar(this);
+        updatePic = (CircleImageView) findViewById(R.id.update_profile_pic);
         EasyImage.configuration(this).setAllowMultiplePickInGallery(false);
-        profilePic = (ImageView) findViewById(R.id.image_header);
         Glide.with(ProfileActivity.this).load(user.profilePic)
                 .apply(new RequestOptions().placeholder(R.drawable.placeholder).error(R.drawable.unknown))
-                .into(profilePic);
-        updatePic = (ImageButton) findViewById(R.id.update_profile_pic);
-
-        revertPic = (ImageButton) findViewById(R.id.undo_profile_pic);
+                .into(updatePic);
+        profileInfoName = (TextView)  findViewById(R.id.prof_info_name);
+        profileInfoStatus = (TextView)  findViewById(R.id.prof_info_status);
+        revertPic = (TextView) findViewById(R.id.undo_profile_pic);
         revertPic.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 reset(false);
                 Glide.with(ProfileActivity.this).load(user.profilePic)
                         .apply(new RequestOptions().placeholder(R.drawable.placeholder).error(R.drawable.unknown))
-                        .into(profilePic);
+                        .into(updatePic);
             }
         });
 
-        resetPic = (ImageButton) findViewById(R.id.reset_profile_pic);
+        resetPic = (TextView) findViewById(R.id.reset_profile_pic);
         resetPic.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 if (!user.profilePic.equals("") || myImageFile != null) {
                     reset(true);
-                    Glide.with(ProfileActivity.this).load(R.drawable.unknown).into(profilePic);
+                    Glide.with(ProfileActivity.this).load(R.drawable.unknown).into(updatePic);
                 }
             }
         });
@@ -140,6 +141,9 @@ public class ProfileActivity extends AppCompatActivity implements FirebaseHelper
         myUsername = (TextView) findViewById(R.id.my_username);
 
         myUsername.setText("Username : " + user.name);
+
+        profileInfoName.setText(user.profileName);
+        profileInfoStatus.setText("Status: " + user.status);
 
         saveButton = (AppCompatButton) findViewById(R.id.save_profile_btn);
 
@@ -288,7 +292,7 @@ public class ProfileActivity extends AppCompatActivity implements FirebaseHelper
                         Glide.with(ProfileActivity.this)
                                 .load(myImageFile)
                                 .apply(new RequestOptions().placeholder(R.drawable.placeholder).error(R.drawable.unknown))
-                                .into(profilePic);
+                                .into(updatePic);
                         break;
                 }
             }
