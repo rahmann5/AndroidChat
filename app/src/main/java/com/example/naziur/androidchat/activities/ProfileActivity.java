@@ -18,8 +18,6 @@ import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.ListView;
-import android.widget.ProgressBar;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -40,18 +38,11 @@ import com.example.naziur.androidchat.utils.FadingActionBarHelper;
 import com.example.naziur.androidchat.models.User;
 import com.example.naziur.androidchat.utils.Network;
 import com.example.naziur.androidchat.utils.ProgressDialog;
-import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
-import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
@@ -220,7 +211,7 @@ public class ProfileActivity extends AppCompatActivity implements FirebaseHelper
                 if (hasInternet) {
                     firebaseHelper.updateLocalContactsFromFirebase("users", fbModel, db);
                 } else {
-                    contactsAdapter.addNewItemContact(new Contact(fbModel, "", false));
+                    contactsAdapter.addNewItemContact(new Contact(fbModel, false));
                     toggleEmptyState(emptyContactsList, contactsAdapter);
                 }
             }

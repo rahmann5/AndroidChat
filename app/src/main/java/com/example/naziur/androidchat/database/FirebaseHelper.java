@@ -31,11 +31,8 @@ import com.loopj.android.http.TextHttpResponseHandler;
 
 import org.json.JSONArray;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.Date;
 
 import java.util.Arrays;
 import java.util.List;
@@ -191,7 +188,7 @@ public class FirebaseHelper {
                     }
                 } else {
                     Container container = new Container();
-                    container.setContact(new Contact(fbModel, "", false));
+                    container.setContact(new Contact(fbModel, false));
                     listener.onCompleteTask("updateLocalContactsFromFirebase", CONDITION_1, container);
                 }
 
@@ -1016,16 +1013,16 @@ public class FirebaseHelper {
         });
     }
 
-    public void exitGroup (final String chatKey, final String leavingUser, final boolean admin) {
+    public void exitGroup (final Chat chat, final String leavingUser, final boolean admin) {
         DatabaseReference reference = database.getReference("groups");
-        reference.orderByChild("groupKey").equalTo(chatKey).getRef().runTransaction(new Transaction.Handler() {
+        reference.orderByChild("groupKey").equalTo(chat.getChatKey()).getRef().runTransaction(new Transaction.Handler() {
             @Override
             public Transaction.Result doTransaction(MutableData mutableData) {
                 for (MutableData data : mutableData.getChildren()) {
                     FirebaseGroupModel groupModel = data.getValue(FirebaseGroupModel.class);
 
                     if (groupModel == null) return Transaction.success(mutableData);
-                    if (groupModel.getGroupKey().equals(chatKey)) {
+                    if (groupModel.getGroupKey().equals(chat.getChatKey())) {
                         String newMembers = groupModel.getMembers();
                         if (admin) {
                             groupModel.setAdmin("");
@@ -1051,7 +1048,7 @@ public class FirebaseHelper {
             @Override
             public void onComplete(DatabaseError databaseError, boolean b, DataSnapshot dataSnapshot) {
                 Container container = new Container();
-                container.setString(chatKey); // key to remove
+                container.setChat(chat); // key to remove
                 if (databaseError == null) {
                     listener.onCompleteTask("exitGroup", CONDITION_1, container);
                 } else {
@@ -1064,6 +1061,7 @@ public class FirebaseHelper {
     public void deleteGroup (final String chatKey) {
         DatabaseReference groupRef = database.getReference("groups").orderByChild("groupKey").equalTo(chatKey).getRef();
         groupRef.runTransaction(new Transaction.Handler() {
+            boolean isDeleted = false;
             @Override
             public Transaction.Result doTransaction(MutableData mutableData) {
                 for (MutableData data : mutableData.getChildren()) {
@@ -1073,6 +1071,7 @@ public class FirebaseHelper {
 
                     if (groupModel.getGroupKey().equals(chatKey)) {
                         if (groupModel.getAdmin().equals("") && groupModel.getMembers().equals("")) { // no admin and members left
+                            isDeleted = true;
                             groupModel = null;
                             data.setValue(groupModel);
                             break;
@@ -1089,7 +1088,7 @@ public class FirebaseHelper {
                 if (databaseError == null) {
                     Container container = new Container();
                     container.setString(chatKey); // key to remove
-                    if (!dataSnapshot.exists()) {
+                    if (isDeleted) {
                         // complete delete
                         listener.onCompleteTask("deleteGroup", CONDITION_1, container);
                     } else {
@@ -1102,8 +1101,8 @@ public class FirebaseHelper {
         });
     }
 
-    public void getGroupInfo(final String groupKey){
-        database.getReference("groups").orderByChild("groupKey").equalTo(groupKey).addListenerForSingleValueEvent(new ValueEventListener() {
+    public ValueEventListener getGroupInfo(final String groupKey){
+        return database.getReference("groups").orderByChild("groupKey").equalTo(groupKey).addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
