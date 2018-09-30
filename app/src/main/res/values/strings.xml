@@ -55,6 +55,9 @@
 
     <string name="media_message">Picture</string>
 
+    <!-- LOGIN -->
+    <string name="forgot_username"><u>Forgot Username?</u></string>
+
     <!-- Notification Activity -->
     <string name="empty_notification">No Pending Notification</string>
 

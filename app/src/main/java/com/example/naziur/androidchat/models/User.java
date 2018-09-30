@@ -76,4 +76,14 @@ public class User {
 
         editor.apply();
     }
+
+    public void setAutoLogin(boolean login) {
+        SharedPreferences.Editor editor = sharedpreferences.edit();
+        editor.putBoolean("auto_login", login);
+        editor.apply();
+    }
+
+    public boolean getAutoLogin() {
+        return sharedpreferences.getBoolean("auto_login", true);
+    }
 }

@@ -8,7 +8,9 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.naziur.androidchat.R;
@@ -29,18 +31,20 @@ import com.google.firebase.iid.FirebaseInstanceId;
 public class LoginActivity extends AppCompatActivity implements FirebaseHelper.FirebaseHelperListener{
 
     private static final String TAG = "LoginActivity";
-    EditText editTextUsername, editTextProfileName;
+    private EditText editTextUsername, editTextProfileName;
     User user = User.getInstance();
-    FirebaseDatabase database;
-    String currentDeviceId;
-    ProgressDialog progressDialog;
-    FirebaseHelper firebaseHelper;
+    private FirebaseDatabase database;
+    private String currentDeviceId;
+    private ProgressDialog progressDialog;
+    private FirebaseHelper firebaseHelper;
+    private CheckBox autoLog;
+    private TextView forgotUsername;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
-
+        progressDialog = new ProgressDialog(this, R.layout.progress_dialog, true);
         user.sharedpreferences = getSharedPreferences(user.appPreferences, Context.MODE_PRIVATE);
         firebaseHelper = FirebaseHelper.getInstance();
         firebaseHelper.setFirebaseHelperListener(this);
@@ -50,6 +54,18 @@ public class LoginActivity extends AppCompatActivity implements FirebaseHelper.F
 
         editTextUsername = (EditText) findViewById(R.id.editTextUsername);
         editTextProfileName = (EditText) findViewById(R.id.editTextProfileName);
+
+        autoLog = (CheckBox) findViewById(R.id.auto_log);
+        autoLog.setChecked(user.getAutoLogin());
+
+        forgotUsername = (TextView) findViewById(R.id.forgot_username);
+        forgotUsername.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                progressDialog.toggleDialog(true);
+                firebaseHelper.autoLogin("users", currentDeviceId, user);
+            }
+        });
     }
 
     public void btnLoginTapped(View view) {
@@ -64,7 +80,6 @@ public class LoginActivity extends AppCompatActivity implements FirebaseHelper.F
                 return;
             }
 
-            progressDialog = new ProgressDialog(this, R.layout.progress_dialog, true);
             progressDialog.toggleDialog(true);
             String currentDeviceId = Settings.Secure.getString(getApplicationContext().getContentResolver(), Settings.Secure.ANDROID_ID);
             firebaseHelper.manualLogin(user, strUsername, strProfileName, currentDeviceId);
@@ -105,7 +120,9 @@ public class LoginActivity extends AppCompatActivity implements FirebaseHelper.F
                         Toast.makeText(LoginActivity.this, "Please enter unique username", Toast.LENGTH_LONG).show();
                         break;
                     case FirebaseHelper.CONDITION_5:
+                        user.setAutoLogin(autoLog.isChecked());
                         startActivity(new Intent(LoginActivity.this, SessionActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
+                        finish();
                         break;
                 }
                 break;
@@ -114,12 +131,29 @@ public class LoginActivity extends AppCompatActivity implements FirebaseHelper.F
                     case FirebaseHelper.CONDITION_1:
                         if (user.login(container.getUserModel())) {
                             Intent intent = new Intent(LoginActivity.this, SessionActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                            user.setAutoLogin(autoLog.isChecked());
                             startActivity(intent);
                             finish();
                         }
                         break;
                 }
                 break;
+
+            case "autoLogin" :
+                switch (condition) {
+                    case FirebaseHelper.CONDITION_1 :
+                        Intent intent = new Intent(LoginActivity.this, SessionActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                        user.setAutoLogin(autoLog.isChecked());
+                        startActivity(intent);
+                        finish();
+                    break;
+
+                    case FirebaseHelper.CONDITION_2 :
+                        Toast.makeText(LoginActivity.this, "Error: This device maybe new therefore please register again.", Toast.LENGTH_LONG).show();
+                        break;
+
+                }
+
 
         }
         progressDialog.toggleDialog(false);
@@ -132,6 +166,7 @@ public class LoginActivity extends AppCompatActivity implements FirebaseHelper.F
                 break;
             case "registerNewUser":
                 Toast.makeText(LoginActivity.this, "Failed to register user please try again.", Toast.LENGTH_LONG).show();
+                break;
         }
         progressDialog.toggleDialog(false);
         Log.i(TAG, tag+": "+databaseError.getMessage());
