@@ -17,6 +17,7 @@ import android.widget.Toast;
 
 import com.example.naziur.androidchat.R;
 import com.example.naziur.androidchat.activities.GroupChatActivity;
+import com.example.naziur.androidchat.activities.GroupDetailActivity;
 import com.example.naziur.androidchat.adapter.AllChatsAdapter;
 import com.example.naziur.androidchat.database.ContactDBHelper;
 import com.example.naziur.androidchat.database.FirebaseHelper;
@@ -164,7 +165,10 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
                     private void onActionSelected(int which, Chat chat, int position) {
                         switch (which) {
                             case 0 : // see group info
-                                Toast.makeText(getActivity(), "View Group Details", Toast.LENGTH_SHORT).show();
+                                Intent intent = new Intent(getActivity(), GroupDetailActivity.class);
+                                intent.putExtra("g_uid", chat.getChatKey());
+                                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                                startActivity(intent);
                                 break;
 
                             case 1 : // chat with contact
@@ -275,20 +279,23 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
         } else if (tag.equals("updateChatKeys")) {
             switch (condition) {
                 case FirebaseHelper.CONDITION_1 :
-                    System.out.println("deleteGroup");
+                    for(int i = 0; i < allGroups.size(); i++){
+                        if(allGroups.get(i).getGroupKey().equals(container.getChat().getChatKey())) {
+                            allGroups.remove(i);
+                            break;
+                        }
+                    }
+                    myChatsdapter.addOrRemoveChat(container.getChat(), false);
+                    if(myChatsdapter.getItemCount() == 0)
+                        emptyChats.setVisibility(View.VISIBLE);
                     firebaseHelper.deleteGroup(container.getChat().getChatKey());
-                    break;
-
-                case FirebaseHelper.CONDITION_2 :
-                    System.out.println("failed deleteGroup");
                     break;
             }
         } else if (tag.equals("deleteGroup")) {
             switch (condition) {
                 case FirebaseHelper.CONDITION_1 :
                     // clean delete all messages + images
-                    System.out.println("Collecting images and messages for group " + container.getString());
-                    firebaseHelper.collectAllImagesForDeletionThenDeleteRelatedMessages("group", container.getString());
+                    firebaseHelper.collectAllImagesForDeletionThenDeleteRelatedMessages("group", container);
                     break;
 
                 case FirebaseHelper.CONDITION_2 :
@@ -298,7 +305,6 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
         } else if (tag.equals("collectAllImagesForDeletionThenDeleteRelatedMessages")) {
             switch (condition) {
                 case FirebaseHelper.CONDITION_1:
-                    System.out.println("Deleting images and messages for group " + container.getString());
                     Network.deleteUploadImages(firebaseHelper, container.getStringList(), container.getString(), "group");
                     break;
             }
@@ -341,7 +347,7 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
                     db.close();
                     String dateString = formatter.format(new Date(groupMessageModel.getCreatedDateLong()));
                     Chat chat = new Chat(title, senderName, groupMessageModel.getText(), picUrl, dateString, groupKey, groupMessageModel.getMediaType(), admin);
-                    myChatsdapter.addChat(chat);
+                    myChatsdapter.addOrRemoveChat(chat, true);
                     //System.out.println(myChatsdapter.getItemCount());
                     break;
             }

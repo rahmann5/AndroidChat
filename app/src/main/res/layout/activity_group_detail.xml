@@ -127,7 +127,7 @@
                     android:layout_below="@id/admin_header"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="No Admin Found"
+                    android:text="@string/no_admin"
                     android:textSize="12sp"
                     android:textColor="@color/white"/>
 
@@ -175,7 +175,7 @@
                         android:layout_marginTop="15dp"
                         android:id="@+id/members_list_view"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"/>
+                        android:layout_height="match_parent"/>
 
                 </RelativeLayout>
 

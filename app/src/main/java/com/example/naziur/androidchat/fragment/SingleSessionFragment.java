@@ -5,7 +5,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.LinearLayoutManager;
@@ -29,17 +28,11 @@ import com.example.naziur.androidchat.models.Chat;
 import com.example.naziur.androidchat.models.FirebaseMessageModel;
 import com.example.naziur.androidchat.models.FirebaseUserModel;
 import com.example.naziur.androidchat.models.User;
-import com.example.naziur.androidchat.utils.Constants;
 import com.example.naziur.androidchat.utils.Container;
 import com.example.naziur.androidchat.utils.Network;
 import com.example.naziur.androidchat.utils.ProgressDialog;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
-import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageReference;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -265,7 +258,7 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
             case "checkKeyListKey":
                 switch(condition){
                     case FirebaseHelper.CONDITION_2:
-                        firebaseHelper.collectAllImagesForDeletionThenDeleteRelatedMessages("single", container.getString());
+                        firebaseHelper.collectAllImagesForDeletionThenDeleteRelatedMessages("single", container);
                         break;
                 }
                 break;
@@ -351,7 +344,7 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
                         SimpleDateFormat formatter = new SimpleDateFormat(getString(R.string.simple_date));
                         String dateString = formatter.format(new Date(firebaseMessageModel.getCreatedDateLong()));
                         Chat chat = new Chat(isChattingTo, username, firebaseMessageModel.getText(), db.getProfileNameAndPic(username)[1], dateString, container.getString(), firebaseMessageModel.getIsReceived(), firebaseMessageModel.getMediaType());
-                        myChatsdapter.addChat(chat);
+                        myChatsdapter.addOrRemoveChat(chat, true);
 
                         break;
                 }

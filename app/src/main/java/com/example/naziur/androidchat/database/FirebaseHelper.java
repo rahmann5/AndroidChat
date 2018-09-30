@@ -424,10 +424,12 @@ public class FirebaseHelper {
     public void attachOrRemoveMessageEventListener(String node, String chatKey, ValueEventListener valueEventListener, boolean add){
         DatabaseReference messagesRef = database.getReference("messages");
         Query pendingQuery = messagesRef.child(node).child(chatKey).limitToLast(1);
-        if(add)
-            pendingQuery.addValueEventListener(valueEventListener);
-        else
-            pendingQuery.removeEventListener(valueEventListener);
+        if(valueEventListener != null) {
+            if (add)
+                pendingQuery.addValueEventListener(valueEventListener);
+            else
+                pendingQuery.removeEventListener(valueEventListener);
+        }
 
     }
 
@@ -544,8 +546,8 @@ public class FirebaseHelper {
         });
     }
 
-    public void collectAllImagesForDeletionThenDeleteRelatedMessages(final String node, final String key){
-        final DatabaseReference reference = database.getReference("messages").child(node).child(key);
+    public void collectAllImagesForDeletionThenDeleteRelatedMessages(final String node, final Container container){
+        final DatabaseReference reference = database.getReference("messages").child(node).child(container.getString());
         reference.orderByChild("mediaType").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -556,15 +558,17 @@ public class FirebaseHelper {
                         imageUri.add(model.getText());
                     }
                 }
-                Container container = new Container();
-                container.setString(key);
-                container.setStringList(imageUri);
-                listener.onCompleteTask("collectAllImagesForDeletionThenDeleteRelatedMessages", CONDITION_1, container);
+                if(container.getStringList() != null)
+                    imageUri.add(container.getStringList().get(0));
+                Container c = new Container();
+                c.setString(container.getString());
+                c.setStringList(imageUri);
+                listener.onCompleteTask("collectAllImagesForDeletionThenDeleteRelatedMessages", CONDITION_1, c);
             }
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
-                cleanDeleteAllMessages(node, key);
+                cleanDeleteAllMessages(node, container.getString());
             }
         });
     }
@@ -1062,6 +1066,7 @@ public class FirebaseHelper {
         DatabaseReference groupRef = database.getReference("groups").orderByChild("groupKey").equalTo(chatKey).getRef();
         groupRef.runTransaction(new Transaction.Handler() {
             boolean isDeleted = false;
+            String groupPic = "";
             @Override
             public Transaction.Result doTransaction(MutableData mutableData) {
                 for (MutableData data : mutableData.getChildren()) {
@@ -1072,6 +1077,7 @@ public class FirebaseHelper {
                     if (groupModel.getGroupKey().equals(chatKey)) {
                         if (groupModel.getAdmin().equals("") && groupModel.getMembers().equals("")) { // no admin and members left
                             isDeleted = true;
+                            groupPic = groupModel.getPic();
                             groupModel = null;
                             data.setValue(groupModel);
                             break;
@@ -1088,6 +1094,9 @@ public class FirebaseHelper {
                 if (databaseError == null) {
                     Container container = new Container();
                     container.setString(chatKey); // key to remove
+                    List<String> list = new ArrayList<String>();
+                    list.add(groupPic);
+                    container.setStringList(list); // key to remove
                     if (isDeleted) {
                         // complete delete
                         listener.onCompleteTask("deleteGroup", CONDITION_1, container);

@@ -1,10 +1,13 @@
 package com.example.naziur.androidchat.activities;
 
+import android.graphics.Color;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
@@ -70,11 +73,21 @@ public class GroupDetailActivity extends AppCompatActivity implements FirebaseHe
         titleTv.setText(groupModel.getTitle());
         if(!groupModel.getAdmin().isEmpty())
             adminTv.setText(groupModel.getAdmin());
-        ArrayAdapter membersAdapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, getEveryOneBesidesYou());
+        else
+            adminTv.setText(getResources().getString(R.string.no_admin));
+        ArrayAdapter membersAdapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, getEveryOneBesidesYou()){
+            @Override
+            public View getView(int position, View convertView, ViewGroup parent) {
+                TextView textView = (TextView) super.getView(position, convertView, parent);
+                textView.setTextColor(Color.WHITE);
+                return textView;
+            }
+        };
         if(membersAdapter.getCount() == 0)
             emptyTv.setVisibility(View.VISIBLE);
         else
             emptyTv.setVisibility(View.GONE);
+
         membersListView.setAdapter(membersAdapter);
         Glide.with(GroupDetailActivity.this).load(groupModel.getPic()).apply(new RequestOptions().placeholder(R.drawable.placeholder).error(R.drawable.unknown)).into(groupIv);
     }
@@ -85,13 +98,12 @@ public class GroupDetailActivity extends AppCompatActivity implements FirebaseHe
         if(groupModel.getAdmin().equals(user.name))
             return Arrays.asList(membersIngroup);
         else {
-            if(!groupModel.getAdmin().isEmpty())
-                members.add(groupModel.getAdmin());
             for (int i = 0; i < membersIngroup.length; i++) {
                 if (!membersIngroup[i].equals(user.name)) {
                     members.add(membersIngroup[i]);
                 }
             }
+            System.out.println("Members found "+members.size());
             return members;
         }
     }
@@ -100,6 +112,18 @@ public class GroupDetailActivity extends AppCompatActivity implements FirebaseHe
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.chat_detail_menu, menu);
         return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+        switch (id){
+            case android.R.id.home:
+                finish();
+                break;
+        }
+
+        return super.onOptionsItemSelected(item);
     }
 
     @Override
