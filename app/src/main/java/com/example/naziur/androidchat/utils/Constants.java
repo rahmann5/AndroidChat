@@ -25,6 +25,7 @@ public class Constants {
 
     public static String generateMediaText (Context c, String type, String wishMessage) {
         switch (type) {
+            case Constants.MESSAGE_TYPE_SYSTEM :
             case Constants.MESSAGE_TYPE_TEXT :
                 return wishMessage;
 

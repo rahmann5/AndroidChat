@@ -56,6 +56,7 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
     private ProgressDialog progressBar;
     private Map<String, ValueEventListener> grpValueEventListeners;
     private Map<String, ValueEventListener> grpMsgValueEventListeners;
+    private SimpleDateFormat formatter;
     FirebaseHelper firebaseHelper;
 
     public GroupSessionFragment() {
@@ -76,7 +77,9 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
         allGroupKeys = new ArrayList<>();
         emptyChats = (TextView) rootView.findViewById(R.id.no_chats);
         recyclerView = rootView.findViewById(R.id.all_chats_list);
+        formatter = new SimpleDateFormat(getString(R.string.simple_date));
         progressBar = new ProgressDialog(getActivity(), R.layout.progress_dialog, true);
+        db = new ContactDBHelper(getActivity());
         setUpAdapterWithRecyclerView();
         return rootView;
     }
@@ -174,7 +177,7 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
 
                             case 2 : // leave/delete Chat
                                 firebaseHelper.toggleListenerFor("groups", "groupKey" , chat.getChatKey(), grpValueEventListeners.get(chat.getChatKey()), false, false);
-                                firebaseHelper.exitGroup(chat.getChatKey(), user.name, chat.getAdmin().equals(user.name));
+                                firebaseHelper.exitGroup(chat, user.name, chat.getAdmin().equals(user.name));
                                 break;
 
                         }
@@ -207,10 +210,10 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
         super.onStop();
     }
 
-    private void updateUserChatKeys (String chatKeyToRemove) {
-        allGroupKeys.remove(chatKeyToRemove);
+    private void updateUserChatKeys (Chat chatToRemove) {
+        allGroupKeys.remove(chatToRemove.getChatKey());
         String updatedKeys = getChatKeysAsString();
-        firebaseHelper.updateChatKeys(user, updatedKeys, null, true);
+        firebaseHelper.updateChatKeys(user, updatedKeys, chatToRemove, true);
     }
 
     private void updateGroupModel(FirebaseGroupModel grpModel) {
@@ -262,18 +265,18 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
         } else if (tag.equals("exitGroup")) {
             switch (condition) {
                 case FirebaseHelper.CONDITION_1 :
-                    updateUserChatKeys(container.getString());
+                    updateUserChatKeys(container.getChat());
                     break;
 
                 case FirebaseHelper.CONDITION_2 : // failure reattach listener for that previously removed group listener
-                    firebaseHelper.toggleListenerFor("groups", "groupKey" , container.getString(), grpValueEventListeners.get(container.getString()), true, false);
+                    firebaseHelper.toggleListenerFor("groups", "groupKey" , container.getChat().getChatKey(), grpValueEventListeners.get(container.getString()), true, false);
                     break;
             }
         } else if (tag.equals("updateChatKeys")) {
             switch (condition) {
                 case FirebaseHelper.CONDITION_1 :
                     System.out.println("deleteGroup");
-                    firebaseHelper.deleteGroup(container.getString());
+                    firebaseHelper.deleteGroup(container.getChat().getChatKey());
                     break;
 
                 case FirebaseHelper.CONDITION_2 :
@@ -284,6 +287,7 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
             switch (condition) {
                 case FirebaseHelper.CONDITION_1 :
                     // clean delete all messages + images
+                    System.out.println("Collecting images and messages for group " + container.getString());
                     firebaseHelper.collectAllImagesForDeletionThenDeleteRelatedMessages("group", container.getString());
                     break;
 
@@ -294,6 +298,7 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
         } else if (tag.equals("collectAllImagesForDeletionThenDeleteRelatedMessages")) {
             switch (condition) {
                 case FirebaseHelper.CONDITION_1:
+                    System.out.println("Deleting images and messages for group " + container.getString());
                     Network.deleteUploadImages(firebaseHelper, container.getStringList(), container.getString(), "group");
                     break;
             }
@@ -332,10 +337,8 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
                         admin = allGroups.get(index).getAdmin();
                     }
                     FirebaseMessageModel groupMessageModel = container.getMsgModel();
-                    db = new ContactDBHelper(getActivity());
                     String senderName = (groupMessageModel.getSenderName().equals(user.name)) ? user.profileName : db.getProfileNameAndPic(groupMessageModel.getSenderName())[0];
                     db.close();
-                    SimpleDateFormat formatter = new SimpleDateFormat(getString(R.string.simple_date));
                     String dateString = formatter.format(new Date(groupMessageModel.getCreatedDateLong()));
                     Chat chat = new Chat(title, senderName, groupMessageModel.getText(), picUrl, dateString, groupKey, groupMessageModel.getMediaType(), admin);
                     myChatsdapter.addChat(chat);

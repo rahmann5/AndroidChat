@@ -252,7 +252,7 @@ public class GroupChatActivity extends AppCompatActivity implements ImageViewDia
         TextView textView = (TextView) actionBar.getCustomView().findViewById(R.id.group_members);
         String[] membersArr = getMembersThatNeedToReceiveMessage();
         String members = "You";
-        if(membersArr.length>0)members+=",";
+        if(membersArr.length>0)members+=", ";
         for(int i =0 ; i < membersArr.length; i++ ){
             if(db.isUserAlreadyInContacts(membersArr[i]))
                 members += db.getProfileNameAndPic(membersArr[i])[0];

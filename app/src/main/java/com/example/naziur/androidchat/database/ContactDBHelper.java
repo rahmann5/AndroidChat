@@ -92,7 +92,7 @@ public class ContactDBHelper extends SQLiteOpenHelper {
     public String[] getProfileNameAndPic(String username){
         String profileName = username;
         String profilePic = "";
-        SQLiteDatabase db = getWritableDatabase();
+        SQLiteDatabase db = getReadableDatabase();
 
         String[] projection = {
                 MyContactsContract.MyContactsContractEntry.COLUMN_PROFILE,

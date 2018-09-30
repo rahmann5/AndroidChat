@@ -126,6 +126,7 @@ public class Network {
                 }
             });
         } else {
+            System.out.println("Clean deleting all messages for" + chatKey);
             firebaseHelper.cleanDeleteAllMessages(loc, chatKey);
         }
 

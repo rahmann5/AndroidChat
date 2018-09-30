@@ -1013,16 +1013,16 @@ public class FirebaseHelper {
         });
     }
 
-    public void exitGroup (final String chatKey, final String leavingUser, final boolean admin) {
+    public void exitGroup (final Chat chat, final String leavingUser, final boolean admin) {
         DatabaseReference reference = database.getReference("groups");
-        reference.orderByChild("groupKey").equalTo(chatKey).getRef().runTransaction(new Transaction.Handler() {
+        reference.orderByChild("groupKey").equalTo(chat.getChatKey()).getRef().runTransaction(new Transaction.Handler() {
             @Override
             public Transaction.Result doTransaction(MutableData mutableData) {
                 for (MutableData data : mutableData.getChildren()) {
                     FirebaseGroupModel groupModel = data.getValue(FirebaseGroupModel.class);
 
                     if (groupModel == null) return Transaction.success(mutableData);
-                    if (groupModel.getGroupKey().equals(chatKey)) {
+                    if (groupModel.getGroupKey().equals(chat.getChatKey())) {
                         String newMembers = groupModel.getMembers();
                         if (admin) {
                             groupModel.setAdmin("");
@@ -1048,7 +1048,7 @@ public class FirebaseHelper {
             @Override
             public void onComplete(DatabaseError databaseError, boolean b, DataSnapshot dataSnapshot) {
                 Container container = new Container();
-                container.setString(chatKey); // key to remove
+                container.setChat(chat); // key to remove
                 if (databaseError == null) {
                     listener.onCompleteTask("exitGroup", CONDITION_1, container);
                 } else {
@@ -1061,6 +1061,7 @@ public class FirebaseHelper {
     public void deleteGroup (final String chatKey) {
         DatabaseReference groupRef = database.getReference("groups").orderByChild("groupKey").equalTo(chatKey).getRef();
         groupRef.runTransaction(new Transaction.Handler() {
+            boolean isDeleted = false;
             @Override
             public Transaction.Result doTransaction(MutableData mutableData) {
                 for (MutableData data : mutableData.getChildren()) {
@@ -1070,6 +1071,7 @@ public class FirebaseHelper {
 
                     if (groupModel.getGroupKey().equals(chatKey)) {
                         if (groupModel.getAdmin().equals("") && groupModel.getMembers().equals("")) { // no admin and members left
+                            isDeleted = true;
                             groupModel = null;
                             data.setValue(groupModel);
                             break;
@@ -1086,7 +1088,7 @@ public class FirebaseHelper {
                 if (databaseError == null) {
                     Container container = new Container();
                     container.setString(chatKey); // key to remove
-                    if (!dataSnapshot.exists()) {
+                    if (isDeleted) {
                         // complete delete
                         listener.onCompleteTask("deleteGroup", CONDITION_1, container);
                     } else {
