@@ -51,13 +51,13 @@
         android:background="@drawable/top_border"
         android:fillViewport="true"
         android:paddingTop="30dp"
+        android:paddingLeft="10dp"
         >
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:orientation="vertical"
-            android:paddingLeft="10dp">
+            android:orientation="vertical">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -118,7 +118,6 @@
                     android:background="@color/login_btn"
                     android:layout_alignParentRight="true"
                     android:layout_marginRight="10dp"
-                    android:visibility="gone"
                     />
 
             </RelativeLayout>
@@ -210,9 +209,17 @@
 
             </LinearLayout>
 
+            <Button
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/save_btn"
+                android:textColor="@color/white"
+                android:background="@color/login_btn"
+                android:textSize="18sp"
+                />
+
         </LinearLayout>
 
     </android.support.v4.widget.NestedScrollView>
-    
 
 </android.support.design.widget.CoordinatorLayout>

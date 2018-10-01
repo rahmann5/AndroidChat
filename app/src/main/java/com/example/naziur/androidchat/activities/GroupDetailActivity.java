@@ -9,6 +9,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -65,16 +66,31 @@ public class GroupDetailActivity extends AppCompatActivity implements FirebaseHe
 
     private void populateWithGroupData(){
         getSupportActionBar().setTitle(groupModel.getTitle());
-        TextView titleTv = (TextView) findViewById(R.id.title_tv);
         TextView adminTv = (TextView) findViewById(R.id.admin_tv);
-        TextView emptyTv = (TextView) findViewById(R.id.empty_view);
-        ImageView groupIv = (ImageView) findViewById(R.id.expandedImage);
-        ListView membersListView = (ListView) findViewById(R.id.members_list_view);
-        titleTv.setText(groupModel.getTitle());
         if(!groupModel.getAdmin().isEmpty())
             adminTv.setText(groupModel.getAdmin());
         else
             adminTv.setText(getResources().getString(R.string.no_admin));
+
+        if(!groupModel.getAdmin().equals(user.name)) {
+            TextView titleTv = (TextView) findViewById(R.id.title_tv);
+            titleTv.setText(groupModel.getTitle());
+        } else {
+            final EditText titleEt = (EditText) findViewById(R.id.group_name_et);
+            ImageView editIv = (ImageView) findViewById(R.id.edit_btn_group_title);
+            editIv.setVisibility(View.VISIBLE);
+            editIv.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                   titleEt.setEnabled(titleEt.isEnabled() ? false : true);
+                }
+            });
+        }
+
+        TextView emptyTv = (TextView) findViewById(R.id.empty_view);
+        ImageView groupIv = (ImageView) findViewById(R.id.expandedImage);
+        ListView membersListView = (ListView) findViewById(R.id.members_list_view);
+
         ArrayAdapter membersAdapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, getEveryOneBesidesYou()){
             @Override
             public View getView(int position, View convertView, ViewGroup parent) {

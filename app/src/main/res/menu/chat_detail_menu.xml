@@ -17,8 +17,15 @@
     <item
         android:id="@+id/action_info"
         android:orderInCategory="200"
-        android:title="info"
-        app:showAsAction="ifRoom"
+        android:title="Add"
+        app:showAsAction="always"
         android:icon="@drawable/ic_friend"/>
+
+    <item
+        android:id="@+id/save_change"
+        android:orderInCategory="200"
+        android:title="Save"
+        app:showAsAction="always"
+        />
 
 </menu>
