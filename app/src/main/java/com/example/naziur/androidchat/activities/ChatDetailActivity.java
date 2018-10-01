@@ -225,7 +225,7 @@ public class ChatDetailActivity extends AppCompatActivity implements FirebaseHel
         statusTv.setText("Status: " + userBeingViewed.getStatus());
         mToolbar.setTitle(userBeingViewed.getProfileName());
         setSupportActionBar(mToolbar);
-        getSupportActionBar().setDisplayShowTitleEnabled(true);
+        getSupportActionBar().setDisplayShowTitleEnabled(false);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         invalidateOptionsMenu();
         Glide.with(ChatDetailActivity.this).load(userBeingViewed.getProfilePic()).apply(new RequestOptions().placeholder(R.drawable.placeholder).error(R.drawable.unknown)).into(profilePicIv);
