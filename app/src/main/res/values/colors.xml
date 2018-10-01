@@ -27,4 +27,8 @@
     <color name="main_theme_1">#6fd5b6</color>
     <color name="main_theme_2">#74cca9</color>
 
+    <!-- colors -->
+    <color name="primary">#785447</color>
+    <color name="primaryDark">#5B3F36</color>
+
 </resources>
