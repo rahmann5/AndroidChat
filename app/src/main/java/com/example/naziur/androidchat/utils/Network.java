@@ -12,6 +12,7 @@ import android.net.NetworkInfo;
 import android.widget.Toast;
 
 import com.example.naziur.androidchat.activities.ChatActivity;
+import com.example.naziur.androidchat.database.ContactDBHelper;
 import com.example.naziur.androidchat.database.FirebaseHelper;
 import com.example.naziur.androidchat.models.Contact;
 import com.example.naziur.androidchat.models.FirebaseGroupModel;
@@ -269,4 +270,21 @@ public class Network {
         firebaseMessageModel.setText(text);
         return firebaseMessageModel;
     }
+
+    public static String getMembersText (Context context, String[] members, String admin) {
+        ContactDBHelper db = new ContactDBHelper(context);
+        User user = User.getInstance();
+        String newMembersList = "you";
+        if (!admin.equals(user.name)) {
+            newMembersList += ", "+db.getProfileInfoIfExists(admin)[0];
+        }
+        for (String m : members) {
+            if (!m.equals(user.name)) {
+                newMembersList += ", " +db.getProfileInfoIfExists(m)[0];
+            }
+        }
+        db.close();
+        return newMembersList;
+    }
+
 }

@@ -125,6 +125,13 @@ public class ContactDBHelper extends SQLiteOpenHelper {
         return new String[]{profileName, profilePic};
     }
 
+    public String[] getProfileInfoIfExists (String username) {
+        if (isUserAlreadyInContacts(username)){
+            return getProfileNameAndPic(username);
+        }
+        return new String[]{username};
+    }
+
     public int removeContact (String username){
         SQLiteDatabase db = getWritableDatabase();
         String where = MyContactsContract.MyContactsContractEntry.COLUMN_USERNAME  + " = ?";

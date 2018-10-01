@@ -69,4 +69,12 @@
     <!-- GroupDetail Activity -->
     <string name="no_admin">No Admin Found</string>
 
+    <!-- Activity titles -->
+    <string name="title_create_group">Create Group</string>
+    <string name="title_notifications">Notifications</string>
+    <string name="title_all_chats">All Chats</string>
+    <string name="title_contacts">Contacts</string>
+    <string name="title_login">Login</string>
+    <string name="title_settings">Settings</string>
+
 </resources>

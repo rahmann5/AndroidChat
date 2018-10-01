@@ -76,6 +76,7 @@ public class GroupChatActivity extends AppCompatActivity implements ImageViewDia
     FirebaseHelper firebaseHelper;
     private ImageViewDialogFragment imageViewDialog;
     private ContactDBHelper db;
+    private Menu menu;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -257,11 +258,7 @@ public class GroupChatActivity extends AppCompatActivity implements ImageViewDia
             if(i < membersArr.length && members.length() > 0){
                 members += ", ";
             }
-
-            if(db.isUserAlreadyInContacts(membersArr[i]))
-                members += db.getProfileNameAndPic(membersArr[i])[0];
-            else
-                members += membersArr[i];
+            members += db.getProfileInfoIfExists(membersArr[i])[0];
         }
         textView.setText(members);
         actionBar.getCustomView().findViewById(R.id.group_members).setVisibility(View.VISIBLE);
@@ -270,6 +267,7 @@ public class GroupChatActivity extends AppCompatActivity implements ImageViewDia
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.group_chat_menu, menu);
+        this.menu = menu;
         return true;
     }
 
@@ -286,95 +284,13 @@ public class GroupChatActivity extends AppCompatActivity implements ImageViewDia
                 intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                 startActivity(intent);
                 break;
-            case R.id.leave_group :
-                leaveGroup();
+            case R.id.admin :
+                firebaseHelper.updateAdmin(user.name, groupKey);
                 break;
 
         }
 
         return super.onOptionsItemSelected(item);
-    }
-
-    private void leaveGroup () {
-        DatabaseReference groupRef = database.getReference("groups").orderByChild("groupKey").equalTo(groupKey).getRef();
-        groupRef.runTransaction(new Transaction.Handler() {
-            @Override
-            public Transaction.Result doTransaction(MutableData mutableData) {
-
-                for (MutableData data : mutableData.getChildren()) {
-                    FirebaseGroupModel groupData = data.getValue(FirebaseGroupModel.class);
-
-                    if (groupData == null) return Transaction.success(mutableData);
-
-                    if (groupData.getGroupKey().equals(groupKey)) {
-                        String [] membersNames = groupData.getMembers().split(",");
-                        String newMembersList = "";
-                        for (String username : membersNames) {
-                            if (!username.equals(user.name))
-                                newMembersList += (newMembersList.equals("")) ? username :  "," + username ;
-                        }
-
-                        groupData.setMembers(newMembersList);
-                        data.setValue(groupData);
-                    }
-
-                }
-
-                return Transaction.success(mutableData);
-            }
-
-            @Override
-            public void onComplete(DatabaseError databaseError, boolean b, DataSnapshot dataSnapshot) {
-                if (databaseError == null) {
-                    leaveGroupFromUser();
-                } else {
-                    Toast.makeText(GroupChatActivity.this, "Error leaving group", Toast.LENGTH_SHORT).show();
-                    Log.i(TAG, databaseError.getMessage());
-                }
-            }
-        });
-    }
-
-    private void leaveGroupFromUser(){
-        DatabaseReference userRef = database.getReference("users").orderByChild("username").equalTo(user.name).getRef();
-        userRef.runTransaction(new Transaction.Handler() {
-            @Override
-            public Transaction.Result doTransaction(MutableData mutableData) {
-
-                for(MutableData data : mutableData.getChildren()) {
-                    FirebaseUserModel firebaseUser = data.getValue(FirebaseUserModel.class);
-
-                    if (firebaseUser == null) return Transaction.success(mutableData);
-
-                    if (firebaseUser.getUsername().equals(user.name)) {
-                        String [] groupsKeys = firebaseUser.getGroupKeys().split(",");
-                        String newKeys = "";
-                        for (String gKey : groupsKeys) {
-                            if (!gKey.equals(groupKey)) {
-                                newKeys += (newKeys.equals(""))? gKey : ","  + gKey;
-                            }
-                        }
-
-                        firebaseUser.setGroupKeys(newKeys);
-
-                        data.setValue(firebaseUser);
-                    }
-
-                }
-
-                return Transaction.success(mutableData);
-            }
-
-            @Override
-            public void onComplete(DatabaseError databaseError, boolean b, DataSnapshot dataSnapshot) {
-                if (databaseError == null){
-                    finish();
-                    Toast.makeText(GroupChatActivity.this, "Successfully left group", Toast.LENGTH_SHORT).show();
-                } else {
-                    Log.i(TAG, databaseError.getMessage());
-                }
-            }
-        });
     }
 
     public void updateListView() {
@@ -469,6 +385,13 @@ public class GroupChatActivity extends AppCompatActivity implements ImageViewDia
                         List<String> members = Arrays.asList(getMembersThatNeedToReceiveMessage());
                         if(members.size() > 0)
                             firebaseHelper.getDeviceTokensFor(members, groupModel.getTitle(), groupModel.getGroupKey());
+                        if (menu != null) {
+                            if (groupModel.getAdmin().equals("")) {
+                                menu.findItem(R.id.admin).setVisible(true);
+                            } else {
+                                menu.findItem(R.id.admin).setVisible(false);
+                            }
+                        }
                         break;
                 }
                 break;
@@ -508,6 +431,10 @@ public class GroupChatActivity extends AppCompatActivity implements ImageViewDia
                         break;
                 }
                 break;
+            case "updateAdmin" :
+                Toast.makeText(this, "New admin is " + container.getString(), Toast.LENGTH_SHORT).show();
+                break;
+
         }
     }
 
@@ -521,6 +448,9 @@ public class GroupChatActivity extends AppCompatActivity implements ImageViewDia
                 break;
             case "createMessageEventListener":
                 progressBar.toggleDialog(false);
+                break;
+            case "updateAdmin":
+                Toast.makeText(this, "Failed to become admin", Toast.LENGTH_SHORT).show();
                 break;
         }
         Log.i(TAG, tag+" "+databaseError.getMessage());

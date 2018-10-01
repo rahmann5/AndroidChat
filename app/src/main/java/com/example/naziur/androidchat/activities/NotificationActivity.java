@@ -52,7 +52,6 @@ public class NotificationActivity extends AppCompatActivity implements Notificat
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_notification);
-        setTitle("Notifications");
         allNotifications = new ArrayList<>();
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowHomeEnabled(true);

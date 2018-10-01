@@ -69,8 +69,6 @@ public class MyContactsActivity extends AppCompatActivity implements AddContactD
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_my_contacts);
-
-        setTitle("My Contacts");
         firebaseHelper = FirebaseHelper.getInstance();
         firebaseHelper.setFirebaseHelperListener(this);
         db = new ContactDBHelper(getApplicationContext());

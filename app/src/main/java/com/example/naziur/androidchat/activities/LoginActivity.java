@@ -70,7 +70,7 @@ public class LoginActivity extends AppCompatActivity implements FirebaseHelper.F
 
     public void btnLoginTapped(View view) {
 
-        if (Network.isInternetAvailable(this, true)) return;
+        if (!Network.isInternetAvailable(this, true)) return;
 
         final String strUsername = editTextUsername.getText().toString().trim();
         final String strProfileName = editTextProfileName.getText().toString().trim();

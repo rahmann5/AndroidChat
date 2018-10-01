@@ -12,6 +12,7 @@ import com.bumptech.glide.request.RequestOptions;
 import com.example.naziur.androidchat.R;
 import com.example.naziur.androidchat.models.FirebaseGroupModel;
 import com.example.naziur.androidchat.models.User;
+import com.example.naziur.androidchat.utils.Network;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -66,23 +67,11 @@ public class AllGroupsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         }
 
         public void bind (Context context, FirebaseGroupModel group) {
-            membersTv.setText(getMembersText(group.getMembers().split(","), group.getAdmin()));
+            membersTv.setText(Network.getMembersText(context, group.getMembers().split(","), group.getAdmin()));
             titleTv.setText(group.getTitle());
             Glide.with(context).load(group.getPic()).apply(new RequestOptions().placeholder(R.drawable.placeholder).error(R.drawable.unknown)).into(groupPicIv);
         }
 
-        private String getMembersText (String[] members, String admin) {
-            String newMembersList = "you";
-            if (!admin.equals(user.name)) {
-                newMembersList += ", "+admin;
-            }
-            for (String m : members) {
-                if (!m.equals(user.name)) {
-                    newMembersList += ", " +m;
-                }
-            }
-            return newMembersList;
-        }
 
 
     }
