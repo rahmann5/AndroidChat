@@ -1,47 +1,64 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical" android:layout_width="match_parent"
+    android:orientation="horizontal" android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@color/notification_bck">
+    android:background="@drawable/rounded_shadow"
+    android:gravity="center">
 
-    <TextView
-        android:id="@+id/notification_msg"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:padding="10dp"
-        android:textSize="16sp"
-        android:textColor="@color/white"
-        />
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="0.8"
+        android:orientation="vertical"
+        >
 
-   <LinearLayout
-       android:layout_width="match_parent"
+        <TextView
+            android:id="@+id/notification_msg"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="10dp"
+            android:text="A very long invite message to a friend that goes."
+            android:textSize="14sp" />
+
+        <TextView
+            android:id="@+id/notification_date"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="10dp"
+            android:text="08/09/2018"
+            android:textSize="12sp"
+            />
+
+    </LinearLayout>
+
+    <LinearLayout
+       android:layout_width="0dp"
        android:layout_height="wrap_content"
-       android:orientation="horizontal"
-       android:padding="1dp">
+       android:layout_weight="0.2"
+       android:orientation="vertical"
+       android:padding="2dp"
+        android:gravity="right">
 
-       <android.support.v7.widget.AppCompatButton
+       <ImageButton
            android:id="@+id/notification_accept"
-           android:layout_width="0dp"
+           android:layout_width="wrap_content"
            android:layout_height="wrap_content"
-           android:layout_weight="0.5"
-           android:text="Accept"
-           android:background="@drawable/rounded_shadow"
-           android:layout_margin="1dp"
-           android:textColor="@color/green"
+           android:layout_marginBottom="1dp"
+           android:src="@drawable/ic_action_accept"
+           android:background="@color/main_theme_1"
+           android:padding="10dp"
            />
 
-       <android.support.v7.widget.AppCompatButton
+       <ImageButton
            android:id="@+id/notification_reject"
-           android:layout_width="0dp"
+           android:layout_width="wrap_content"
            android:layout_height="wrap_content"
-           android:layout_weight="0.5"
-           android:text="Reject"
-           android:textColor="@color/red"
-           android:background="@drawable/rounded_shadow"
-           android:layout_margin="1dp"
+           android:layout_marginBottom="2dp"
+           android:src="@drawable/ic_action_reject"
+           android:background="@color/main_theme_1"
+           android:padding="10dp"
            />
 
    </LinearLayout>
-
 
 </LinearLayout>
