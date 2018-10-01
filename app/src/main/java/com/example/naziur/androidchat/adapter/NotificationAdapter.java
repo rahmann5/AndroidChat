@@ -63,19 +63,19 @@ public class NotificationAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
     private static class NotificationViewHolder extends RecyclerView.ViewHolder {
 
-        private TextView notificationMsg, notificationDate;
+        private TextView notificationTitle, notificationDate;
         private ImageButton accept, reject;
 
         public NotificationViewHolder(View itemView) {
             super(itemView);
-            notificationMsg = (TextView) itemView.findViewById(R.id.notification_msg);
+            notificationTitle = (TextView) itemView.findViewById(R.id.notification_title);
             notificationDate = (TextView) itemView.findViewById(R.id.notification_date);
             accept = (ImageButton) itemView.findViewById(R.id.notification_accept);
             reject = (ImageButton) itemView.findViewById(R.id.notification_reject);
         }
 
         void bind(final Notification notification, final int position, final OnItemClickListener listener, Context context) {
-            notificationMsg.setText(notification.getSender() + ": " + context.getResources().getString(R.string.invitation_message));
+            notificationTitle.setText(context.getString(R.string.invitation_title) + " " + notification.getSender());
             SimpleDateFormat formatter = new SimpleDateFormat(context.getString(R.string.simple_date));
             String dateString = formatter.format(new Date(notification.getCreatedDateLong()));
             notificationDate.setText(dateString);

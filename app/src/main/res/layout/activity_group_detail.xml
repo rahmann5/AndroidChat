@@ -115,7 +115,7 @@
                     android:layout_gravity="center_vertical"
                     android:scaleType="center"
                     android:src="@android:drawable/ic_menu_edit"
-                    android:background="@color/login_btn"
+                    android:background="@color/main_theme_1"
                     android:layout_alignParentRight="true"
                     android:layout_marginRight="10dp"
                     android:visibility="gone"

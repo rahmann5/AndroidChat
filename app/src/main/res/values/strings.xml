@@ -60,8 +60,8 @@
 
     <!-- Notification Activity -->
     <string name="empty_notification">No Pending Notification</string>
-
     <string name="invitation_message">Hey, want to join me for a chat.</string>
+    <string name="invitation_title">Invitation from</string>
 
     <string name="short_text">Hello</string>
     <string name="long_text">MAC Address - The physical address of the WAN port, as seen from the Internet. IP Address - The current WAN (Internet) IP Address. This field will be blank or 0.0.0.0 if the IP Address is assigned dynamically and there is no connection to Internet.</string>
