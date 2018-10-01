@@ -49,7 +49,6 @@ public class SessionActivity extends AppCompatActivity implements NetworkChangeR
         sessionFragmentPagerAdapter = new SessionFragmentPagerAdapter(getSupportFragmentManager());
 
         Toolbar mToolbar = (Toolbar) findViewById(R.id.toolbar);
-        mToolbar.setTitle("All Chats");
         setSupportActionBar(mToolbar);
 
         viewPager.setAdapter(sessionFragmentPagerAdapter);

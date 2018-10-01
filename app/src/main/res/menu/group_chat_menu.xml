@@ -7,8 +7,10 @@
         />
 
     <item
-        android:id="@+id/leave_group"
-        android:title="Leave Group"
+        android:id="@+id/admin"
+        android:title="Become Admin"
+        android:visible="false"
         />
+
 
 </menu>

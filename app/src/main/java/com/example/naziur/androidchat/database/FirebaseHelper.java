@@ -1131,6 +1131,41 @@ public class FirebaseHelper {
         });
     }
 
+    public void updateAdmin (final String newAdmin, final String chatKey) {
+        DatabaseReference groupRef = database.getReference("groups").orderByChild("groupKey").equalTo(chatKey).getRef();
+        groupRef.runTransaction(new Transaction.Handler() {
+            @Override
+            public Transaction.Result doTransaction(MutableData mutableData) {
+                for (MutableData data : mutableData.getChildren()) {
+                    FirebaseGroupModel groupModel = data.getValue(FirebaseGroupModel.class);
 
+                    if (groupModel == null) return Transaction.success(mutableData);
+
+                    if (groupModel.getGroupKey().equals(chatKey)) {
+                        if (groupModel.getAdmin().equals("")) {
+                            groupModel.setAdmin(newAdmin);
+                            data.setValue(groupModel);
+                            break;
+                        }
+
+                    }
+
+                }
+
+                return Transaction.success(mutableData);
+            }
+
+            @Override
+            public void onComplete(DatabaseError databaseError, boolean b, DataSnapshot dataSnapshot) {
+                if (databaseError == null) {
+                    Container container = new Container();
+                    container.setString(newAdmin);
+                    listener.onCompleteTask("updateAdmin", CONDITION_1, container);
+                } else {
+                    listener.onFailureTask("updateAdmin", databaseError);
+                }
+            }
+        });
+    }
 
 }

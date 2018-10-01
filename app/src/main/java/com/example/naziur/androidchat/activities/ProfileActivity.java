@@ -89,7 +89,7 @@ public class ProfileActivity extends AppCompatActivity implements FirebaseHelper
         db = new ContactDBHelper(getApplicationContext());
         progressBar = new ProgressDialog(ProfileActivity.this, R.layout.progress_dialog, true);
         FadingActionBarHelper helper = new FadingActionBarHelper()
-                .actionBarBackground(R.color.colorPrimaryDark)
+                .actionBarBackground(R.color.main_theme_2)
                 .headerLayout(R.layout.header)
                 .contentLayout(R.layout.activity_profile)
                 .allowHeaderTouchEvents(true);
