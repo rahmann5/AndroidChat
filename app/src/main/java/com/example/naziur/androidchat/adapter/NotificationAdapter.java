@@ -6,13 +6,17 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 
 import com.example.naziur.androidchat.R;
 import com.example.naziur.androidchat.models.Notification;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -59,19 +63,22 @@ public class NotificationAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
     private static class NotificationViewHolder extends RecyclerView.ViewHolder {
 
-        private TextView notificationMsg;
-        private AppCompatButton accept, reject;
+        private TextView notificationMsg, notificationDate;
+        private ImageButton accept, reject;
 
         public NotificationViewHolder(View itemView) {
             super(itemView);
             notificationMsg = (TextView) itemView.findViewById(R.id.notification_msg);
-            accept = (AppCompatButton) itemView.findViewById(R.id.notification_accept);
-            reject = (AppCompatButton) itemView.findViewById(R.id.notification_reject);
+            notificationDate = (TextView) itemView.findViewById(R.id.notification_date);
+            accept = (ImageButton) itemView.findViewById(R.id.notification_accept);
+            reject = (ImageButton) itemView.findViewById(R.id.notification_reject);
         }
 
         void bind(final Notification notification, final int position, final OnItemClickListener listener, Context context) {
             notificationMsg.setText(notification.getSender() + ": " + context.getResources().getString(R.string.invitation_message));
-
+            SimpleDateFormat formatter = new SimpleDateFormat(context.getString(R.string.simple_date));
+            String dateString = formatter.format(new Date(notification.getCreatedDateLong()));
+            notificationDate.setText(dateString);
             accept.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
