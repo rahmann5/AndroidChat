@@ -12,6 +12,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -46,7 +47,7 @@ public class NotificationActivity extends AppCompatActivity implements Notificat
     ValueEventListener notificationEvent;
     List<Notification> allNotifications;
     private FirebaseHelper firebaseHelper;
-    private TextView emptyText;
+    private LinearLayout empty;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,7 +59,7 @@ public class NotificationActivity extends AppCompatActivity implements Notificat
         LinearLayoutManager mLayoutManager = new LinearLayoutManager(this);
         firebaseHelper = FirebaseHelper.getInstance();
         firebaseHelper.setFirebaseHelperListener(this);
-        emptyText = (TextView) findViewById(R.id.empty_notifications);
+        empty = (LinearLayout) findViewById(R.id.empty);
         notificationRecycler = (RecyclerView) findViewById(R.id.notification_recycler);
         notificationRecycler.setLayoutManager(mLayoutManager);
         DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(this,
@@ -82,12 +83,12 @@ public class NotificationActivity extends AppCompatActivity implements Notificat
     private void toggleEmpty (List<Notification> allNotifications) {
        if (allNotifications != null) {
            if (allNotifications.isEmpty()) {
-               emptyText.setVisibility(View.VISIBLE);
+               empty.setVisibility(View.VISIBLE);
            } else {
-               emptyText.setVisibility(View.GONE);
+               empty.setVisibility(View.GONE);
            }
        } else {
-           emptyText.setVisibility(View.VISIBLE);
+           empty.setVisibility(View.VISIBLE);
        }
     }
 

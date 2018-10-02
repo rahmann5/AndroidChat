@@ -54,20 +54,22 @@
             android:launchMode="singleTop" />
         <activity
             android:name=".activities.SessionActivity"
-            android:theme="@style/AppTheme.NoActionBar"
-            android:label="@string/title_all_chats"/>
-        <activity android:name=".activities.MyContactsActivity"
-            android:label="@string/title_contacts"/>
+            android:label="@string/title_all_chats"
+            android:theme="@style/AppTheme.NoActionBar" />
+        <activity
+            android:name=".activities.MyContactsActivity"
+            android:label="@string/title_contacts" />
         <activity
             android:name=".activities.ProfileActivity"
             android:theme="@style/AppTheme.Transparent" />
         <activity
             android:name=".activities.ChatDetailActivity"
             android:theme="@style/AppTheme.NoActionBar" />
-        <activity android:name=".activities.LoginActivity"
+        <activity
+            android:name=".activities.LoginActivity"
+            android:label="@string/title_login"
             android:theme="@style/AppTheme.NoActionBar"
-            android:windowSoftInputMode="stateHidden"
-            android:label="@string/title_login"/>
+            android:windowSoftInputMode="stateHidden" />
         <!-- Set custom default icon. This is used when no icon is set for incoming notification messages. -->
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"
@@ -80,13 +82,17 @@
             android:name="com.google.firebase.messaging.default_notification_color"
             android:resource="@color/colorPrimaryDark" />
 
-        <activity android:name=".activities.GroupCreatorActivity"
-            android:label="@string/title_create_group"/>
+        <activity
+            android:name=".activities.GroupCreatorActivity"
+            android:label="@string/title_create_group" />
         <activity android:name=".activities.GroupChatActivity" />
-        <activity android:name=".activities.NotificationActivity"
-            android:label="@string/title_notifications"/>
-        <activity android:name=".activities.GroupDetailActivity"
-            android:theme="@style/AppTheme.NoActionBar"/>
+        <activity
+            android:name=".activities.NotificationActivity"
+            android:label="@string/title_notifications" />
+        <activity
+            android:name=".activities.GroupDetailActivity"
+            android:theme="@style/AppTheme.NoActionBar" />
+        <activity android:name=".activities.SettingsActivity"></activity>
     </application>
 
 </manifest>

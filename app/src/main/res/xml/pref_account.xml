@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <SwitchPreference
+        android:defaultValue="true"
+        android:key="auto_login_user"
+        android:summary="@string/pref_desc_auto_login"
+        android:title="@string/pref_title_auto_login" />
+
+
+</PreferenceScreen>

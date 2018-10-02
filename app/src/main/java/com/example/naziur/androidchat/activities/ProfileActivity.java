@@ -3,6 +3,7 @@ package com.example.naziur.androidchat.activities;
 
 import android.content.Intent;
 import android.database.Cursor;
+import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -191,8 +192,13 @@ public class ProfileActivity extends AppCompatActivity implements FirebaseHelper
 
 
     private void getGroupInfo (String key) {
-        ValueEventListener userListener = firebaseHelper.getValueEventListener(key, FirebaseHelper.CONDITION_3, FirebaseHelper.NON_CONDITION, FirebaseHelper.NON_CONDITION, FirebaseGroupModel.class);
-        firebaseHelper.toggleListenerFor("groups", "groupKey" , key, userListener, true, true); //  single event
+        if (Network.isInternetAvailable(this, true)) {
+            ValueEventListener userListener = firebaseHelper.getValueEventListener(key, FirebaseHelper.CONDITION_3, FirebaseHelper.NON_CONDITION, FirebaseHelper.NON_CONDITION, FirebaseGroupModel.class);
+            firebaseHelper.toggleListenerFor("groups", "groupKey" , key, userListener, true, true); //  single event
+        } else {
+            toggleEmptyState(emptyGroupsList, groupsAdapter);
+        }
+
     }
 
 
@@ -221,7 +227,10 @@ public class ProfileActivity extends AppCompatActivity implements FirebaseHelper
             }
 
         } finally {
-            if (!hasInternet) Toast.makeText(this, "Data maybe outdated", Toast.LENGTH_LONG).show();
+            if (!hasInternet) {
+                Toast.makeText(this, "Data maybe outdated", Toast.LENGTH_LONG).show();
+            }
+            toggleEmptyState(emptyContactsList, contactsAdapter);
             c.close();
         }
     }
@@ -409,6 +418,11 @@ public class ProfileActivity extends AppCompatActivity implements FirebaseHelper
         switch (tag) {
             case "updateLocalContactsFromFirebase" :
                 toggleEmptyState(emptyContactsList, contactsAdapter);
+                break;
+
+            case "getValueEventListener" :
+                toggleEmptyState(emptyContactsList, contactsAdapter);
+                toggleEmptyState(emptyGroupsList, groupsAdapter);
                 break;
 
             case "updateUserInfo" :

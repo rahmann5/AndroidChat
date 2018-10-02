@@ -1,68 +1,78 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="horizontal" android:layout_width="match_parent"
+<android.support.v7.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@drawable/rounded_shadow"
-    android:gravity="center">
+    cardElevation="6dp">
 
-    <LinearLayout
-        android:layout_width="0dp"
-        android:layout_height="match_parent"
-        android:layout_weight="0.8"
-        android:orientation="vertical"
-        >
-        <TextView
-            android:id="@+id/notification_title"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:padding="10dp"
-            android:text=""
-            android:textStyle="bold"
-            android:textSize="14sp" />
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:padding="10dp"
-            android:text="@string/invitation_message"
-            android:textSize="14sp" />
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:orientation="horizontal" android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center">
 
-        <TextView
-            android:id="@+id/notification_date"
-            android:layout_width="match_parent"
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="0.8"
+            android:orientation="vertical"
+            android:padding="5dp"
+            android:gravity="center_vertical"
+            >
+            <TextView
+                android:id="@+id/notification_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Invitation from john"
+                android:padding="4dp"
+                android:textStyle="bold"
+                android:textSize="14sp" />
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="4dp"
+                android:text="@string/invitation_message"
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/notification_date"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="4dp"
+                android:text="08/07/1995"
+                android:textSize="12sp"
+                />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:padding="10dp"
-            android:text=""
-            android:textSize="12sp"
-            />
+            android:layout_weight="0.2"
+            android:orientation="vertical"
+            android:gravity="right"
+            android:paddingBottom="1dp"
+            >
+
+            <ImageButton
+                android:id="@+id/notification_accept"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="1dp"
+                android:src="@drawable/ic_thumb_up_green"
+                android:background="@color/main_theme_1"
+                android:padding="10dp"
+                />
+
+            <ImageButton
+                android:id="@+id/notification_reject"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/ic_thumb_down"
+                android:background="@color/main_theme_1"
+                android:padding="10dp"
+                />
+
+        </LinearLayout>
 
     </LinearLayout>
 
-    <LinearLayout
-       android:layout_width="0dp"
-       android:layout_height="wrap_content"
-       android:layout_weight="0.2"
-       android:orientation="vertical"
-        android:gravity="right">
-
-       <ImageButton
-           android:id="@+id/notification_accept"
-           android:layout_width="wrap_content"
-           android:layout_height="wrap_content"
-           android:layout_marginBottom="1dp"
-           android:src="@drawable/ic_thumb_up_green"
-           android:background="@color/main_theme_1"
-           android:padding="10dp"
-           />
-
-       <ImageButton
-           android:id="@+id/notification_reject"
-           android:layout_width="wrap_content"
-           android:layout_height="wrap_content"
-           android:src="@drawable/ic_thumb_down"
-           android:background="@color/main_theme_1"
-           android:padding="10dp"
-           />
-
-   </LinearLayout>
-
-</LinearLayout>
+</android.support.v7.widget.CardView>

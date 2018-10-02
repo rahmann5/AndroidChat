@@ -15,6 +15,7 @@ import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -61,7 +62,7 @@ public class MyContactsActivity extends AppCompatActivity implements AddContactD
     private ContactDBHelper db;
     private RecyclerView myContactsRecycler;
     private MyContactsAdapter myContactsAdapter;
-    private TextView emptyState;
+    private LinearLayout emptyState;
     private User user = User.getInstance();
     private ProgressDialog progressBar;
     FirebaseHelper firebaseHelper;
@@ -74,7 +75,7 @@ public class MyContactsActivity extends AppCompatActivity implements AddContactD
         db = new ContactDBHelper(getApplicationContext());
         myContactsRecycler = (RecyclerView) findViewById(R.id.contacts_recycler);
         progressBar = new ProgressDialog(MyContactsActivity.this, R.layout.progress_dialog, true);
-        emptyState = (TextView) findViewById(R.id.empty_contacts);
+        emptyState = (LinearLayout) findViewById(R.id.empty);
         FloatingActionButton floatingActionButton  = (FloatingActionButton) findViewById(R.id.add_contact);
         floatingActionButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -112,17 +113,17 @@ public class MyContactsActivity extends AppCompatActivity implements AddContactD
 
         if (c != null && c.getCount() > 0) {
             updateExistingContacts(c);
-            emptyState.setVisibility(View.GONE);
         } else {
-            emptyState.setVisibility(View.VISIBLE);
             myContactsAdapter = new MyContactsAdapter(this, setUpListener());
             myContactsRecycler.setAdapter(myContactsAdapter);
+            toggleContactsEmptyState();
         }
 
 
     }
 
     private void updateExistingContacts (final Cursor c) {
+        progressBar.toggleDialog(true);
         myContactsAdapter = new MyContactsAdapter(this, setUpListener());
         boolean hasInternet = Network.isInternetAvailable(this, true);
         try{
@@ -144,8 +145,9 @@ public class MyContactsActivity extends AppCompatActivity implements AddContactD
             if (!hasInternet){
                 Toast.makeText(this, "Data maybe outdated", Toast.LENGTH_LONG).show();
                 myContactsRecycler.setAdapter(myContactsAdapter);
+                progressBar.toggleDialog(false);
+                toggleContactsEmptyState();
             }
-            progressBar.toggleDialog(false);
             c.close();
         }
     }
@@ -178,6 +180,15 @@ public class MyContactsActivity extends AppCompatActivity implements AddContactD
         db.close();
         super.onDestroy();
     }
+
+    private void toggleContactsEmptyState() {
+        if (myContactsAdapter.getItemCount() == 0)
+            emptyState.setVisibility(View.VISIBLE);
+        else
+            emptyState.setVisibility(View.GONE);
+
+    }
+
 
     public void showContctsDialog() {
         // Create an instance of the dialog fragment and show it
@@ -220,8 +231,9 @@ public class MyContactsActivity extends AppCompatActivity implements AddContactD
             case 2 : // delete contact
                 if (db.removeContact(c.getContact().getUsername()) > 0) {
                     myContactsAdapter.updateState(itemLoc);
+                    toggleContactsEmptyState();
                 } else {
-                    System.out.println("Failed to delete the user");
+                    Log.i(TAG, "Failed to delete the user");
                 }
                 break;
         }
@@ -316,17 +328,20 @@ public class MyContactsActivity extends AppCompatActivity implements AddContactD
         if (tag.equals("updateLocalContactsFromFirebase")) {
             switch (condition) {
                 case FirebaseHelper.CONDITION_1 :
+                    progressBar.toggleDialog(false);
                     myContactsAdapter.addNewItem(container.getContact().getContact());
                     break;
                 case FirebaseHelper.CONDITION_2 :
+                    progressBar.toggleDialog(false);
                     myContactsRecycler.setAdapter(myContactsAdapter);
+                    toggleContactsEmptyState();
                     break;
             }
         } else if (tag.equals("addUserToContacts")) {
             switch (condition) {
                 case FirebaseHelper.CONDITION_1 :
                     myContactsAdapter.addNewItem(container.getUserModel());
-                    emptyState.setVisibility(View.GONE);
+                    toggleContactsEmptyState();
                     break;
 
                 case FirebaseHelper.CONDITION_2 :
@@ -411,31 +426,19 @@ public class MyContactsActivity extends AppCompatActivity implements AddContactD
 
         switch (tag) {
             case "updateLocalContactsFromFirebase" :
-                if (myContactsAdapter.getItemCount() == 0)
-                    emptyState.setVisibility(View.VISIBLE);
-                else
-                    emptyState.setVisibility(View.GONE);
-                break;
-
-            case "addUserToContacts" :
-                progressBar.toggleDialog(false);
+                toggleContactsEmptyState();
                 break;
 
             case "setUpSingleChat" :
-                progressBar.toggleDialog(false);
                 Toast.makeText(MyContactsActivity.this, "Error has occurred creating chat", Toast.LENGTH_LONG).show();
                 break;
 
             case "updateChatKeyFromContact" :
-                progressBar.toggleDialog(false);
                 Toast.makeText(MyContactsActivity.this, "Error has occurred creating connection", Toast.LENGTH_LONG).show();
                 break;
 
-            case "notificationNodeExists" :
-                progressBar.toggleDialog(false);
-                break;
         }
-
+        progressBar.toggleDialog(false);
         Log.i(TAG, tag + " "+ databaseError.getMessage());
     }
 
