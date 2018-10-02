@@ -19,7 +19,8 @@
         android:orderInCategory="200"
         android:title="Add"
         app:showAsAction="always"
-        android:icon="@drawable/ic_friend"/>
+        android:icon="@drawable/ic_friend"
+        android:visible="false"/>
 
     <item
         android:id="@+id/save_change"

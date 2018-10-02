@@ -113,7 +113,9 @@ public class GroupCreatorActivity extends AppCompatActivity implements FirebaseH
                         Toast.makeText(GroupCreatorActivity.this, "Failed to make background notification", Toast.LENGTH_SHORT).show();
                         break;
                 }
-                firebaseHelper.updateGroupKeyForMembers(getAllMembersTogether(), container.getString(), user);
+                List<String> allMembersIncludingAdmin = getAllMembersTogether();
+                allMembersIncludingAdmin.add(user.name);
+                firebaseHelper.updateGroupKeyForMembers(allMembersIncludingAdmin, container.getString());
                 break;
             case "getDeviceTokensFor":
                 switch(condition){
@@ -193,6 +195,7 @@ public class GroupCreatorActivity extends AppCompatActivity implements FirebaseH
         TextView emptyViewTv = (TextView) findViewById(R.id.no_groups);
         contactsRecyclerView = (RecyclerView) findViewById(R.id.chat_groups_list);
         choiceRecyclerView = (RecyclerView) findViewById(R.id.chosen_group_list);
+        EasyImage.configuration(this).setAllowMultiplePickInGallery(false);
         allChosenMembersAdapter = new ChoiceAdapter(this, new OnItemClickListener() {
             @Override
             public void onItemClick(String user, int pos) {

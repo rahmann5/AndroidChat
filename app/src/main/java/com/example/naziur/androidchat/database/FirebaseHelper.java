@@ -936,9 +936,9 @@ public class FirebaseHelper {
         });
     }
 
-    public void updateGroupKeyForMembers(final List<String> allMembers, final String uniqueID, final User user){
+    public void updateGroupKeyForMembers(final List<String> allMembers, final String uniqueID){
         DatabaseReference reference = database.getReference("users");
-        reference.orderByChild("username").getRef().runTransaction(new Transaction.Handler() {
+        reference.orderByChild("username").startAt(allMembers.get(0)).endAt(allMembers.get(allMembers.size()-1)).getRef().runTransaction(new Transaction.Handler() {
             @Override
             public Transaction.Result doTransaction(MutableData mutableData) {
                 for(MutableData data : mutableData.getChildren()){
@@ -946,13 +946,25 @@ public class FirebaseHelper {
                     if(firebaseUserModel == null)
                         return Transaction.success(mutableData);
 
-                    if(firebaseUserModel.getUsername().equals(user.name) || allMembers.contains(firebaseUserModel.getUsername())){
+                    if(allMembers.contains(firebaseUserModel.getUsername())){
                         if(firebaseUserModel.getGroupKeys().equals(""))
                             firebaseUserModel.setGroupKeys(uniqueID);
                         else {
                             List<String> membersKeys = Arrays.asList(firebaseUserModel.getGroupKeys().split(","));
                             if(!membersKeys.contains(uniqueID))
                                 firebaseUserModel.setGroupKeys(firebaseUserModel.getGroupKeys() + "," + uniqueID);
+                            else{ //Removing a users group key
+                                membersKeys.remove(uniqueID);
+                                if(membersKeys.size() == 0)
+                                    firebaseUserModel.setGroupKeys("");
+                                else{
+                                    String updatedKeys = "";
+                                    for(int i = 0; i < membersKeys.size(); i++){
+                                        updatedKeys += (updatedKeys.equals(""))? membersKeys.get(i) : ","+membersKeys.get(i);
+                                    }
+                                    firebaseUserModel.setGroupKeys(updatedKeys);
+                                }
+                            }
                         }
                         data.setValue(firebaseUserModel);
                     }
@@ -1017,6 +1029,34 @@ public class FirebaseHelper {
         });
     }
 
+    public void updateGroupInfo(final FirebaseGroupModel group){
+        DatabaseReference groupsRef = database.getReference("groups");
+        groupsRef.orderByChild("groupKey").equalTo(group.getGroupKey()).getRef().runTransaction(new Transaction.Handler() {
+            @Override
+            public Transaction.Result doTransaction(MutableData mutableData) {
+                for (MutableData data : mutableData.getChildren()) {
+                    FirebaseGroupModel groupModel = data.getValue(FirebaseGroupModel.class);
+                    if (groupModel == null) return Transaction.success(mutableData);
+                    if(groupModel.getGroupKey().equals(group.getGroupKey())){
+                        groupModel = group;
+                        data.setValue(groupModel);
+                    }
+                }
+
+                return Transaction.success(mutableData);
+            }
+
+            @Override
+            public void onComplete(DatabaseError databaseError, boolean b, DataSnapshot dataSnapshot) {
+                if (databaseError == null) {
+                    listener.onCompleteTask("updateGroupInfo", CONDITION_1, null);
+                } else {
+                    listener.onFailureTask("updateGroupInfo", databaseError);
+                }
+            }
+        });
+    }
+
     public void exitGroup (final Chat chat, final String leavingUser, final boolean admin) {
         DatabaseReference reference = database.getReference("groups");
         reference.orderByChild("groupKey").equalTo(chat.getChatKey()).getRef().runTransaction(new Transaction.Handler() {
@@ -1057,6 +1097,50 @@ public class FirebaseHelper {
                     listener.onCompleteTask("exitGroup", CONDITION_1, container);
                 } else {
                     listener.onCompleteTask("exitGroup", CONDITION_2, container);
+                }
+            }
+        });
+    }
+
+    public void removeFromGroup(final String groupKey, final String username){
+        DatabaseReference groupRef = database.getReference("groups").orderByChild("groupKey").equalTo(groupKey).getRef();
+        groupRef.runTransaction(new Transaction.Handler() {
+            @Override
+            public Transaction.Result doTransaction(MutableData mutableData) {
+                for (MutableData data : mutableData.getChildren()) {
+                    FirebaseGroupModel groupModel = data.getValue(FirebaseGroupModel.class);
+
+                    if (groupModel == null) return Transaction.success(mutableData);
+
+                    if (groupModel.getGroupKey().equals(groupKey)) {
+                        String[] members = groupModel.getMembers().split(",");
+                        String newMembers = "";
+                        for (String member : members) {
+                            if (!member.equals(username)) {
+                                newMembers += (newMembers.equals("")) ? member : "," + member;
+                            }
+                        }
+
+                        groupModel.setMembers(newMembers);
+                        data.setValue(groupModel);
+                    }
+
+                }
+
+                return Transaction.success(mutableData);
+            }
+
+            @Override
+            public void onComplete(DatabaseError databaseError, boolean b, DataSnapshot dataSnapshot) {
+                Container container = new Container();
+                List<String> data = new ArrayList<String>();
+                data.add(groupKey);
+                data.add(username);
+                container.setStringList(data);
+                if (databaseError == null) {
+                    listener.onCompleteTask("exitGroup", CONDITION_1, container);
+                } else {
+                    listener.onFailureTask("removeFromGroup", databaseError);
                 }
             }
         });

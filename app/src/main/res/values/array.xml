@@ -21,6 +21,10 @@
         <item>@string/dialog_op4</item>
     </string-array>
 
+    <string-array name="group_detail_dialog_actions">
+        <item>@string/dialog_op_1</item>
+    </string-array>
+
     <string-array name="member_group_chat_dialog_actions">
         <item>@string/dialog_op5</item>
         <item>@string/dialog_op2</item>

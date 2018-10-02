@@ -90,9 +90,10 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Group Name"
-                    android:textSize="12sp"
+                    android:textSize="13sp"
                     android:textColor="@color/white"
-                    android:visibility="gone"/>
+                    android:visibility="gone"
+                    />
 
                 <EditText
                     android:id="@+id/group_name_et"
@@ -100,13 +101,17 @@
                     android:layout_height="wrap_content"
                     android:textColor="@color/white"
                     android:textColorHint="@color/white"
-                    android:layout_marginTop="10dp"
+                    android:textSize="13sp"
+                    android:layout_marginTop="30dp"
                     android:hint="Group Name"
                     android:inputType="textEmailAddress"
                     android:maxLines="1"
                     android:background="@null"
                     android:layout_centerVertical="true"
-                    android:enabled="false"/>
+                    android:enabled="false"
+                    android:layout_below="@+id/title_tv"
+                    android:visibility="gone"
+                    />
 
                 <ImageView
                     android:id="@+id/edit_btn_group_title"
@@ -157,7 +162,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/no_admin"
-                    android:textSize="12sp"
+                    android:textSize="13sp"
                     android:textColor="@color/white"/>
 
             </RelativeLayout>
@@ -196,7 +201,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="No Members Found"
-                        android:textSize="12sp"
+                        android:textSize="13sp"
                         android:textColor="@color/white"
                         android:visibility="gone"/>
 
@@ -213,6 +218,27 @@
         </LinearLayout>
 
     </android.support.v4.widget.NestedScrollView>
-    
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/fab"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/fab_margin"
+        app:layout_anchor="@id/app_bar"
+        app:layout_anchorGravity="bottom|center"
+        app:srcCompat="@android:drawable/ic_menu_camera"
+        android:visibility="gone"
+        app:backgroundTint="@color/main_theme_1"/>
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/fab_delete"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/fab_margin"
+        app:layout_anchor="@id/app_bar"
+        app:layout_anchorGravity="bottom|start"
+        app:srcCompat="@android:drawable/ic_delete"
+        android:visibility="gone"
+        app:backgroundTint="@color/main_theme_1"/>
 
 </android.support.design.widget.CoordinatorLayout>

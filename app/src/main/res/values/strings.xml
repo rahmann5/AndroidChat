@@ -68,6 +68,8 @@
 
     <!-- GroupDetail Activity -->
     <string name="no_admin">No Admin Found</string>
+    <string name="dialog_group_details">Options:</string>
+    <string name="dialog_op_1">Remove from group</string>
 
     <!-- Activity titles -->
     <string name="title_create_group">Create Group</string>
