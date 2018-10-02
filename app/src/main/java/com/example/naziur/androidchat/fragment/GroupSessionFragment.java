@@ -102,10 +102,12 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
         /*grpValueEventListeners.clear();
         grpMsgValueEventListeners.clear();
         myChatsdapter.clearAllChats ();*/
-        final String currentGroupKey = allGroupKeys.get(index);
-        ValueEventListener valueEventListener = firebaseHelper.getValueEventListener(currentGroupKey, loop, FirebaseHelper.NON_CONDITION, complete, FirebaseGroupModel.class);
-        grpValueEventListeners.put(currentGroupKey, valueEventListener);
-        firebaseHelper.toggleListenerFor("groups", "groupKey" , currentGroupKey, valueEventListener, true, single);
+        if (index < allGroupKeys.size()) {
+            final String currentGroupKey = allGroupKeys.get(index);
+            ValueEventListener valueEventListener = firebaseHelper.getValueEventListener(currentGroupKey, loop, FirebaseHelper.NON_CONDITION, complete, FirebaseGroupModel.class);
+            grpValueEventListeners.put(currentGroupKey, valueEventListener);
+            firebaseHelper.toggleListenerFor("groups", "groupKey" , currentGroupKey, valueEventListener, true, single);
+        }
 
     }
 

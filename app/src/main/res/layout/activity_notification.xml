@@ -9,16 +9,14 @@
     <android.support.v7.widget.RecyclerView
         android:id="@+id/notification_recycler"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/empty_notifications"
-        android:layout_centerInParent="true"
-        android:textSize="18sp"
-        android:text="@string/empty_notification"
+        android:layout_height="match_parent"
         />
 
+    <include
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        layout="@layout/empty_layout"
+        android:layout_centerInParent="true"
+        />
 
 </RelativeLayout>

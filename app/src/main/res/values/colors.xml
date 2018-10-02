@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#3F51B5</color>
-    <color name="colorPrimaryDark">#303F9F</color>
+    <color name="colorPrimary">#6fd5b6</color>
+    <color name="colorPrimaryDark">#74cca9</color>
     <color name="colorAccent">#FF4081</color>
     <color name="white">#ffffff</color>
     <color name="red">#fd0000</color>
@@ -18,6 +18,7 @@
     <color name="profile_camera_button">#f17110</color>
     <color name="profile_save_button">#224488</color>
     <color name="system_msg_color">#cbeff7</color>
+    <color name="chat_background">#efeded</color>
     <color name="group_detail_tint">#635fc6dc</color>
 
     <color name="button_color">#3f94df</color>

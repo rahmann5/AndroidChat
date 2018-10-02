@@ -62,6 +62,7 @@ public class LoginActivity extends AppCompatActivity implements FirebaseHelper.F
         forgotUsername.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                if (!Network.isInternetAvailable(LoginActivity.this, true)) return;
                 progressDialog.toggleDialog(true);
                 firebaseHelper.autoLogin("users", currentDeviceId, user);
             }

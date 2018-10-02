@@ -13,20 +13,15 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.widget.Toast;
 
 import com.example.naziur.androidchat.R;
 import com.example.naziur.androidchat.adapter.SessionFragmentPagerAdapter;
 import com.example.naziur.androidchat.database.FirebaseHelper;
 import com.example.naziur.androidchat.fragment.GroupSessionFragment;
-import com.example.naziur.androidchat.fragment.SingleSessionFragment;
 import com.example.naziur.androidchat.models.User;
 import com.example.naziur.androidchat.utils.Container;
 import com.example.naziur.androidchat.utils.NetworkChangeReceiver;
-import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 public class SessionActivity extends AppCompatActivity implements NetworkChangeReceiver.OnNetworkStateChangeListener, FirebaseHelper.FirebaseHelperListener{
@@ -116,8 +111,11 @@ public class SessionActivity extends AppCompatActivity implements NetworkChangeR
                 startActivity(new Intent(SessionActivity.this, ProfileActivity.class));
                 return true;
             case R.id.settings:
-                Toast.makeText(this, "Settings", Toast.LENGTH_SHORT).show();
+                startActivity(new Intent(SessionActivity.this, SettingsActivity.class));
                 return true;
+            case R.id.settings2:
+            startActivity(new Intent(SessionActivity.this, SettingsActivity2.class));
+            return true;
             case R.id.action_notification:
                 startActivity(new Intent(SessionActivity.this, NotificationActivity.class));
                 return true;

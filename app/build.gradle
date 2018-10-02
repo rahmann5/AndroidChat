@@ -10,6 +10,7 @@ android {
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        vectorDrawables.useSupportLibrary = true
     }
     buildTypes {
         release {
@@ -51,6 +52,7 @@ dependencies {
     compile 'com.loopj.android:android-async-http:1.4.9'
     compile 'com.android.support:design:26.+'
     compile 'com.android.support:support-v4:26.+'
+    compile 'com.android.support:support-vector-drawable:26.+'
     testCompile 'junit:junit:4.12'
 }
 apply plugin: 'com.google.gms.google-services'

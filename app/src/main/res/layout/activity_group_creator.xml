@@ -32,7 +32,7 @@
             android:layout_marginLeft="20dp"
             android:layout_marginRight="20dp"
             android:layout_marginTop="70dp"
-            android:background="@drawable/rounded_corner"
+            android:background="@color/white"
             android:elevation="4dp"
             android:orientation="vertical"
             android:padding="20dp"
@@ -118,7 +118,7 @@
                         android:layout_height="wrap_content"
                         android:layout_gravity="center"
                         android:layout_weight="0.2"
-                        android:background="@color/main_theme_1"
+                        android:background="@color/profile_save_button"
                         android:scaleType="fitCenter"
                         android:src="@drawable/ic_add_contact" />
                 </LinearLayout>
@@ -145,7 +145,7 @@
                     android:layout_height="wrap_content"
                     android:layout_margin="22dp"
                     android:background="@drawable/button_shape"
-                    android:backgroundTint="@color/main_theme_1"
+                    android:backgroundTint="@color/profile_save_button"
                     android:text="Create Group"
                     android:textAllCaps="false"
                     android:textColor="#fff"
