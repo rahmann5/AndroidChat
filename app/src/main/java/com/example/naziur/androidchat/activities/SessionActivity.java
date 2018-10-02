@@ -113,9 +113,6 @@ public class SessionActivity extends AppCompatActivity implements NetworkChangeR
             case R.id.settings:
                 startActivity(new Intent(SessionActivity.this, SettingsActivity.class));
                 return true;
-            case R.id.settings2:
-            startActivity(new Intent(SessionActivity.this, SettingsActivity2.class));
-            return true;
             case R.id.action_notification:
                 startActivity(new Intent(SessionActivity.this, NotificationActivity.class));
                 return true;

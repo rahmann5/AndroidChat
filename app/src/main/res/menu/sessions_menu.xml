@@ -13,9 +13,6 @@
     <item android:id="@+id/settings"
         android:title="Settings" />
 
-    <item android:id="@+id/settings2"
-        android:title="Settings2" />
-
     <item
         android:id="@+id/action_notification"
         android:orderInCategory="200"

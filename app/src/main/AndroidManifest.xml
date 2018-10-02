@@ -92,9 +92,6 @@
         <activity
             android:name=".activities.GroupDetailActivity"
             android:theme="@style/AppTheme.NoActionBar" />
-        <activity
-            android:name=".activities.SettingsActivity2"
-            android:label="@string/title_activity_settings" />
         <activity android:name=".activities.SettingsActivity"></activity>
     </application>
 

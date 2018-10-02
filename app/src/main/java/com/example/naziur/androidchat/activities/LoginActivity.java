@@ -3,6 +3,7 @@ package com.example.naziur.androidchat.activities;
 
 import android.content.Context;
 import android.content.Intent;
+import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -45,7 +46,7 @@ public class LoginActivity extends AppCompatActivity implements FirebaseHelper.F
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
         progressDialog = new ProgressDialog(this, R.layout.progress_dialog, true);
-        user.sharedpreferences = getSharedPreferences(user.appPreferences, Context.MODE_PRIVATE);
+        user.sharedpreferences = PreferenceManager.getDefaultSharedPreferences(this);
         firebaseHelper = FirebaseHelper.getInstance();
         firebaseHelper.setFirebaseHelperListener(this);
         currentDeviceId = Settings.Secure.getString(getApplicationContext().getContentResolver(), Settings.Secure.ANDROID_ID);
