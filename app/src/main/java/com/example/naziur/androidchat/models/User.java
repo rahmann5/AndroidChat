@@ -1,6 +1,9 @@
 package com.example.naziur.androidchat.models;
 
+import android.content.Context;
 import android.content.SharedPreferences;
+
+import com.example.naziur.androidchat.R;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -79,13 +82,11 @@ public class User {
 
     public void setAutoLogin(boolean login) {
         SharedPreferences.Editor editor = sharedpreferences.edit();
-        String value = (login) ? "true" : "false";
-        editor.putString("auto_login_user", value);
+        editor.putBoolean("auto_login_user", login);
         editor.apply();
     }
 
     public boolean getAutoLogin() {
-        String value = sharedpreferences.getString("auto_login_user", "true");
-        return value.equals("true");
+        return sharedpreferences.getBoolean("auto_login_user", true);
     }
 }
