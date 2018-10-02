@@ -12,6 +12,7 @@ import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.MenuItem;
+import android.widget.Toast;
 
 import com.example.naziur.androidchat.R;
 
@@ -106,6 +107,21 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
             // to their values. When their values change, their summaries are
             // updated to reflect the new value, per the Android Design
             // guidelines.
+            Preference blockListPref = findPreference(getString(R.string.key_block_list));
+            blockListPref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+                public boolean onPreferenceClick(Preference preference) {
+                    Toast.makeText(getActivity(), "Showing block list", Toast.LENGTH_SHORT).show();
+                    return true;
+                }
+            });
+
+            Preference deleteAccPref = findPreference(getString(R.string.key_delete_acc));
+            deleteAccPref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+                public boolean onPreferenceClick(Preference preference) {
+                    Toast.makeText(getActivity(), "Deleting Account", Toast.LENGTH_SHORT).show();
+                    return true;
+                }
+            });
             //bindPreferenceSummaryToValue(findPreference("auto_login_user"));
         }
 

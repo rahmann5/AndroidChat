@@ -2,10 +2,20 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
     <SwitchPreference
-        android:defaultValue="@string/boolean_true"
-        android:key="auto_login_user"
+        android:defaultValue="true"
+        android:key="@string/key_auto_login"
         android:summary="@string/pref_desc_auto_login"
         android:title="@string/pref_title_auto_login" />
 
+    <Preference
+        android:key="@string/key_block_list"
+        android:summary="@string/pref_desc_block_list"
+        android:title="@string/pref_title_block_list" />
+
+
+    <Preference
+        android:key="@string/key_delete_acc"
+        android:summary="@string/pref_desc_delete_acc"
+        android:title="@string/pref_title_delete_acc" />
 
 </PreferenceScreen>
