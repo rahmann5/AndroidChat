@@ -938,7 +938,12 @@ public class FirebaseHelper {
 
     public void updateGroupKeyForMembers(final List<String> allMembers, final String uniqueID){
         DatabaseReference reference = database.getReference("users");
-        reference.orderByChild("username").startAt(allMembers.get(0)).endAt(allMembers.get(allMembers.size()-1)).getRef().runTransaction(new Transaction.Handler() {
+        if(allMembers.size() > 1)
+            reference = reference.orderByChild("username").startAt(allMembers.get(0)).endAt(allMembers.get(allMembers.size()-1)).getRef();
+        else
+            reference = reference.orderByChild("username").equalTo(allMembers.get(0)).getRef();
+
+        reference.runTransaction(new Transaction.Handler() {
             @Override
             public Transaction.Result doTransaction(MutableData mutableData) {
                 for(MutableData data : mutableData.getChildren()){
@@ -954,16 +959,12 @@ public class FirebaseHelper {
                             if(!membersKeys.contains(uniqueID))
                                 firebaseUserModel.setGroupKeys(firebaseUserModel.getGroupKeys() + "," + uniqueID);
                             else{ //Removing a users group key
-                                membersKeys.remove(uniqueID);
-                                if(membersKeys.size() == 0)
-                                    firebaseUserModel.setGroupKeys("");
-                                else{
-                                    String updatedKeys = "";
-                                    for(int i = 0; i < membersKeys.size(); i++){
+                                String updatedKeys = "";
+                                for(int i = 0; i < membersKeys.size(); i++){
+                                    if(!membersKeys.get(i).equals(uniqueID))
                                         updatedKeys += (updatedKeys.equals(""))? membersKeys.get(i) : ","+membersKeys.get(i);
-                                    }
-                                    firebaseUserModel.setGroupKeys(updatedKeys);
                                 }
+                                firebaseUserModel.setGroupKeys(updatedKeys);
                             }
                         }
                         data.setValue(firebaseUserModel);
@@ -1138,7 +1139,7 @@ public class FirebaseHelper {
                 data.add(username);
                 container.setStringList(data);
                 if (databaseError == null) {
-                    listener.onCompleteTask("exitGroup", CONDITION_1, container);
+                    listener.onCompleteTask("removeFromGroup", CONDITION_1, container);
                 } else {
                     listener.onFailureTask("removeFromGroup", databaseError);
                 }

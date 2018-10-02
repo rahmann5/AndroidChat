@@ -62,6 +62,7 @@ public class GroupDetailActivity extends AppCompatActivity implements FirebaseHe
     private File myImageFile;
     private ImageView groupIv;
     private EditText titleEt;
+    private TextView emptyTv;
     private User user = User.getInstance();
     private StorageReference mStorageRef;
     public boolean changeMade = false;
@@ -108,9 +109,11 @@ public class GroupDetailActivity extends AppCompatActivity implements FirebaseHe
         TextView adminTv = (TextView) findViewById(R.id.admin_tv);
         groupIv = (ImageView) findViewById(R.id.expandedImage);
         membersAdapter.clear();
+        System.out.println("Count before "+membersAdapter.getCount());
         membersAdapter.addAll(getEveryOneBesidesYou());
+        System.out.println("Count after "+membersAdapter.getCount());
         membersAdapter.notifyDataSetChanged();
-        TextView emptyTv = (TextView) findViewById(R.id.empty_view);
+        emptyTv = (TextView) findViewById(R.id.empty_view);
 
         if(membersAdapter.getCount() == 0)
             emptyTv.setVisibility(View.VISIBLE);
@@ -130,10 +133,7 @@ public class GroupDetailActivity extends AppCompatActivity implements FirebaseHe
             titleTv.setVisibility(View.VISIBLE);
             titleTv.setText(groupModel.getTitle());
         } else {
-            if(menu != null) {
-                menu.findItem(R.id.save_change).setVisible(true);
-                menu.findItem(R.id.action_info).setVisible(true);
-            }
+            invalidateOptionsMenu();
 
             membersListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                 @Override
@@ -211,7 +211,9 @@ public class GroupDetailActivity extends AppCompatActivity implements FirebaseHe
 
         String [] membersIngroup = groupModel.getMembers().split(",");
         if(groupModel.getAdmin().equals(user.name))
-            return Arrays.asList(membersIngroup);
+            if(!membersIngroup[0].equals(""))
+                return Arrays.asList(membersIngroup);
+            else return members;
         else {
             for (int i = 0; i < membersIngroup.length; i++) {
                 if (!membersIngroup[i].equals(user.name)) {
@@ -283,6 +285,10 @@ public class GroupDetailActivity extends AppCompatActivity implements FirebaseHe
     public boolean onCreateOptionsMenu(Menu menu) {
         this.menu = menu;
         getMenuInflater().inflate(R.menu.chat_detail_menu, menu);
+        if(groupModel != null && groupModel.getAdmin().equals(user.name)) {
+            menu.findItem(R.id.save_change).setVisible(true);
+            menu.findItem(R.id.action_info).setVisible(true);
+        }
         return true;
     }
 
@@ -294,6 +300,7 @@ public class GroupDetailActivity extends AppCompatActivity implements FirebaseHe
                 finish();
                 break;
             case R.id.action_info:
+                //DO STUFF HERE
                 break;
             case R.id.save_change:
                 if(changeMade)
