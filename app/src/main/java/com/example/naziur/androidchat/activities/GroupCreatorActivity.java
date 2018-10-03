@@ -7,6 +7,7 @@ import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -62,6 +63,8 @@ import java.util.Random;
 import de.hdodenhof.circleimageview.CircleImageView;
 import pl.aprilapps.easyphotopicker.DefaultCallback;
 import pl.aprilapps.easyphotopicker.EasyImage;
+
+import static android.R.attr.mode;
 
 public class GroupCreatorActivity extends AppCompatActivity implements FirebaseHelper.FirebaseHelperListener{
     private static final int REQUEST_CODE_GALLERY_CAMERA = 0;
@@ -177,7 +180,7 @@ public class GroupCreatorActivity extends AppCompatActivity implements FirebaseH
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_group_creator);
-        setTitle("Group Chat");
+        setTitle("");
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         membersSelectedFromContacts = new ArrayList<>();
         newUsersNotInContacts = new ArrayList<>();
@@ -195,6 +198,7 @@ public class GroupCreatorActivity extends AppCompatActivity implements FirebaseH
         TextView emptyViewTv = (TextView) findViewById(R.id.no_groups);
         contactsRecyclerView = (RecyclerView) findViewById(R.id.chat_groups_list);
         choiceRecyclerView = (RecyclerView) findViewById(R.id.chosen_group_list);
+
         EasyImage.configuration(this).setAllowMultiplePickInGallery(false);
         allChosenMembersAdapter = new ChoiceAdapter(this, new OnItemClickListener() {
             @Override
@@ -210,6 +214,8 @@ public class GroupCreatorActivity extends AppCompatActivity implements FirebaseH
 
         LinearLayoutManager layoutManager = new LinearLayoutManager(this);
         choiceRecyclerView.setLayoutManager(layoutManager);
+        DividerItemDecoration mDividerItemDecoration = new DividerItemDecoration(choiceRecyclerView.getContext(), layoutManager.getOrientation());
+        choiceRecyclerView.addItemDecoration(mDividerItemDecoration);
         choiceRecyclerView.setAdapter(allChosenMembersAdapter);
         myContactsAdapter = new MyContactsAdapter(this, readCursorData(contactDbHelper.getAllMyContacts(null)), new MyContactsAdapter.OnItemClickListener() {
             @Override

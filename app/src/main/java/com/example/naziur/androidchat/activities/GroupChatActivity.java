@@ -101,9 +101,7 @@ public class GroupChatActivity extends AppCompatActivity implements ImageViewDia
         firebaseHelper.setFirebaseHelperListener(this);
         registeredIds = new JSONArray();
         // assuming that user is guaranteed member of group
-        if (Network.isInternetAvailable(this, true)) {
-            groupListener = firebaseHelper.getGroupInfo(groupKey);
-        } else {
+        if (!Network.isInternetAvailable(this, true)) {
             finish();
         }
 
@@ -188,6 +186,7 @@ public class GroupChatActivity extends AppCompatActivity implements ImageViewDia
         super.onResume();
         if (Network.isInternetAvailable(this, true)) {
             progressBar.toggleDialog(true);
+            groupListener = firebaseHelper.getGroupInfo(groupKey);
             firebaseHelper.toggleMsgEventListeners("group", groupKey, msgValueEventListener, true);
         } else {
             Toast.makeText(this,"You need internet to view or send messages", Toast.LENGTH_SHORT).show();

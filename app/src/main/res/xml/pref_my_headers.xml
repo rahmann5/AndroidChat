@@ -2,10 +2,15 @@
 
 <!-- These settings headers are only used on tablets. -->
 
-<header
-    android:fragment="com.example.naziur.androidchat.activities.SettingsActivity$AccountPreferenceFragment"
-    android:icon="@drawable/ic_empty"
-    android:title="@string/pref_header_account" />
+    <header
+        android:fragment="com.example.naziur.androidchat.activities.SettingsActivity$AccountPreferenceFragment"
+        android:icon="@drawable/ic_empty"
+        android:title="@string/pref_header_account" />
+
+    <header
+        android:fragment="com.example.naziur.androidchat.activities.SettingsActivity$AccountPreferenceFragment"
+        android:icon="@drawable/ic_empty"
+        android:title="@string/pref_header_about" />
 
 
 </preference-headers>

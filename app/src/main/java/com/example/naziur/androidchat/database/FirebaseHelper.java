@@ -32,6 +32,7 @@ import com.loopj.android.http.TextHttpResponseHandler;
 import org.json.JSONArray;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 
 import java.util.Arrays;
@@ -937,6 +938,7 @@ public class FirebaseHelper {
     }
 
     public void updateGroupKeyForMembers(final List<String> allMembers, final String uniqueID){
+        Collections.sort(allMembers);
         DatabaseReference reference = database.getReference("users");
         if(allMembers.size() > 1)
             reference = reference.orderByChild("username").startAt(allMembers.get(0)).endAt(allMembers.get(allMembers.size()-1)).getRef();

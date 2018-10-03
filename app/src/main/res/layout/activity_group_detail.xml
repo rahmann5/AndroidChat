@@ -67,7 +67,7 @@
             <ImageView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:src="@android:drawable/ic_lock_lock"
+                android:src="@drawable/ic_title"
                 android:layout_marginRight="8dp"/>
 
             <RelativeLayout
@@ -95,21 +95,26 @@
                     android:visibility="gone"
                     />
 
-                <EditText
-                    android:id="@+id/group_name_et"
-                    android:layout_width="fill_parent"
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_below="@+id/title_tv">
+
+                <android.support.v7.widget.AppCompatEditText
+                    android:id="@+id/group_name_et"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_weight="1"
+                    android:layout_gravity="center_vertical"
                     android:textColor="@color/white"
                     android:textColorHint="@color/white"
                     android:textSize="13sp"
-                    android:layout_marginTop="30dp"
                     android:hint="Group Name"
                     android:inputType="textEmailAddress"
                     android:maxLines="1"
-                    android:background="@null"
-                    android:layout_centerVertical="true"
                     android:enabled="false"
-                    android:layout_below="@+id/title_tv"
+                    android:background="@drawable/bottom_border_white"
                     android:visibility="gone"
                     />
 
@@ -125,6 +130,7 @@
                     android:layout_marginRight="10dp"
                     android:visibility="gone"
                     />
+                </LinearLayout>
 
             </RelativeLayout>
 
@@ -139,7 +145,7 @@
             <ImageView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:src="@android:drawable/ic_lock_lock"
+                android:src="@drawable/ic_username"
                 android:layout_marginRight="8dp"/>
 
             <RelativeLayout
@@ -178,7 +184,7 @@
                 <ImageView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:src="@android:drawable/ic_lock_lock"
+                    android:src="@drawable/ic_group"
                     android:layout_marginRight="8dp"/>
 
                 <RelativeLayout

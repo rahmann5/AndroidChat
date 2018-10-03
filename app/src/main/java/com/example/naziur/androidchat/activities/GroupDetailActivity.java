@@ -174,6 +174,10 @@ public class GroupDetailActivity extends AppCompatActivity implements FirebaseHe
                 @Override
                 public void onClick(View view) {
                    titleEt.setEnabled(titleEt.isEnabled() ? false : true);
+                   if(titleEt.isEnabled())
+                       titleEt.requestFocus();
+                   else
+                       titleEt.clearFocus();
                 }
             });
 
