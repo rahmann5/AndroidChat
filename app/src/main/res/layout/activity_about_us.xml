@@ -1,14 +1,197 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
+    android:background="#192a56"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.example.naziur.androidchat.activities.AboutActivity">
+    android:fillViewport="true">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="About Us"/>
+    <RelativeLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="10dp"
+        >
 
-</android.support.constraint.ConstraintLayout>
+        <LinearLayout
+            android:id="@+id/naz_header"
+            android:layout_marginTop="20dp"
+            android:layout_alignParentTop="true"
+            android:layout_centerHorizontal="true"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center">
+
+            <de.hdodenhof.circleimageview.CircleImageView
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                android:src="@drawable/naziur_prof"
+                android:layout_gravity="center"
+                app:civ_border_width="3dp"
+                app:civ_border_color="#7f8fa6"
+                />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/white"
+                android:text="Naziur Rahman"
+                android:layout_marginTop="10dp"
+                android:textSize="25sp"
+                android:textStyle="bold"
+                />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/naz_content"
+            android:orientation="vertical"
+            android:layout_below="@+id/naz_header"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/naziur_description"
+                android:padding="10dp"
+                android:textColor="#f5f6fa"
+                android:textSize="20sp"
+                android:textAlignment="center"
+                android:fontFamily="sans-serif-thin"
+                android:textStyle="italic"
+                />
+
+            <LinearLayout
+                android:layout_marginTop="10dp"
+                android:orientation="horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center">
+
+                <de.hdodenhof.circleimageview.CircleImageView
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:src="@drawable/lang_css"
+                    app:civ_border_width="3dp"
+                    app:civ_border_color="#7f8fa6"
+                    android:layout_margin="3dp"
+                    />
+
+                <de.hdodenhof.circleimageview.CircleImageView
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:src="@drawable/lang_java"
+                    app:civ_border_width="3dp"
+                    app:civ_border_color="#7f8fa6"
+                    android:layout_margin="3dp"
+                    />
+
+                <de.hdodenhof.circleimageview.CircleImageView
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:src="@drawable/lang_php"
+                    app:civ_border_width="3dp"
+                    app:civ_border_color="#7f8fa6"
+                    android:layout_margin="3dp"
+                    />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_below="@+id/naz_content"
+            android:id="@+id/hamidur_header"
+            android:layout_marginTop="20dp"
+            android:layout_centerHorizontal="true"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center">
+
+            <de.hdodenhof.circleimageview.CircleImageView
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                android:src="@drawable/hamidur_prof"
+                android:layout_gravity="center"
+                app:civ_border_width="3dp"
+                app:civ_border_color="#7f8fa6"
+                />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/white"
+                android:text="Hamidur Rahman"
+                android:layout_marginTop="10dp"
+                android:textSize="25sp"
+                android:textStyle="bold"
+                />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/hamidur_content"
+            android:orientation="vertical"
+            android:layout_below="@+id/hamidur_header"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/hamidur_description"
+                android:padding="10dp"
+                android:textColor="#f5f6fa"
+                android:textSize="20sp"
+                android:textAlignment="center"
+                android:fontFamily="sans-serif-thin"
+                android:textStyle="italic"
+                />
+
+            <LinearLayout
+                android:layout_marginTop="10dp"
+                android:orientation="horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center">
+
+                <de.hdodenhof.circleimageview.CircleImageView
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:src="@drawable/lang_html"
+                    app:civ_border_width="3dp"
+                    app:civ_border_color="#7f8fa6"
+                    android:layout_margin="3dp"
+                    />
+
+                <de.hdodenhof.circleimageview.CircleImageView
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:src="@drawable/lang_js"
+                    app:civ_border_width="3dp"
+                    app:civ_border_color="#7f8fa6"
+                    android:layout_margin="3dp"
+                    />
+
+                <de.hdodenhof.circleimageview.CircleImageView
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:src="@drawable/lang_java"
+                    app:civ_border_width="3dp"
+                    app:civ_border_color="#7f8fa6"
+                    android:layout_margin="3dp"
+                    />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </RelativeLayout>
+
+
+</ScrollView>

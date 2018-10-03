@@ -133,5 +133,8 @@
     <string name="key_version">pref_key_version</string>
     <string name="key_report_issue">pref_key_report_issue</string>
 
+    <string name="naziur_description">I am the co-developer of the Android Chat android application. My key contribution to the application involves designing layouts and writing logic for managing connections with the various open-source APIs.</string>
+    <string name="hamidur_description">Co-developer of Android Chat and involved in designing the various layout features as well as utilising the different web APIs. I am particularly interested in APIs and their use in producing high-quality dynamic content.</string>
+
 
 </resources>
