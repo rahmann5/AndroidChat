@@ -53,6 +53,7 @@ import pl.aprilapps.easyphotopicker.EasyImage;
 public class GroupDetailActivity extends AppCompatActivity implements FirebaseHelper.FirebaseHelperListener{
     private static final String TAG = GroupDetailActivity.class.getSimpleName();
     private static final int REQUEST_CODE_GALLERY_CAMERA = 0;
+    public static final int MEMBER_REQUEST_CODE = 1;
     private final String NO_IMAGE_CODE = "NO_IMAGE_CODE";
     private FirebaseHelper firebaseHelper;
     private FirebaseGroupModel groupModel;
@@ -80,14 +81,6 @@ public class GroupDetailActivity extends AppCompatActivity implements FirebaseHe
         progressBar = new ProgressDialog(this, R.layout.progress_dialog, true);
         toolbar = (Toolbar) findViewById(R.id.toolbar);
 
-        Bundle extra = getIntent().getExtras();
-        if (extra != null) {
-            progressBar.toggleDialog(true);
-            groupListener = firebaseHelper.getGroupInfo(extra.getString("g_uid"));
-        } else {
-            Toast.makeText(this, "Error occurred", Toast.LENGTH_LONG).show();
-            finish();
-        }
         membersListView = (ListView) findViewById(R.id.members_list_view);
         membersAdapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, getEveryOneBesidesYou()){
             @Override
@@ -101,6 +94,19 @@ public class GroupDetailActivity extends AppCompatActivity implements FirebaseHe
         EasyImage.configuration(this).setAllowMultiplePickInGallery(false);
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        Bundle extra = getIntent().getExtras();
+        if (extra != null) {
+            progressBar.toggleDialog(true);
+            groupListener = firebaseHelper.getGroupInfo(extra.getString("g_uid"));
+        } else {
+            Toast.makeText(this, "Error occurred", Toast.LENGTH_LONG).show();
+            finish();
+        }
+    }
+
     private void populateWithGroupData(){
         toolbar.setTitle(groupModel.getTitle());
         setSupportActionBar(toolbar);
@@ -108,11 +114,7 @@ public class GroupDetailActivity extends AppCompatActivity implements FirebaseHe
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         TextView adminTv = (TextView) findViewById(R.id.admin_tv);
         groupIv = (ImageView) findViewById(R.id.expandedImage);
-        membersAdapter.clear();
-        System.out.println("Count before "+membersAdapter.getCount());
-        membersAdapter.addAll(getEveryOneBesidesYou());
-        System.out.println("Count after "+membersAdapter.getCount());
-        membersAdapter.notifyDataSetChanged();
+        updateGroupListAdapter();
         emptyTv = (TextView) findViewById(R.id.empty_view);
 
         if(membersAdapter.getCount() == 0)
@@ -204,8 +206,15 @@ public class GroupDetailActivity extends AppCompatActivity implements FirebaseHe
             });
 
         }
+        if (!changeMade) {
+            Glide.with(GroupDetailActivity.this).load(pic).apply(new RequestOptions().placeholder(R.drawable.placeholder).error(R.drawable.unknown)).into(groupIv);
+        }
+    }
 
-        Glide.with(GroupDetailActivity.this).load(pic).apply(new RequestOptions().placeholder(R.drawable.placeholder).error(R.drawable.unknown)).into(groupIv);
+    private void updateGroupListAdapter() {
+        membersAdapter.clear();
+        membersAdapter.addAll(getEveryOneBesidesYou());
+        membersAdapter.notifyDataSetChanged();
     }
 
     private List<String> getEveryOneBesidesYou(){
@@ -231,6 +240,17 @@ public class GroupDetailActivity extends AppCompatActivity implements FirebaseHe
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == MEMBER_REQUEST_CODE) {
+            if (resultCode == RESULT_OK) {
+                if (data != null) {
+                    List<String> members = data.getStringArrayListExtra("members");
+                    if (members.size() > 0) {
+                        firebaseHelper.updateGroupMembers(members.get(0), members , groupModel.getGroupKey(), false);
+                    }
+                }
+            }
+
+        }
 
         EasyImage.handleActivityResult(requestCode, resultCode, data, this, new DefaultCallback(){
 
@@ -239,13 +259,13 @@ public class GroupDetailActivity extends AppCompatActivity implements FirebaseHe
                 switch (type){
                     case REQUEST_CODE_GALLERY_CAMERA:
                         myImageFile = imageFiles.get(0);
-                    Glide.with(GroupDetailActivity.this)
-                            .load(myImageFile)
-                            .apply(new RequestOptions().placeholder(R.drawable.placeholder).error(R.drawable.unknown))
-                            .into(groupIv);
-                    pic = "groupProf/"+ Uri.fromFile(myImageFile).getLastPathSegment();
-                    changeMade = true;
-                    break;
+                        Glide.with(GroupDetailActivity.this)
+                                .load(myImageFile)
+                                .apply(new RequestOptions().placeholder(R.drawable.placeholder).error(R.drawable.unknown))
+                                .into(groupIv);
+                        pic = "groupProf/"+ Uri.fromFile(myImageFile).getLastPathSegment();
+                        changeMade = true;
+                        break;
                 }
             }
 
@@ -265,6 +285,7 @@ public class GroupDetailActivity extends AppCompatActivity implements FirebaseHe
                 }
             }
         });
+
     }
 
     private AlertDialog createDialog (final String username) {
@@ -304,7 +325,9 @@ public class GroupDetailActivity extends AppCompatActivity implements FirebaseHe
                 finish();
                 break;
             case R.id.action_info:
-                //DO STUFF HERE
+                Intent intent = new Intent(GroupDetailActivity.this, MemberSelectorActivity.class);
+                intent.putExtra("current_members", groupModel.getMembers());
+                startActivityForResult(intent, MEMBER_REQUEST_CODE);
                 break;
             case R.id.save_change:
                 if(changeMade)
@@ -412,6 +435,15 @@ public class GroupDetailActivity extends AppCompatActivity implements FirebaseHe
 
     }
 
+    private String getNextMember (String member, List<String> members) {
+        String nextMember = member;
+        for (String next : members) {
+            if (!next.equals(member)) {
+                nextMember = next;
+            }
+        }
+        return nextMember;
+    }
 
     @Override
     protected void onStop() {
@@ -425,6 +457,7 @@ public class GroupDetailActivity extends AppCompatActivity implements FirebaseHe
             case "getGroupInfo":
                 switch (condition){
                     case FirebaseHelper.CONDITION_1:
+                        System.out.println("getGroupInfo");
                         groupModel = container.getGroupModel();
                         populateWithGroupData();
                         progressBar.toggleDialog(false);
@@ -447,17 +480,34 @@ public class GroupDetailActivity extends AppCompatActivity implements FirebaseHe
                         /*Container is a list where 0=>groupKey, 1=>username*/
                         List<String> memberToRemove = new ArrayList<>();
                         memberToRemove.add(container.getStringList().get(1));
-                        firebaseHelper.updateGroupKeyForMembers(memberToRemove, container.getStringList().get(0));
+                        firebaseHelper.updateGroupKeyForMembers(memberToRemove, container.getStringList().get(0), FirebaseHelper.CONDITION_1);
                         break;
                 }
                 break;
             case "updateGroupKeyForMembers":
                 switch(condition){
+                    case FirebaseHelper.CONDITION_2:
+                        Toast.makeText(this, "Successfully added all members", Toast.LENGTH_SHORT).show();
+                        break;
+                }
+                progressBar.toggleDialog(false);
+                break;
+
+            case "updateGroupMembers" :
+                switch(condition){
                     case FirebaseHelper.CONDITION_1:
-                        progressBar.toggleDialog(false);
+                        String addedMember = container.getString();
+                        List<String> allMembers = container.getStringList();
+                        String nextMember = getNextMember(addedMember, allMembers);
+                        if (!nextMember.equals(addedMember)) {
+                            firebaseHelper.updateGroupMembers(nextMember, allMembers, groupModel.getGroupKey(), false);
+                        } else {
+                            firebaseHelper.updateGroupKeyForMembers(allMembers, groupModel.getGroupKey(), FirebaseHelper.CONDITION_2);
+                        }
                         break;
                 }
                 break;
+
         }
     }
 
@@ -468,6 +518,7 @@ public class GroupDetailActivity extends AppCompatActivity implements FirebaseHe
             case "updateGroupInfo":
             case "removeFromGroup":
             case "updateGroupKeyForMembers":
+            case "updateGroupMembers":
                 progressBar.toggleDialog(false);
                 break;
         }

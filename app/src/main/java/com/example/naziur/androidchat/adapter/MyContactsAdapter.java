@@ -36,7 +36,7 @@ public class MyContactsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
     public OnItemClickListener listener;
 
     public interface OnItemClickListener {
-        void onItemClick (Contact contact, int pos);
+        void onItemClick (Contact contact, int pos, View itemView);
     }
 
     public MyContactsAdapter (Context context, List<Contact> contacts, OnItemClickListener listener) {
@@ -84,8 +84,19 @@ public class MyContactsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
     }
 
     public void addNewItem(FirebaseUserModel fbModel){
-        allMyContacts.add(new Contact(fbModel));
-        notifyDataSetChanged();
+        if (!isExists(fbModel)) {
+            allMyContacts.add(new Contact(fbModel));
+            notifyDataSetChanged();
+        }
+    }
+
+    private boolean isExists (FirebaseUserModel fbModel) {
+        for (Contact c : allMyContacts) {
+            if (c.getContact().getUsername().equals(fbModel.getUsername())){
+                return true;
+            }
+        }
+        return false;
     }
 
     private static class MyContactViewHolder extends RecyclerView.ViewHolder {
@@ -107,7 +118,7 @@ public class MyContactsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
                 itemView.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
-                        listener.onItemClick(contact, position);
+                        listener.onItemClick(contact, position, itemView);
                     }
                 });
             }

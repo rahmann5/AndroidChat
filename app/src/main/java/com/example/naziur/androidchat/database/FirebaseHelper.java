@@ -937,7 +937,7 @@ public class FirebaseHelper {
         });
     }
 
-    public void updateGroupKeyForMembers(final List<String> allMembers, final String uniqueID){
+    public void updateGroupKeyForMembers(final List<String> allMembers, final String uniqueID, final int condition){
         Collections.sort(allMembers);
         DatabaseReference reference = database.getReference("users");
         if(allMembers.size() > 1)
@@ -983,7 +983,7 @@ public class FirebaseHelper {
                 } else {
                     Container container = new Container();
                     container.setString(uniqueID);
-                    listener.onCompleteTask("updateGroupKeyForMembers", CONDITION_1, container);
+                    listener.onCompleteTask("updateGroupKeyForMembers", condition, container);
                 }
             }
         });
@@ -1218,7 +1218,7 @@ public class FirebaseHelper {
         });
     }
 
-    public void updateAdmin (final String newAdmin, final String chatKey) {
+    public void updateGroupMembers (final String singleUser, final List<String> usernames, final String chatKey, final boolean admin) {
         DatabaseReference groupRef = database.getReference("groups").orderByChild("groupKey").equalTo(chatKey).getRef();
         groupRef.runTransaction(new Transaction.Handler() {
             @Override
@@ -1229,12 +1229,19 @@ public class FirebaseHelper {
                     if (groupModel == null) return Transaction.success(mutableData);
 
                     if (groupModel.getGroupKey().equals(chatKey)) {
-                        if (groupModel.getAdmin().equals("")) {
-                            groupModel.setAdmin(newAdmin);
+                        if (admin) {
+                            if (groupModel.getAdmin().equals("")) {
+                                groupModel.setAdmin(singleUser);
+                                data.setValue(groupModel);
+                                break;
+                            }
+                        } else {
+                            String updatedMembers = groupModel.getMembers();
+                            updatedMembers += (updatedMembers.equals("")) ? singleUser : "," + singleUser;
+                            groupModel.setMembers(updatedMembers);
                             data.setValue(groupModel);
                             break;
                         }
-
                     }
 
                 }
@@ -1246,10 +1253,11 @@ public class FirebaseHelper {
             public void onComplete(DatabaseError databaseError, boolean b, DataSnapshot dataSnapshot) {
                 if (databaseError == null) {
                     Container container = new Container();
-                    container.setString(newAdmin);
-                    listener.onCompleteTask("updateAdmin", CONDITION_1, container);
+                    container.setStringList(usernames);
+                    container.setString(singleUser);
+                    listener.onCompleteTask("updateGroupMembers", CONDITION_1, container);
                 } else {
-                    listener.onFailureTask("updateAdmin", databaseError);
+                    listener.onFailureTask("updateGroupMembers", databaseError);
                 }
             }
         });
