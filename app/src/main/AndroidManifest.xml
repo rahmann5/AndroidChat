@@ -103,7 +103,8 @@
         <activity
             android:name=".activities.MemberSelectorActivity"
             android:label="@string/title_select_member" />
-        <activity android:name=".activities.AboutActivity"></activity>
+        <activity android:name=".activities.AboutActivity"
+            android:theme="@style/AppTheme.NoActionBar"></activity>
     </application>
 
 </manifest>

@@ -15,6 +15,7 @@ import android.view.MenuItem;
 import android.widget.Toast;
 
 import com.example.naziur.androidchat.R;
+import com.example.naziur.androidchat.models.User;
 
 import java.util.List;
 
@@ -174,6 +175,19 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
                     Intent intent = new Intent(getActivity(), AboutActivity.class);
                     intent.putExtra("key", R.string.key_app_info);
                     startActivity(intent);
+                    return true;
+                }
+            });
+
+            Preference reportIssue = findPreference(getString(R.string.key_report_issue));
+            reportIssue.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+                public boolean onPreferenceClick(Preference preference) {
+                    User user = User.getInstance();
+                    Intent intent = new Intent(Intent.ACTION_SEND);
+                    intent.setType("plain/text");
+                    intent.putExtra(Intent.EXTRA_EMAIL, new String[] { "shr96@hotmail.co.uk" });
+                    intent.putExtra(Intent.EXTRA_SUBJECT, "Error Reporting by "+ user.profileName +" ("+user.name+")");
+                    startActivity(Intent.createChooser(intent, ""));
                     return true;
                 }
             });

@@ -123,7 +123,6 @@
     <string name="pref_version_title">Version</string>
     <string name="pref_report_issue_title">Report An Issue</string>
     <string name="pref_about_summary">Learn about who we are</string>
-    <string name="pref_app_info_summary">Information about the app and its software</string>
     <string name="pref_version_summary">1.0</string>
     <string name="pref_report_issue_summary">Found an issue with the app. Report it now.</string>
     <string name="key_about_settings">pref_key_about_settings</string>
