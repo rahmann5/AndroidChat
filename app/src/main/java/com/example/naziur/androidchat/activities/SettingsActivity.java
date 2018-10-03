@@ -4,6 +4,7 @@ import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
+import android.net.Uri;
 import android.os.Build;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
@@ -112,6 +113,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
     protected boolean isValidFragment(String fragmentName) {
         return PreferenceFragment.class.getName().equals(fragmentName)
                 || SettingsActivity.AccountPreferenceFragment.class.getName().equals(fragmentName)
+                || SettingsActivity.HelpPreferenceFragment.class.getName().equals(fragmentName)
                 || SettingsActivity.AboutPreferenceFragment.class.getName().equals(fragmentName);
     }
 
@@ -175,6 +177,74 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
                     return true;
                 }
             });
+        }
+
+    }
+
+    /**
+     * This fragment shows general preferences only. It is used when the
+     * activity is showing a two-pane settings UI.
+     */
+    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
+    public static class HelpPreferenceFragment extends PreferenceFragment {
+        @Override
+        public void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            addPreferencesFromResource(R.xml.pref_help);
+
+            Preference ratePref = findPreference(getString(R.string.pref_rate_key));
+            ratePref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+                @Override
+                public boolean onPreferenceClick(Preference preference) {
+                    getActivity().startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" +  getActivity().getPackageName())));
+                    return true;
+                }
+            });
+            Preference sharePref = findPreference(getString(R.string.pref_share_key));
+            sharePref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+                @Override
+                public boolean onPreferenceClick(Preference preference) {
+                    Intent sharingIntent = new Intent(android.content.Intent.ACTION_SEND);
+                    sharingIntent.setType("text/plain");
+                    String shareBodyText = "Check it out. Android Chat (Place URL Here)";
+                    sharingIntent.putExtra(android.content.Intent.EXTRA_SUBJECT,"Android Chat");
+                    sharingIntent.putExtra(android.content.Intent.EXTRA_TEXT, shareBodyText);
+                    startActivity(Intent.createChooser(sharingIntent, "Shearing Option"));
+                    return true;
+                }
+            });
+
+            Preference faqPref = findPreference(getString(R.string.pref_faq_key));
+            faqPref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+                @Override
+                public boolean onPreferenceClick(Preference preference) {
+                    Uri newsUri = Uri.parse("https://tutoriallibrary.000webhostapp.com/faqs");
+                    Intent websiteIntent = new Intent(Intent.ACTION_VIEW, newsUri);
+                    startActivity(websiteIntent);
+                    return true;
+                }
+            });
+            Preference tAndCPref = findPreference(getString(R.string.pref_tandc_key));
+            tAndCPref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+                @Override
+                public boolean onPreferenceClick(Preference preference) {
+                    Uri newsUri = Uri.parse("https://tutoriallibrary.000webhostapp.com/legal/1");
+                    Intent websiteIntent = new Intent(Intent.ACTION_VIEW, newsUri);
+                    startActivity(websiteIntent);
+                    return true;
+                }
+            });
+            Preference privacyPref = findPreference(getString(R.string.pref_privacy_key));
+            privacyPref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+                @Override
+                public boolean onPreferenceClick(Preference preference) {
+                    Uri newsUri = Uri.parse("https://tutoriallibrary.000webhostapp.com/legal/0");
+                    Intent websiteIntent = new Intent(Intent.ACTION_VIEW, newsUri);
+                    startActivity(websiteIntent);
+                    return true;
+                }
+            });
+
         }
 
     }

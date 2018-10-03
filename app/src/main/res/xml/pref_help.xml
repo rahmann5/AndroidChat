@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory android:title="@string/pref_cat_support"/>
+
+    <Preference
+        android:key="@string/pref_faq_key"
+        android:summary="@string/pref_faq_summery"
+        android:title="@string/pref_faq_title" />
+
+    <Preference
+        android:key="@string/pref_rate_key"
+        android:summary="@string/pref_rate_summery"
+        android:title="@string/pref_rate_title" />
+
+    <Preference
+        android:key="@string/pref_share_key"
+        android:summary="@string/pref_share_summery"
+        android:title="@string/pref_share_title" />
+
+    <PreferenceCategory android:title="@string/pref_cat_security"/>
+
+    <Preference
+        android:key="@string/pref_tandc_key"
+        android:title="@string/pref_tandc_title" />
+
+    <Preference
+        android:key="@string/pref_privacy_key"
+        android:title="@string/pref_privacy_title" />
+
+</PreferenceScreen>

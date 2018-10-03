@@ -29,6 +29,7 @@ import com.example.naziur.androidchat.models.Contact;
 import com.example.naziur.androidchat.models.FirebaseUserModel;
 import com.example.naziur.androidchat.models.User;
 import com.example.naziur.androidchat.utils.Container;
+import com.example.naziur.androidchat.utils.Network;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.ValueEventListener;
 
@@ -173,6 +174,12 @@ public class MemberSelectorActivity extends AppCompatActivity implements Firebas
 
     @Override
     public void onDialogPositiveClick(DialogFragment dialog, final String username) {
+
+        if (!Network.isInternetAvailable(this, true)) {
+            dialog.dismiss();
+            return;
+        }
+
         User user = User.getInstance();
         ContactDBHelper db = new ContactDBHelper(getApplicationContext());
         if(!db.isUserAlreadyInContacts(username) && !username.equals(user.name) && !isAlreadyMember(username)){
