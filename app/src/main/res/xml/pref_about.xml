@@ -19,11 +19,9 @@
 
         <Preference
             android:key="@string/key_app_info"
-            android:summary="@string/pref_app_info_summary"
             android:title="@string/pref_app_info_title" />
 
         <Preference
-            android:selectable="false"
             android:key="@string/key_version"
             android:summary="@string/pref_version_summary"
             android:title="@string/pref_version_title" />

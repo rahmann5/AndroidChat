@@ -436,14 +436,16 @@ public class FirebaseHelper {
 
     public void toggleListenerFor(String reference, String child, String target, ValueEventListener valueEventListener, boolean add, boolean single){
         DatabaseReference databaseReference = database.getReference(reference);
-        if (!single) {
-            if (add) {
-                databaseReference.orderByChild(child).equalTo(target).addValueEventListener(valueEventListener);
+        if(valueEventListener != null) {
+            if (!single) {
+                if (add) {
+                    databaseReference.orderByChild(child).equalTo(target).addValueEventListener(valueEventListener);
+                } else {
+                    databaseReference.orderByChild(child).equalTo(target).removeEventListener(valueEventListener);
+                }
             } else {
-                databaseReference.orderByChild(child).equalTo(target).removeEventListener(valueEventListener);
+                databaseReference.orderByChild(child).equalTo(target).addListenerForSingleValueEvent(valueEventListener);
             }
-        } else {
-            databaseReference.orderByChild(child).equalTo(target).addListenerForSingleValueEvent(valueEventListener);
         }
     }
 
