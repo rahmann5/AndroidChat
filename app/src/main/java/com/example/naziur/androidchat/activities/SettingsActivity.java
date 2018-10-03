@@ -2,6 +2,7 @@ package com.example.naziur.androidchat.activities;
 
 import android.annotation.TargetApi;
 import android.content.Context;
+import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.Build;
 import android.preference.Preference;
@@ -110,7 +111,8 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
      */
     protected boolean isValidFragment(String fragmentName) {
         return PreferenceFragment.class.getName().equals(fragmentName)
-                || SettingsActivity.AccountPreferenceFragment.class.getName().equals(fragmentName);
+                || SettingsActivity.AccountPreferenceFragment.class.getName().equals(fragmentName)
+                || SettingsActivity.AboutPreferenceFragment.class.getName().equals(fragmentName);
     }
 
     /**
@@ -144,6 +146,35 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
                 }
             });
             //bindPreferenceSummaryToValue(findPreference("auto_login_user"));
+        }
+
+    }
+
+    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
+    public static class AboutPreferenceFragment extends PreferenceFragment {
+        @Override
+        public void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            addPreferencesFromResource(R.xml.pref_about);
+            Preference aboutUs = findPreference(getString(R.string.key_about_us));
+            aboutUs.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+                public boolean onPreferenceClick(Preference preference) {
+                    Intent intent = new Intent(getActivity(), AboutActivity.class);
+                    intent.putExtra("key", R.string.key_about_us);
+                    startActivity(intent);
+                    return true;
+                }
+            });
+
+            Preference appInfo = findPreference(getString(R.string.key_app_info));
+            appInfo.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+                public boolean onPreferenceClick(Preference preference) {
+                    Intent intent = new Intent(getActivity(), AboutActivity.class);
+                    intent.putExtra("key", R.string.key_app_info);
+                    startActivity(intent);
+                    return true;
+                }
+            });
         }
 
     }

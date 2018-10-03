@@ -12,6 +12,8 @@
     <string name="status_sad">Sad</string>
     <string name="status_dead">Dead</string>
     <string name="gallery_chooser">Profile Picture</string>
+    <string name="chat_gallery_chooser">Upload Picture</string>
+    <string name="group_gallery_chooser">Group Picture</string>
     <string name="save_btn">Save &amp; Exit</string>
 
 
@@ -96,6 +98,24 @@
     <string name="key_delete_acc">delete_acc</string>
     <string name="pref_desc_delete_acc">Warning: this action cannot be undone.</string>
     <string name="pref_title_delete_acc">Delete Account</string>
+
+    <!-- About Settings Keys -->
+    <string name="about_category_title">About</string>
+    <string name="app_info_category_title">App Info</string>
+    <string name="pref_about_title">About Us</string>
+    <string name="pref_app_info_title">App Information</string>
+    <string name="pref_version_title">Version</string>
+    <string name="pref_report_issue_title">Report An Issue</string>
+    <string name="pref_about_summary">Learn about who we are</string>
+    <string name="pref_app_info_summary">Information about the app and its software</string>
+    <string name="pref_version_summary">1.0</string>
+    <string name="pref_report_issue_summary">Found an issue with the app. Report it now.</string>
+    <string name="key_about_settings">pref_key_about_settings</string>
+    <string name="key_app_info_settings">pref_key_app_info_settings</string>
+    <string name="key_app_info">App Information</string>
+    <string name="key_about_us">pref_key_about_us</string>
+    <string name="key_version">pref_key_version</string>
+    <string name="key_report_issue">pref_key_report_issue</string>
 
 
 </resources>

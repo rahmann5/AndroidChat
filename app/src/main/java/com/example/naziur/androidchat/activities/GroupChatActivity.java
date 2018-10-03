@@ -132,7 +132,7 @@ public class GroupChatActivity extends AppCompatActivity implements ImageViewDia
         btnMedia.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                EasyImage.openChooserWithGallery(GroupChatActivity.this, getResources().getString(R.string.gallery_chooser), REQUEST_CODE_GALLERY_CAMERA);
+                EasyImage.openChooserWithGallery(GroupChatActivity.this, getResources().getString(R.string.chat_gallery_chooser), REQUEST_CODE_GALLERY_CAMERA);
             }
         });
 
@@ -379,7 +379,7 @@ public class GroupChatActivity extends AppCompatActivity implements ImageViewDia
                         ((TextView) actionBar.getCustomView().findViewById(R.id.profile_name)).setText(groupModel.getTitle());
                         Glide.with(getApplicationContext())
                                 .load(groupModel.getPic())
-                                .apply(new RequestOptions().placeholder(R.drawable.placeholder).error(R.drawable.unknown))
+                                .apply(new RequestOptions().placeholder(R.drawable.placeholder).error(R.drawable.ic_group_unknown))
                                 .into(((CircleImageView) actionBar.getCustomView().findViewById(R.id.profile_icon)));
                         List<String> members = Arrays.asList(getMembersThatNeedToReceiveMessage());
                         if(members.size() > 0)

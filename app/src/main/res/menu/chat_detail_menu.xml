@@ -2,17 +2,6 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     tools:context="com.example.naziur.androidchat.activities.ChatDetailActivityy">
-    <item
-        android:id="@+id/action_profile"
-        android:orderInCategory="100"
-        android:title="My profile"
-        app:showAsAction="never" />
-
-    <item
-        android:id="@+id/action_contacts"
-        android:orderInCategory="100"
-        android:title="Settings"
-        app:showAsAction="never" />
 
     <item
         android:id="@+id/action_info"

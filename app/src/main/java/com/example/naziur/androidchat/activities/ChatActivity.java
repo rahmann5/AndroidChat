@@ -194,7 +194,7 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
         btnMedia.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                EasyImage.openChooserWithGallery(ChatActivity.this, getResources().getString(R.string.gallery_chooser), REQUEST_CODE_GALLERY_CAMERA);
+                EasyImage.openChooserWithGallery(ChatActivity.this, getResources().getString(R.string.chat_gallery_chooser), REQUEST_CODE_GALLERY_CAMERA);
             }
         });
 

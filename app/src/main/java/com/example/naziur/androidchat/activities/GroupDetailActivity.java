@@ -66,7 +66,6 @@ public class GroupDetailActivity extends AppCompatActivity implements FirebaseHe
     private TextView emptyTv;
     private User user = User.getInstance();
     private StorageReference mStorageRef;
-    public boolean changeMade = false;
     private String pic = "";
     private Menu menu;
     private ArrayAdapter membersAdapter;
@@ -149,27 +148,6 @@ public class GroupDetailActivity extends AppCompatActivity implements FirebaseHe
             titleEt.setText(groupModel.getTitle());
             titleEt.setVisibility(View.VISIBLE);
 
-            titleEt.addTextChangedListener(new TextWatcher() {
-                @Override
-                public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-
-                }
-
-                @Override
-                public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-                    if(!charSequence.toString().equals(groupModel.getTitle())){
-                        changeMade = true;
-                    } else {
-                        changeMade = false;
-                    }
-                }
-
-                @Override
-                public void afterTextChanged(Editable editable) {
-
-                }
-            });
-
             ImageView editIv = (ImageView) findViewById(R.id.edit_btn_group_title);
             editIv.setVisibility(View.VISIBLE);
             editIv.setOnClickListener(new View.OnClickListener() {
@@ -191,24 +169,23 @@ public class GroupDetailActivity extends AppCompatActivity implements FirebaseHe
                 @Override
                 public void onClick(View view) {
                     pic = NO_IMAGE_CODE;
-                    changeMade = true;
                     myImageFile = null;
                     Glide.with(GroupDetailActivity.this)
-                            .load(R.drawable.unknown)
+                            .load(R.drawable.ic_group_unknown)
                             .into(groupIv);
                 }
             });
             fab.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    EasyImage.openChooserWithGallery(GroupDetailActivity.this, getResources().getString(R.string.gallery_chooser), REQUEST_CODE_GALLERY_CAMERA);
+                    EasyImage.openChooserWithGallery(GroupDetailActivity.this, getResources().getString(R.string.group_gallery_chooser), REQUEST_CODE_GALLERY_CAMERA);
                 }
             });
 
         }
-        if (!changeMade) {
+        if(pic.equals(groupModel.getPic()))
             Glide.with(GroupDetailActivity.this).load(pic).apply(new RequestOptions().placeholder(R.drawable.placeholder).error(R.drawable.unknown)).into(groupIv);
-        }
+
     }
 
     private void updateGroupListAdapter() {
@@ -264,7 +241,6 @@ public class GroupDetailActivity extends AppCompatActivity implements FirebaseHe
                                 .apply(new RequestOptions().placeholder(R.drawable.placeholder).error(R.drawable.unknown))
                                 .into(groupIv);
                         pic = "groupProf/"+ Uri.fromFile(myImageFile).getLastPathSegment();
-                        changeMade = true;
                         break;
                 }
             }
@@ -330,8 +306,7 @@ public class GroupDetailActivity extends AppCompatActivity implements FirebaseHe
                 startActivityForResult(intent, MEMBER_REQUEST_CODE);
                 break;
             case R.id.save_change:
-                if(changeMade)
-                    checkAndSaveChanges();
+                checkAndSaveChanges();
                 break;
         }
 
@@ -468,7 +443,6 @@ public class GroupDetailActivity extends AppCompatActivity implements FirebaseHe
                 switch (condition){
                     case FirebaseHelper.CONDITION_1:
                         progressBar.toggleDialog(false);
-                        changeMade = false;
                         pic = "";
                         finish();
                         break;

@@ -85,8 +85,7 @@
 
         <activity
             android:name=".activities.GroupCreatorActivity"
-            android:theme="@style/AppTheme.Transparent"
-            />
+            android:theme="@style/AppTheme.Transparent" />
         <activity android:name=".activities.GroupChatActivity" />
         <activity
             android:name=".activities.NotificationActivity"
@@ -94,15 +93,17 @@
         <activity
             android:name=".activities.GroupDetailActivity"
             android:theme="@style/AppTheme.NoActionBar" />
-        <activity android:name=".activities.SettingsActivity"
+        <activity
+            android:name=".activities.SettingsActivity"
             android:parentActivityName=".activities.SessionActivity">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.example.naziur.androidchat.activities.SessionActivity" />
         </activity>
-        <activity android:name=".activities.MemberSelectorActivity"
-            android:label="@string/title_select_member"
-            />
+        <activity
+            android:name=".activities.MemberSelectorActivity"
+            android:label="@string/title_select_member" />
+        <activity android:name=".activities.AboutActivity"></activity>
     </application>
 
 </manifest>

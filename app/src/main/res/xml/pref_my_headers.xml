@@ -8,7 +8,7 @@
         android:title="@string/pref_header_account" />
 
     <header
-        android:fragment="com.example.naziur.androidchat.activities.SettingsActivity$AccountPreferenceFragment"
+        android:fragment="com.example.naziur.androidchat.activities.SettingsActivity$AboutPreferenceFragment"
         android:icon="@drawable/ic_empty"
         android:title="@string/pref_header_about" />
 

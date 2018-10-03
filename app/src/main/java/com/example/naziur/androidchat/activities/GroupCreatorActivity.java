@@ -250,7 +250,7 @@ public class GroupCreatorActivity extends AppCompatActivity implements FirebaseH
         groupImage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                EasyImage.openChooserWithGallery(GroupCreatorActivity.this, getResources().getString(R.string.gallery_chooser), REQUEST_CODE_GALLERY_CAMERA);
+                EasyImage.openChooserWithGallery(GroupCreatorActivity.this, getResources().getString(R.string.group_gallery_chooser), REQUEST_CODE_GALLERY_CAMERA);
             }
         });
 

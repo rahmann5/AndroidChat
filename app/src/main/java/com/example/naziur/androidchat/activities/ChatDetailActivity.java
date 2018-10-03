@@ -173,12 +173,6 @@ public class ChatDetailActivity extends AppCompatActivity implements FirebaseHel
         int id = item.getItemId();
 
         switch(id){
-            case R.id.action_profile:
-                startActivity(new Intent(ChatDetailActivity.this, ProfileActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
-                break;
-            case R.id.action_contacts:
-                Toast.makeText(this, "Settings in progress", Toast.LENGTH_SHORT).show();
-                break;
             case R.id.action_info:
                 addUserAsContact();
                 fab.setVisibility(View.GONE);
