@@ -115,7 +115,7 @@ public class GroupCreatorActivity extends AppCompatActivity implements FirebaseH
                 }
                 List<String> allMembersIncludingAdmin = getAllMembersTogether();
                 allMembersIncludingAdmin.add(user.name);
-                firebaseHelper.updateGroupKeyForMembers(allMembersIncludingAdmin, container.getString());
+                firebaseHelper.updateGroupKeyForMembers(allMembersIncludingAdmin, container.getString(), FirebaseHelper.CONDITION_1);
                 break;
             case "getDeviceTokensFor":
                 switch(condition){
@@ -213,7 +213,7 @@ public class GroupCreatorActivity extends AppCompatActivity implements FirebaseH
         choiceRecyclerView.setAdapter(allChosenMembersAdapter);
         myContactsAdapter = new MyContactsAdapter(this, readCursorData(contactDbHelper.getAllMyContacts(null)), new MyContactsAdapter.OnItemClickListener() {
             @Override
-            public void onItemClick(Contact contact, int pos) {
+            public void onItemClick(Contact contact, int pos, View itemView) {
                 if (membersSelectedFromContacts.contains(contact.getContact().getUsername())) {
                     membersSelectedFromContacts.remove(contact.getContact().getUsername());
                 } else {

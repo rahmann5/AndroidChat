@@ -285,7 +285,7 @@ public class GroupChatActivity extends AppCompatActivity implements ImageViewDia
                 startActivity(intent);
                 break;
             case R.id.admin :
-                firebaseHelper.updateAdmin(user.name, groupKey);
+                firebaseHelper.updateGroupMembers(user.name,null, groupKey, true);
                 break;
 
         }
@@ -431,7 +431,7 @@ public class GroupChatActivity extends AppCompatActivity implements ImageViewDia
                         break;
                 }
                 break;
-            case "updateAdmin" :
+            case "updateGroupMembers" :
                 Toast.makeText(this, "New admin is " + container.getString(), Toast.LENGTH_SHORT).show();
                 break;
 
@@ -449,7 +449,7 @@ public class GroupChatActivity extends AppCompatActivity implements ImageViewDia
             case "createMessageEventListener":
                 progressBar.toggleDialog(false);
                 break;
-            case "updateAdmin":
+            case "updateGroupMembers":
                 Toast.makeText(this, "Failed to become admin", Toast.LENGTH_SHORT).show();
                 break;
         }

@@ -155,7 +155,7 @@ public class MyContactsActivity extends AppCompatActivity implements AddContactD
     private MyContactsAdapter.OnItemClickListener setUpListener () {
         return new MyContactsAdapter.OnItemClickListener() {
             @Override
-            public void onItemClick(Contact contact, int position) {
+            public void onItemClick(Contact contact, int position, View itemView) {
                 createDialog(contact, position).show();
             }
         };

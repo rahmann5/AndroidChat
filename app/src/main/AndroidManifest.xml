@@ -92,7 +92,10 @@
         <activity
             android:name=".activities.GroupDetailActivity"
             android:theme="@style/AppTheme.NoActionBar" />
-        <activity android:name=".activities.SettingsActivity"></activity>
+        <activity android:name=".activities.SettingsActivity" />
+        <activity android:name=".activities.MemberSelectorActivity"
+            android:label="@string/title_select_member"
+            />
     </application>
 
 </manifest>
