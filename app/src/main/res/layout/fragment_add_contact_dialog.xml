@@ -9,7 +9,7 @@
         android:textSize="30sp"
         android:layout_width="match_parent"
         android:layout_height="64dp"
-        android:background="#FFFFBB33"
+        android:background="@color/main_theme_1"
         android:contentDescription="@string/app_name" />
     <EditText
         android:id="@+id/username"

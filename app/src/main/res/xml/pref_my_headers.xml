@@ -4,13 +4,18 @@
 
     <header
         android:fragment="com.example.naziur.androidchat.activities.SettingsActivity$AccountPreferenceFragment"
-        android:icon="@drawable/ic_empty"
+        android:icon="@drawable/ic_account"
         android:title="@string/pref_header_account" />
 
     <header
         android:fragment="com.example.naziur.androidchat.activities.SettingsActivity$AccountPreferenceFragment"
-        android:icon="@drawable/ic_empty"
+        android:icon="@drawable/ic_about"
         android:title="@string/pref_header_about" />
+
+    <header
+        android:fragment="com.example.naziur.androidchat.activities.SettingsActivity$HelpPreferenceFragment"
+        android:icon="@drawable/ic_help"
+        android:title="@string/pref_header_help" />
 
 
 </preference-headers>

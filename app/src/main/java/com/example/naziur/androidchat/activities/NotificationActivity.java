@@ -93,21 +93,10 @@ public class NotificationActivity extends AppCompatActivity implements Notificat
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.profile_menu, menu);
-        return true;
-    }
-
-    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case android.R.id.home :
                 finish();
-                break;
-
-            case R.id.action_settings :
-
                 break;
 
         }
