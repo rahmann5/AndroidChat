@@ -10,8 +10,6 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -43,9 +41,7 @@ import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
 import java.io.File;
-import java.sql.Array;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import pl.aprilapps.easyphotopicker.DefaultCallback;
@@ -82,7 +78,7 @@ public class GroupDetailActivity extends AppCompatActivity implements FirebaseHe
         toolbar = (Toolbar) findViewById(R.id.toolbar);
 
         membersListView = (ListView) findViewById(R.id.members_list_view);
-        membersAdapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, getEveryOneBesidesYou()){
+        membersAdapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, getEveryMember()){
             @Override
             public View getView(int position, View convertView, ViewGroup parent) {
                 TextView textView = (TextView) super.getView(position, convertView, parent);
@@ -191,28 +187,21 @@ public class GroupDetailActivity extends AppCompatActivity implements FirebaseHe
 
     private void updateGroupListAdapter() {
         membersAdapter.clear();
-        membersAdapter.addAll(getEveryOneBesidesYou());
+        membersAdapter.addAll(getEveryMember());
         membersAdapter.notifyDataSetChanged();
     }
 
-    private List<String> getEveryOneBesidesYou(){
+    private List<String> getEveryMember(){
         List<String> members = new ArrayList<>();
-        if(groupModel == null)
-            return members;
-
-        String [] membersIngroup = groupModel.getMembers().split(",");
-        if(groupModel.getAdmin().equals(user.name))
-            if(!membersIngroup[0].equals(""))
-                return Arrays.asList(membersIngroup);
-            else return members;
-        else {
-            for (int i = 0; i < membersIngroup.length; i++) {
-                if (!membersIngroup[i].equals(user.name)) {
+        if(groupModel != null) {
+            if (!groupModel.getMembers().isEmpty()) {
+                String [] membersIngroup = groupModel.getMembers().split(",");
+                for (int i = 0; i < membersIngroup.length; i++) {
                     members.add(membersIngroup[i]);
                 }
             }
-            return members;
         }
+        return members;
     }
 
     @Override
