@@ -959,7 +959,10 @@ public class FirebaseHelper {
                         if(firebaseUserModel.getGroupKeys().equals(""))
                             firebaseUserModel.setGroupKeys(uniqueID);
                         else {
-                            firebaseUserModel.setGroupKeys(firebaseUserModel.getGroupKeys() + "," + uniqueID);
+                            List<String> allGroupKeys = Arrays.asList(firebaseUserModel.getGroupKeys().split(","));
+                            if (!allGroupKeys.contains(uniqueID)) {
+                                firebaseUserModel.setGroupKeys(firebaseUserModel.getGroupKeys() + "," + uniqueID);
+                            }
                         }
                         data.setValue(firebaseUserModel);
                     }
