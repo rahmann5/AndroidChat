@@ -76,7 +76,6 @@ public class GroupChatActivity extends AppCompatActivity implements ImageViewDia
     FirebaseHelper firebaseHelper;
     private ImageViewDialogFragment imageViewDialog;
     private ContactDBHelper db;
-    private Menu menu;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -266,7 +265,11 @@ public class GroupChatActivity extends AppCompatActivity implements ImageViewDia
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.group_chat_menu, menu);
-        this.menu = menu;
+        if (groupModel.getAdmin().equals("")) {
+            menu.findItem(R.id.admin).setVisible(true);
+        } else {
+            menu.findItem(R.id.admin).setVisible(false);
+        }
         return true;
     }
 
@@ -384,13 +387,7 @@ public class GroupChatActivity extends AppCompatActivity implements ImageViewDia
                         List<String> members = Arrays.asList(getMembersThatNeedToReceiveMessage());
                         if(members.size() > 0)
                             firebaseHelper.getDeviceTokensFor(members, groupModel.getTitle(), groupModel.getGroupKey());
-                        if (menu != null) {
-                            if (groupModel.getAdmin().equals("")) {
-                                menu.findItem(R.id.admin).setVisible(true);
-                            } else {
-                                menu.findItem(R.id.admin).setVisible(false);
-                            }
-                        }
+                        invalidateOptionsMenu();
                         break;
                 }
                 break;
