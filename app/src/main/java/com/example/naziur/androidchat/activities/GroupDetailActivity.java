@@ -422,7 +422,6 @@ public class GroupDetailActivity extends AppCompatActivity implements FirebaseHe
             case "getGroupInfo":
                 switch (condition){
                     case FirebaseHelper.CONDITION_1:
-                        System.out.println("getGroupInfo");
                         groupModel = container.getGroupModel();
                         populateWithGroupData();
                         progressBar.toggleDialog(false);
