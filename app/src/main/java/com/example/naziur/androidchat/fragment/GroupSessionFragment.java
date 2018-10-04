@@ -302,10 +302,14 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
                     break;
 
                 case FirebaseHelper.CONDITION_2 :
-                    FirebaseGroupModel grpModel = allGroups.get(findIndexForGroup(container.getString()));
-                    String leaver = (grpModel.getAdmin().equals(user.name)) ? "Admin " + user.name : user.name;
-                    String wishMessage = leaver + " has left the group.";
-                    firebaseHelper.updateMessageNode(getActivity(), "group", container.getString(), wishMessage , null, Constants.MESSAGE_TYPE_SYSTEM, null, grpModel.getTitle());
+                    FirebaseGroupModel grpModel = container.getGroupModel();
+                    if (grpModel != null) {
+                        String leaver = (grpModel.getAdmin().equals(user.name)) ? "Admin " + user.name : user.name;
+                        String wishMessage = leaver + " has left the group.";
+                        firebaseHelper.updateMessageNode(getActivity(), "group", container.getString(), wishMessage , null, Constants.MESSAGE_TYPE_SYSTEM, null, grpModel.getTitle());
+                    } else {
+                        Log.i(TAG, "Could not send system message; as Group Model is null.");
+                    }
                     Toast.makeText(getActivity(), "Successfully left the group", Toast.LENGTH_SHORT).show();
                     break;
             }

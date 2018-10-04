@@ -1157,6 +1157,7 @@ public class FirebaseHelper {
         groupRef.runTransaction(new Transaction.Handler() {
             boolean isDeleted = false;
             String groupPic = "";
+            private FirebaseGroupModel groupRemovedFrom;
             @Override
             public Transaction.Result doTransaction(MutableData mutableData) {
                 for (MutableData data : mutableData.getChildren()) {
@@ -1172,6 +1173,7 @@ public class FirebaseHelper {
                             data.setValue(groupModel);
                             break;
                         }
+                        groupRemovedFrom = groupModel;
                     }
 
                 }
@@ -1186,7 +1188,8 @@ public class FirebaseHelper {
                     container.setString(chatKey); // key to remove
                     List<String> list = new ArrayList<String>();
                     list.add(groupPic);
-                    container.setStringList(list); // key to remove
+                    container.setStringList(list);// key to remove
+                    container.setGroupModel(groupRemovedFrom);
                     if (isDeleted) {
                         // complete delete
                         listener.onCompleteTask("deleteGroup", CONDITION_1, container);
