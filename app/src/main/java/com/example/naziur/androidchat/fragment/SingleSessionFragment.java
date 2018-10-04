@@ -25,6 +25,7 @@ import com.example.naziur.androidchat.database.ContactDBHelper;
 import com.example.naziur.androidchat.database.FirebaseHelper;
 import com.example.naziur.androidchat.database.MyContactsContract;
 import com.example.naziur.androidchat.models.Chat;
+import com.example.naziur.androidchat.models.FirebaseGroupModel;
 import com.example.naziur.androidchat.models.FirebaseMessageModel;
 import com.example.naziur.androidchat.models.FirebaseUserModel;
 import com.example.naziur.androidchat.models.User;
@@ -258,7 +259,10 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
             case "checkKeyListKey":
                 switch(condition){
                     case FirebaseHelper.CONDITION_2:
-                        firebaseHelper.collectAllImagesForDeletionThenDeleteRelatedMessages("single", container);
+                        FirebaseGroupModel grp = new FirebaseGroupModel();
+                        grp.setGroupKey(container.getString());
+                        grp.setPic(null);
+                        firebaseHelper.collectAllImagesForDeletionThenDeleteRelatedMessages("single", grp);
                         break;
                 }
                 break;

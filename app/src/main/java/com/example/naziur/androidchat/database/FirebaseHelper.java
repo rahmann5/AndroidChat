@@ -549,8 +549,8 @@ public class FirebaseHelper {
         });
     }
 
-    public void collectAllImagesForDeletionThenDeleteRelatedMessages(final String node, final Container container){
-        final DatabaseReference reference = database.getReference("messages").child(node).child(container.getString());
+    public void collectAllImagesForDeletionThenDeleteRelatedMessages(final String node, final FirebaseGroupModel firebaseGroupModel){
+        final DatabaseReference reference = database.getReference("messages").child(node).child(firebaseGroupModel.getGroupKey());
         reference.orderByChild("mediaType").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -561,17 +561,17 @@ public class FirebaseHelper {
                         imageUri.add(model.getText());
                     }
                 }
-                if(container.getStringList() != null)
-                    imageUri.add(container.getStringList().get(0));
+                if (firebaseGroupModel.getPic() != null)
+                    imageUri.add(firebaseGroupModel.getPic());
                 Container c = new Container();
-                c.setString(container.getString());
+                c.setString(firebaseGroupModel.getGroupKey());
                 c.setStringList(imageUri);
                 listener.onCompleteTask("collectAllImagesForDeletionThenDeleteRelatedMessages", CONDITION_1, c);
             }
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
-                cleanDeleteAllMessages(node, container.getString());
+                cleanDeleteAllMessages(node, firebaseGroupModel.getGroupKey());
             }
         });
     }
@@ -1166,14 +1166,17 @@ public class FirebaseHelper {
                     if (groupModel == null) return Transaction.success(mutableData);
 
                     if (groupModel.getGroupKey().equals(chatKey)) {
+                        groupRemovedFrom = new FirebaseGroupModel();
+                        groupRemovedFrom.setTitle(groupModel.getTitle());
+                        groupRemovedFrom.setGroupKey(chatKey);
+                        groupRemovedFrom.setPic(groupModel.getPic());
+                        groupRemovedFrom.setAdmin(groupModel.getAdmin());
                         if (groupModel.getAdmin().equals("") && groupModel.getMembers().equals("")) { // no admin and members left
                             isDeleted = true;
-                            groupPic = groupModel.getPic();
                             groupModel = null;
                             data.setValue(groupModel);
                             break;
                         }
-                        groupRemovedFrom = groupModel;
                     }
 
                 }
@@ -1185,10 +1188,6 @@ public class FirebaseHelper {
             public void onComplete(DatabaseError databaseError, boolean b, DataSnapshot dataSnapshot) {
                 if (databaseError == null) {
                     Container container = new Container();
-                    container.setString(chatKey); // key to remove
-                    List<String> list = new ArrayList<String>();
-                    list.add(groupPic);
-                    container.setStringList(list);// key to remove
                     container.setGroupModel(groupRemovedFrom);
                     if (isDeleted) {
                         // complete delete
@@ -1235,19 +1234,27 @@ public class FirebaseHelper {
                     if (groupModel == null) return Transaction.success(mutableData);
 
                     if (groupModel.getGroupKey().equals(chatKey)) {
+                        String updatedMembers = "";
                         if (admin) {
                             if (groupModel.getAdmin().equals("")) {
                                 groupModel.setAdmin(singleUser);
-                                data.setValue(groupModel);
+                                String [] allMembers = groupModel.getMembers().split(",");
+                                for (String member : allMembers) {
+                                    if (!member.equals(singleUser)) {
+                                        updatedMembers += (updatedMembers.equals("")) ? member : "," + member;
+                                    }
+                                }
                                 break;
                             }
                         } else {
-                            String updatedMembers = groupModel.getMembers();
+                            updatedMembers = groupModel.getMembers();
                             updatedMembers += (updatedMembers.equals("")) ? singleUser : "," + singleUser;
-                            groupModel.setMembers(updatedMembers);
-                            data.setValue(groupModel);
-                            break;
+
                         }
+
+                        groupModel.setMembers(updatedMembers);
+                        data.setValue(groupModel);
+                        break;
                     }
 
                 }

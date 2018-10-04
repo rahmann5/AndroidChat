@@ -265,10 +265,12 @@ public class GroupChatActivity extends AppCompatActivity implements ImageViewDia
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.group_chat_menu, menu);
-        if (groupModel.getAdmin().equals("")) {
-            menu.findItem(R.id.admin).setVisible(true);
-        } else {
-            menu.findItem(R.id.admin).setVisible(false);
+        if (groupModel != null) {
+            if (groupModel.getAdmin().equals("")) {
+                menu.findItem(R.id.admin).setVisible(true);
+            } else {
+                menu.findItem(R.id.admin).setVisible(false);
+            }
         }
         return true;
     }
@@ -287,7 +289,7 @@ public class GroupChatActivity extends AppCompatActivity implements ImageViewDia
                 startActivity(intent);
                 break;
             case R.id.admin :
-                firebaseHelper.updateGroupMembers(user.name,null, groupKey, true);
+                firebaseHelper.updateGroupMembers(user.name, null, groupKey, true);
                 break;
 
         }

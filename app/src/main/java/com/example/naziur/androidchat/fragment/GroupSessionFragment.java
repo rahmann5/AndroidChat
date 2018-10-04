@@ -298,7 +298,7 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
             switch (condition) {
                 case FirebaseHelper.CONDITION_1 :
                     // clean delete all messages + images
-                    firebaseHelper.collectAllImagesForDeletionThenDeleteRelatedMessages("group", container);
+                    firebaseHelper.collectAllImagesForDeletionThenDeleteRelatedMessages("group", container.getGroupModel());
                     break;
 
                 case FirebaseHelper.CONDITION_2 :
@@ -306,7 +306,7 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
                     if (grpModel != null) {
                         String leaver = (grpModel.getAdmin().equals(user.name)) ? "Admin " + user.name : user.name;
                         String wishMessage = leaver + " has left the group.";
-                        firebaseHelper.updateMessageNode(getActivity(), "group", container.getString(), wishMessage , null, Constants.MESSAGE_TYPE_SYSTEM, null, grpModel.getTitle());
+                        firebaseHelper.updateMessageNode(getActivity(), "group", grpModel.getGroupKey(), wishMessage , null, Constants.MESSAGE_TYPE_SYSTEM, null, grpModel.getTitle());
                     } else {
                         Log.i(TAG, "Could not send system message; as Group Model is null.");
                     }
@@ -344,22 +344,19 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
             switch (condition) {
                 case FirebaseHelper.CONDITION_1 :
                     String groupKey = container.getString();
-                    String title = "ERROR";
-                    String picUrl = "";
-                    String admin = "ERROR";
                     int index = findIndexForGroup(groupKey);
                     if (index != -1) {
-                        title = allGroups.get(index).getTitle();
-                        picUrl = allGroups.get(index).getPic();
-                        admin = allGroups.get(index).getAdmin();
+                        String title = allGroups.get(index).getTitle();
+                        String picUrl = allGroups.get(index).getPic();
+                        String admin = allGroups.get(index).getAdmin();
+                        FirebaseMessageModel groupMessageModel = container.getMsgModel();
+                        String senderName = (groupMessageModel.getSenderName().equals(user.name)) ? user.profileName : db.getProfileNameAndPic(groupMessageModel.getSenderName())[0];
+                        db.close();
+                        String dateString = formatter.format(new Date(groupMessageModel.getCreatedDateLong()));
+                        Chat chat = new Chat(title, senderName, groupMessageModel.getText(), picUrl, dateString, groupKey, groupMessageModel.getMediaType(), admin);
+                        myChatsdapter.addOrRemoveChat(chat, true);
+                        //System.out.println(myChatsdapter.getItemCount());
                     }
-                    FirebaseMessageModel groupMessageModel = container.getMsgModel();
-                    String senderName = (groupMessageModel.getSenderName().equals(user.name)) ? user.profileName : db.getProfileNameAndPic(groupMessageModel.getSenderName())[0];
-                    db.close();
-                    String dateString = formatter.format(new Date(groupMessageModel.getCreatedDateLong()));
-                    Chat chat = new Chat(title, senderName, groupMessageModel.getText(), picUrl, dateString, groupKey, groupMessageModel.getMediaType(), admin);
-                    myChatsdapter.addOrRemoveChat(chat, true);
-                    //System.out.println(myChatsdapter.getItemCount());
                     break;
             }
         } if (tag.equals("getValueEventListener")) {
