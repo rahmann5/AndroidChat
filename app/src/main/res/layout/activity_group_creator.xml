@@ -56,6 +56,7 @@
                         android:layout_height="wrap_content"
                         android:drawableLeft="@drawable/ic_title"
                         android:drawableTint="@color/main_theme_1"
+                        android:maxLength="@string/group_name_text"
                         android:hint="Group Name"
                         android:inputType="textEmailAddress"
                         android:maxLines="1" />
@@ -108,6 +109,7 @@
                             android:layout_height="wrap_content"
                             android:drawableLeft="@android:drawable/ic_menu_search"
                             android:drawableTint="@color/main_theme_1"
+                            android:maxLength="@string/usernames_text"
                             android:hint="Enter Username"
                             android:inputType="textEmailAddress"
                             android:maxLines="1" />

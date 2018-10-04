@@ -17,6 +17,7 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -73,6 +74,7 @@ public class GroupChatActivity extends AppCompatActivity implements ImageViewDia
     private ProgressDialog progressBar;
     private String groupKey = "";
     private ValueEventListener msgValueEventListener, groupListener;
+    private LinearLayout chatControl, footerMsg;
     FirebaseHelper firebaseHelper;
     private ImageViewDialogFragment imageViewDialog;
     private ContactDBHelper db;
@@ -93,6 +95,8 @@ public class GroupChatActivity extends AppCompatActivity implements ImageViewDia
         btnSend = (CircleImageView) findViewById(R.id.send_button);
         btnMedia = (CircleImageView) findViewById(R.id.media_button);
         sendBottom = (FloatingActionButton) findViewById(R.id.action_send_bottom);
+        chatControl = (LinearLayout) findViewById(R.id.chat_control);
+        footerMsg = (LinearLayout) findViewById(R.id.footer_message);
         database = FirebaseDatabase.getInstance();
         groupKey = extra.getString("group_uid");
         progressBar = new ProgressDialog(this, R.layout.progress_dialog, true);
@@ -249,17 +253,36 @@ public class GroupChatActivity extends AppCompatActivity implements ImageViewDia
             }
         });
         TextView textView = (TextView) actionBar.getCustomView().findViewById(R.id.group_members);
-        String[] membersArr = getMembersThatNeedToReceiveMessage();
-        String members = "You";
 
-        for(int i =0 ; i < membersArr.length; i++ ){
-            if(i < membersArr.length && members.length() > 0){
-                members += ", ";
-            }
-            members += db.getProfileInfoIfExists(membersArr[i])[0];
-        }
-        textView.setText(members);
+        textView.setText(getActionBarString());
         actionBar.getCustomView().findViewById(R.id.group_members).setVisibility(View.VISIBLE);
+    }
+
+    private String getActionBarString(){
+        String[] membersArr = getMembersThatNeedToReceiveMessage();
+        boolean isStillInGroup = false;
+        String members = "";
+        for(int i =0 ; i < membersArr.length; i++ ){
+            if(membersArr[i].equals(user.name))
+                isStillInGroup = true;
+            members += db.getProfileInfoIfExists(membersArr[i])[0];
+            if(i < membersArr.length-1)
+                members+=", ";
+        }
+        if(isStillInGroup)
+            members = "You, "+members;
+        toggleFooterSection(isStillInGroup);
+        return members;
+    }
+
+    private void toggleFooterSection(boolean show){
+        if(show) {
+            chatControl.setVisibility(View.VISIBLE);
+            footerMsg.setVisibility(View.GONE);
+        }else {
+            chatControl.setVisibility(View.GONE);
+            footerMsg.setVisibility(View.VISIBLE);
+        }
     }
 
     @Override
@@ -341,7 +364,7 @@ public class GroupChatActivity extends AppCompatActivity implements ImageViewDia
     private String[] getMembersThatNeedToReceiveMessage(){
         String [] membersIngroup = groupModel.getMembers().split(",");
         List<String> members = new ArrayList<>();
-        if(groupModel.getAdmin().equals(user.name))
+        if(groupModel.getAdmin().equals(user.name) && !membersIngroup[0].equals(""))
             return membersIngroup;
         else {
             if(!groupModel.getAdmin().isEmpty())
@@ -406,13 +429,8 @@ public class GroupChatActivity extends AppCompatActivity implements ImageViewDia
                         registeredIds = new JSONArray();
                         break;
                     case FirebaseHelper.CONDITION_2:
-                        if(registeredIds.length() == 0) {
-                            Toast.makeText(this, "Their are no more receivers on this chat: "+registeredIds.length(), Toast.LENGTH_SHORT).show();
-                            progressBar.toggleDialog(false);
-                        } else {
-                            String wishMessage = textComment.getText().toString().trim();
-                            sendMessage(wishMessage);
-                        }
+                        String wishMessage = textComment.getText().toString().trim();
+                        sendMessage(wishMessage);
                         break;
                     case FirebaseHelper.CONDITION_3:
                         imageViewDialog.sendImageAndMessage(groupKey, null, this, groupModel, registeredIds);

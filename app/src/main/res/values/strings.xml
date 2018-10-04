@@ -21,6 +21,7 @@
     <string name="enter_message">Type your message...</string>
     <string name="content_desc_send">Send</string>
     <string name="content_desc_media">Media</string>
+    <string name="footer_message">You are no longer a participant of this group</string>
 
 
     <!-- My Contacts Class -->
@@ -135,5 +136,6 @@
     <string name="naziur_description">I am the co-developer of the Android Chat android application. My key contribution to the application involves designing layouts and writing logic for managing connections with the various open-source APIs.</string>
     <string name="hamidur_description">Co-developer of Android Chat and involved in designing the various layout features as well as utilising the different web APIs. I am particularly interested in APIs and their use in producing high-quality dynamic content.</string>
 
+    <string name="group_name_text">25</string>
 
 </resources>

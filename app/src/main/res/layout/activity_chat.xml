@@ -16,12 +16,18 @@
         android:layout_above="@+id/footer_section"
         />
 
-    <LinearLayout
+    <FrameLayout
         android:id="@+id/footer_section"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:padding="3dp">
+
+    <LinearLayout
+        android:id="@+id/chat_control"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        >
 
         <LinearLayout
             android:paddingTop="6dp"
@@ -89,6 +95,27 @@
             android:visibility="gone"
             />
     </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/footer_message"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/main_theme_1"
+        android:visibility="gone">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/footer_message"
+            android:textAlignment="center"
+            android:textSize="20sp"
+            android:padding="5dp"
+            android:textColor="@color/white"
+            />
+
+    </LinearLayout>
+
+    </FrameLayout>
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/action_send_bottom"
