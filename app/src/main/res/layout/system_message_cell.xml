@@ -2,6 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical" android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:padding="10dp"
     >
 
     <TextView
@@ -18,7 +19,7 @@
         android:paddingRight="10dp"
         android:layout_margin="5dp"
         android:layout_gravity="center"
-
+        android:visibility="gone"
         />
 
     <LinearLayout

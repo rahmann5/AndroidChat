@@ -282,16 +282,21 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
         } else if (tag.equals("updateChatKeys")) {
             switch (condition) {
                 case FirebaseHelper.CONDITION_1 :
+                    Chat chat = container.getChat();
                     for(int i = 0; i < allGroups.size(); i++){
-                        if(allGroups.get(i).getGroupKey().equals(container.getChat().getChatKey())) {
+                        if(allGroups.get(i).getGroupKey().equals(chat.getChatKey())) {
                             allGroups.remove(i);
                             break;
                         }
                     }
-                    myChatsdapter.addOrRemoveChat(container.getChat(), false);
+                    myChatsdapter.addOrRemoveChat(chat, false);
                     if(myChatsdapter.getItemCount() == 0)
                         emptyChats.setVisibility(View.VISIBLE);
-                    firebaseHelper.deleteGroup(container.getChat().getChatKey());
+
+                    String leaver = (chat.getAdmin().equals(user.name)) ? "Admin " + user.name : user.name;
+                    String wishMessage = leaver + " has left the group.";
+                    firebaseHelper.updateMessageNode(getActivity(), "group", chat.getChatKey(), wishMessage , null, Constants.MESSAGE_TYPE_SYSTEM, null, chat.getTitle());
+                    firebaseHelper.deleteGroup(chat.getChatKey());
                     break;
             }
         } else if (tag.equals("deleteGroup")) {
@@ -302,14 +307,6 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
                     break;
 
                 case FirebaseHelper.CONDITION_2 :
-                    FirebaseGroupModel grpModel = container.getGroupModel();
-                    if (grpModel != null) {
-                        String leaver = (grpModel.getAdmin().equals(user.name)) ? "Admin " + user.name : user.name;
-                        String wishMessage = leaver + " has left the group.";
-                        firebaseHelper.updateMessageNode(getActivity(), "group", grpModel.getGroupKey(), wishMessage , null, Constants.MESSAGE_TYPE_SYSTEM, null, grpModel.getTitle());
-                    } else {
-                        Log.i(TAG, "Could not send system message; as Group Model is null.");
-                    }
                     Toast.makeText(getActivity(), "Successfully left the group", Toast.LENGTH_SHORT).show();
                     break;
             }
