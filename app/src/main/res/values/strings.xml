@@ -15,6 +15,7 @@
     <string name="chat_gallery_chooser">Upload Picture</string>
     <string name="group_gallery_chooser">Group Picture</string>
     <string name="save_btn">Save &amp; Exit</string>
+    <string name="profile_hint">Enter profile Name...</string>
 
 
     <!-- Chat Activity -->
@@ -137,5 +138,9 @@
     <string name="hamidur_description">Co-developer of Android Chat and involved in designing the various layout features as well as utilising the different web APIs. I am particularly interested in APIs and their use in producing high-quality dynamic content.</string>
 
     <string name="group_name_text">25</string>
+
+    <!-- TEXT LENGTH -->
+    <string name="profile_name_text">15</string>
+    <string name="username_text">10</string>
 
 </resources>

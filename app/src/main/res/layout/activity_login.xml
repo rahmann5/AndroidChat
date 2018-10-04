@@ -58,6 +58,8 @@
                     android:padding="15dp"
                     android:textColor="@color/white"
                     android:textColorHint="@color/white"
+                    android:maxLines="1"
+                    android:maxLength="@string/username_text"
                     />
 
             </LinearLayout>
@@ -86,6 +88,8 @@
                     android:layout_gravity="center_vertical"
                     android:textColor="@color/white"
                     android:textColorHint="@color/white"
+                    android:maxLines="1"
+                    android:maxLength="@string/profile_name_text"
                     />
             </LinearLayout>
 
