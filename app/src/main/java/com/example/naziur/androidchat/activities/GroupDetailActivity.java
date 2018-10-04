@@ -452,22 +452,15 @@ public class GroupDetailActivity extends AppCompatActivity implements FirebaseHe
             case "removeFromGroup":
                 switch(condition){
                     case FirebaseHelper.CONDITION_1:
-                        /*Container is a list where 0=>groupKey, 1=>username*/
-                        List<String> memberToRemove = new ArrayList<>();
-                        memberToRemove.add(container.getStringList().get(1));
-                        firebaseHelper.updateGroupKeyForMembers(memberToRemove, container.getStringList().get(0), FirebaseHelper.CONDITION_1);
+                        String msg = "Admin has removed "+ container.getStringList().get(1) + " from the group";
+                        firebaseHelper.updateMessageNode(this, "group", groupModel.getGroupKey(), msg, null, Constants.MESSAGE_TYPE_SYSTEM, null, groupModel.getTitle());
                         break;
                 }
                 break;
             case "updateGroupKeyForMembers":
-                String msg;
                 switch(condition){
                     case FirebaseHelper.CONDITION_1:
-                        msg = "Admin has removed "+ container.getStringList().get(0) + " from the group";
-                        firebaseHelper.updateMessageNode(this, "group", groupModel.getGroupKey(), msg, null, Constants.MESSAGE_TYPE_SYSTEM, null, groupModel.getTitle());
-                        break;
-                    case FirebaseHelper.CONDITION_2:
-                        msg = "Admin has add "+ container.getStringList().get(0) +" to the group";
+                        String msg = "Admin has add "+ container.getStringList().get(0) +" to the group";
                         firebaseHelper.updateMessageNode(this, "group", groupModel.getGroupKey(), msg, null, Constants.MESSAGE_TYPE_SYSTEM, null, groupModel.getTitle());
                         Toast.makeText(this, "Successfully added all members", Toast.LENGTH_SHORT).show();
                         break;
@@ -484,7 +477,7 @@ public class GroupDetailActivity extends AppCompatActivity implements FirebaseHe
                         if (!nextMember.equals(addedMember)) {
                             firebaseHelper.updateGroupMembers(nextMember, allMembers, groupModel.getGroupKey(), false);
                         } else {
-                            firebaseHelper.updateGroupKeyForMembers(allMembers, groupModel.getGroupKey(), FirebaseHelper.CONDITION_2);
+                            firebaseHelper.updateGroupKeyForMembers(allMembers, groupModel.getGroupKey(), FirebaseHelper.CONDITION_1);
                         }
                         break;
                 }
