@@ -1,6 +1,7 @@
 package com.example.naziur.androidchat.activities;
 
 import android.content.Intent;
+import android.net.Uri;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
@@ -13,6 +14,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -212,15 +214,31 @@ public class ChatDetailActivity extends AppCompatActivity implements FirebaseHel
         TextView profileTv = (TextView) findViewById(R.id.profile_tv);
         TextView statusTv = (TextView) findViewById(R.id.status_tv);
         ImageView profilePicIv = (ImageView) findViewById(R.id.expandedImage);
+        LinearLayout spamButton = (LinearLayout) findViewById(R.id.spam_button);
         usernameTv.setText("Username: " + userBeingViewed.getUsername());
         profileTv.setText("Profile Name: " + userBeingViewed.getProfileName());
         statusTv.setText("Status: " + userBeingViewed.getStatus());
+
+        spamButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                openEmailToReportSpam();
+            }
+        });
+
         mToolbar.setTitle(userBeingViewed.getProfileName());
         setSupportActionBar(mToolbar);
         getSupportActionBar().setDisplayShowTitleEnabled(true);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         invalidateOptionsMenu();
         Glide.with(ChatDetailActivity.this).load(userBeingViewed.getProfilePic()).apply(new RequestOptions().placeholder(R.drawable.placeholder).error(R.drawable.unknown)).into(profilePicIv);
+    }
+
+    private void openEmailToReportSpam(){
+        Intent intent = new Intent(Intent.ACTION_VIEW);
+        Uri data = Uri.parse("mailto:?subject=" + "Spam Report by"+ user.profileName +" ("+user.name+")" + "&body=" + userBeingViewed.getUsername()+" has been spamming me and would like you to take action immediately" + "&to=" +  "johnB1994@hotmail.co.uk");
+        intent.setData(data);
+        startActivity(Intent.createChooser(intent, ""));
     }
 
     private void hideOption(int id) {

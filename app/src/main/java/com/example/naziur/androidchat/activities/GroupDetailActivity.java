@@ -31,6 +31,7 @@ import com.example.naziur.androidchat.R;
 import com.example.naziur.androidchat.database.FirebaseHelper;
 import com.example.naziur.androidchat.models.FirebaseGroupModel;
 import com.example.naziur.androidchat.models.User;
+import com.example.naziur.androidchat.utils.Constants;
 import com.example.naziur.androidchat.utils.Container;
 import com.example.naziur.androidchat.utils.ProgressDialog;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -459,8 +460,15 @@ public class GroupDetailActivity extends AppCompatActivity implements FirebaseHe
                 }
                 break;
             case "updateGroupKeyForMembers":
+                String msg;
                 switch(condition){
+                    case FirebaseHelper.CONDITION_1:
+                        msg = "Admin has removed "+ container.getStringList().get(0) + " from the group";
+                        firebaseHelper.updateMessageNode(this, "group", groupModel.getGroupKey(), msg, null, Constants.MESSAGE_TYPE_SYSTEM, null, groupModel.getTitle());
+                        break;
                     case FirebaseHelper.CONDITION_2:
+                        msg = "Admin has add "+ container.getStringList().get(0) +" to the group";
+                        firebaseHelper.updateMessageNode(this, "group", groupModel.getGroupKey(), msg, null, Constants.MESSAGE_TYPE_SYSTEM, null, groupModel.getTitle());
                         Toast.makeText(this, "Successfully added all members", Toast.LENGTH_SHORT).show();
                         break;
                 }

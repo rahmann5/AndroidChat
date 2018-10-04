@@ -149,7 +149,11 @@ public class AllChatsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
             } else {
                 lastMsgTv.setTextColor(ContextCompat.getColor(context, R.color.black));
             }*/
-            Glide.with(context).load(chat.getProfilePic()).apply(new RequestOptions().placeholder(R.drawable.unknown).error(R.drawable.unknown)).into(profPicIv);
+            Glide.with(context)
+                    .load(chat.getProfilePic()).apply(new RequestOptions()
+                    .placeholder(chat.isGroup()? R.drawable.ic_group_unknown:R.drawable.unknown)
+                    .error(chat.isGroup()? R.drawable.ic_group_unknown:R.drawable.unknown)).
+                    into(profPicIv);
         }
 
     }
