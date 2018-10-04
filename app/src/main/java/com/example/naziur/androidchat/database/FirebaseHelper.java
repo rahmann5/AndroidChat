@@ -561,7 +561,7 @@ public class FirebaseHelper {
                         imageUri.add(model.getText());
                     }
                 }
-                if (firebaseGroupModel.getPic() != null)
+                if (firebaseGroupModel.getPic() != null && !firebaseGroupModel.getPic().isEmpty())
                     imageUri.add(firebaseGroupModel.getPic());
                 Container c = new Container();
                 c.setString(firebaseGroupModel.getGroupKey());
