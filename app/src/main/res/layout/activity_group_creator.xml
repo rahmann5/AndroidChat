@@ -109,7 +109,7 @@
                             android:layout_height="wrap_content"
                             android:drawableLeft="@android:drawable/ic_menu_search"
                             android:drawableTint="@color/main_theme_1"
-                            android:maxLength="@string/usernames_text"
+                            android:maxLength="@string/username_text"
                             android:hint="Enter Username"
                             android:inputType="textEmailAddress"
                             android:maxLines="1" />
