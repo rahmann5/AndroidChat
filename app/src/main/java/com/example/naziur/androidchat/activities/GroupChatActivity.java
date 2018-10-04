@@ -259,18 +259,41 @@ public class GroupChatActivity extends AppCompatActivity implements ImageViewDia
     }
 
     private String getActionBarString(){
-        String[] membersArr = getMembersThatNeedToReceiveMessage();
         boolean isStillInGroup = false;
         String members = "";
-        for(int i =0 ; i < membersArr.length; i++ ){
-            if(membersArr[i].equals(user.name))
-                isStillInGroup = true;
-            members += db.getProfileInfoIfExists(membersArr[i])[0];
-            if(i < membersArr.length-1)
-                members+=", ";
+        if(!groupModel.getMembers().isEmpty()){
+            String [] membersArr = groupModel.getMembers().split(",");
+            for(int i =0 ; i < membersArr.length; i++ ){
+                if(membersArr[i].equals(user.name))
+                    isStillInGroup = true;
+
+                if(!membersArr[i].equals(user.name)) {
+                    members += db.getProfileInfoIfExists(membersArr[i])[0];
+
+                    if (i < membersArr.length - 1)
+                        members += ", ";
+                }
+            }
         }
-        if(isStillInGroup)
-            members = "You, "+members;
+
+        if(groupModel.getAdmin().equals(user.name))
+            isStillInGroup = true;
+
+        if(!groupModel.getAdmin().isEmpty() && !groupModel.getAdmin().equals(user.name)) {
+            if(!members.isEmpty())
+                members = members + ", " + db.getProfileInfoIfExists(groupModel.getAdmin())[0];
+            else
+                members = db.getProfileInfoIfExists(groupModel.getAdmin())[0];
+        }
+
+        if(isStillInGroup) {
+            if(!members.isEmpty())
+                members = "You, " + members;
+            else
+                members = "You";
+
+        }
+
         toggleFooterSection(isStillInGroup);
         return members;
     }
@@ -364,7 +387,7 @@ public class GroupChatActivity extends AppCompatActivity implements ImageViewDia
     private String[] getMembersThatNeedToReceiveMessage(){
         String [] membersIngroup = groupModel.getMembers().split(",");
         List<String> members = new ArrayList<>();
-        if(groupModel.getAdmin().equals(user.name) && !membersIngroup[0].equals(""))
+        if(groupModel.getAdmin().equals(user.name) &&  groupModel.getMembers().isEmpty())
             return membersIngroup;
         else {
             if(!groupModel.getAdmin().isEmpty())
