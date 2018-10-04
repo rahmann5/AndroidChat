@@ -1234,22 +1234,20 @@ public class FirebaseHelper {
                     if (groupModel == null) return Transaction.success(mutableData);
 
                     if (groupModel.getGroupKey().equals(chatKey)) {
-                        String updatedMembers = "";
+                        String updatedMembers = groupModel.getMembers();
                         if (admin) {
                             if (groupModel.getAdmin().equals("")) {
                                 groupModel.setAdmin(singleUser);
                                 String [] allMembers = groupModel.getMembers().split(",");
+                                updatedMembers = "";
                                 for (String member : allMembers) {
                                     if (!member.equals(singleUser)) {
                                         updatedMembers += (updatedMembers.equals("")) ? member : "," + member;
                                     }
                                 }
-                                break;
                             }
                         } else {
-                            updatedMembers = groupModel.getMembers();
                             updatedMembers += (updatedMembers.equals("")) ? singleUser : "," + singleUser;
-
                         }
 
                         groupModel.setMembers(updatedMembers);
