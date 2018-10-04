@@ -118,14 +118,15 @@ public class GroupChatActivity extends AppCompatActivity implements ImageViewDia
                     return;
                 }
 
-                if(!textComment.getText().toString().trim().isEmpty()) {
-                    if(registeredIds.length() > 0) {
+                if (!textComment.getText().toString().trim().isEmpty()) {
+
+                    if(getMembersThatNeedToReceiveMessage().length > 0) {
                         hideKeyboard();
                         btnSend.setEnabled(false);
                         progressBar.toggleDialog(true);
                         firebaseHelper.checkGroupsKeys("users", FirebaseHelper.CONDITION_1, FirebaseHelper.CONDITION_2, groupKey, getMembersThatNeedToReceiveMessage());
-                    }else
-                        Toast.makeText(GroupChatActivity.this, "Their is nobody else in this chat to speak to", Toast.LENGTH_SHORT).show();
+                    }
+
                 } else {
                     Toast.makeText(GroupChatActivity.this, "You must enter some text before sending a message", Toast.LENGTH_SHORT).show();
                 }
@@ -387,9 +388,14 @@ public class GroupChatActivity extends AppCompatActivity implements ImageViewDia
     private String[] getMembersThatNeedToReceiveMessage(){
         String [] membersIngroup = groupModel.getMembers().split(",");
         List<String> members = new ArrayList<>();
-        if(groupModel.getAdmin().equals(user.name) &&  groupModel.getMembers().isEmpty())
-            return membersIngroup;
-        else {
+        if(groupModel.getAdmin().equals(user.name)) {
+            if(!groupModel.getMembers().isEmpty())
+                return membersIngroup;
+            else {
+                String[] stockArr = new String[members.size()];
+                return  members.toArray(stockArr);
+            }
+        }else {
             if(!groupModel.getAdmin().isEmpty())
                 members.add(groupModel.getAdmin());
             for (int i = 0; i < membersIngroup.length; i++) {
