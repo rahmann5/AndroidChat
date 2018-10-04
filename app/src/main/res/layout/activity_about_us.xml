@@ -13,10 +13,23 @@
         android:padding="10dp"
         >
 
+        <TextView
+            android:id="@+id/about_title"
+            android:layout_alignParentTop="true"
+            android:layout_centerHorizontal="true"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/white"
+            android:text="The Authors"
+            android:layout_marginTop="10dp"
+            android:textSize="30sp"
+            android:textStyle="bold"
+            />
+
         <LinearLayout
             android:id="@+id/naz_header"
             android:layout_marginTop="20dp"
-            android:layout_alignParentTop="true"
+            android:layout_below="@+id/about_title"
             android:layout_centerHorizontal="true"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -40,6 +53,7 @@
                 android:layout_marginTop="10dp"
                 android:textSize="25sp"
                 android:textStyle="bold"
+
                 />
 
         </LinearLayout>
@@ -185,6 +199,47 @@
                     app:civ_border_width="3dp"
                     app:civ_border_color="#7f8fa6"
                     android:layout_margin="3dp"
+                    />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_marginTop="10dp"
+            android:layout_below="@+id/hamidur_content"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:layout_marginBottom="10dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/white"
+                android:text="Our other apps"
+                android:textSize="25sp"
+                android:textStyle="bold"
+                />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="5dp">
+
+                <ImageView
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:src="@drawable/app_logo_mynews"
+                    android:contentDescription="My News"/>
+
+                <ImageView
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:src="@drawable/app_logo_tutlib"
+                    android:contentDescription="Tutorial Library"
                     />
 
             </LinearLayout>

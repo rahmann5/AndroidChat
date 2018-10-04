@@ -26,6 +26,7 @@ import com.example.naziur.androidchat.models.FirebaseGroupModel;
 import com.example.naziur.androidchat.models.FirebaseMessageModel;
 import com.example.naziur.androidchat.models.FirebaseUserModel;
 import com.example.naziur.androidchat.models.User;
+import com.example.naziur.androidchat.utils.Constants;
 import com.example.naziur.androidchat.utils.Container;
 import com.example.naziur.androidchat.utils.Network;
 import com.example.naziur.androidchat.utils.ProgressDialog;
@@ -301,6 +302,10 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
                     break;
 
                 case FirebaseHelper.CONDITION_2 :
+                    FirebaseGroupModel grpModel = allGroups.get(findIndexForGroup(container.getString()));
+                    String leaver = (grpModel.getAdmin().equals(user.name)) ? "Admin " + user.name : user.name;
+                    String wishMessage = leaver + " has left the group.";
+                    firebaseHelper.updateMessageNode(getActivity(), "group", container.getString(), wishMessage , null, Constants.MESSAGE_TYPE_SYSTEM, null, grpModel.getTitle());
                     Toast.makeText(getActivity(), "Successfully left the group", Toast.LENGTH_SHORT).show();
                     break;
             }

@@ -43,7 +43,6 @@ public class ChatDetailActivity extends AppCompatActivity implements FirebaseHel
     private static final String TAG = ChatDetailActivity.class.getSimpleName();
     private User user = User.getInstance();
     private FirebaseUserModel userBeingViewed;
-    private FirebaseDatabase database;
     private ContactDBHelper db;
     private boolean isInContacts;
     private FloatingActionButton fab;
@@ -60,7 +59,6 @@ public class ChatDetailActivity extends AppCompatActivity implements FirebaseHel
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chat_detail);
         db = new ContactDBHelper(this);
-        database = FirebaseDatabase.getInstance();
         progressBar = new ProgressDialog(ChatDetailActivity.this, R.layout.progress_dialog, true);
         firebaseHelper = FirebaseHelper.getInstance();
         firebaseHelper.setFirebaseHelperListener(this);
@@ -144,7 +142,7 @@ public class ChatDetailActivity extends AppCompatActivity implements FirebaseHel
     }
 
     private void isInSameGroup (FirebaseGroupModel groupModel) {
-        String [] members  = groupModel.getMembers().split("-");
+        String [] members  = groupModel.getMembers().split(",");
         for (String member : members) {
             if (member.equals(userBeingViewed.getUsername())){
                 groupsAdapter.addGroupItem(groupModel);

@@ -431,7 +431,8 @@ public class GroupChatActivity extends AppCompatActivity implements ImageViewDia
                 }
                 break;
             case "updateGroupMembers" :
-                Toast.makeText(this, "New admin is " + container.getString(), Toast.LENGTH_SHORT).show();
+                String wishMessage = "New admin is " + container.getString();
+                firebaseHelper.updateMessageNode(this, "group", groupKey, wishMessage , null, Constants.MESSAGE_TYPE_SYSTEM, null, groupModel.getTitle());
                 break;
 
         }

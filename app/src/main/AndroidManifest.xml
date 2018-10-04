@@ -95,7 +95,8 @@
             android:theme="@style/AppTheme.NoActionBar" />
         <activity
             android:name=".activities.SettingsActivity"
-            android:parentActivityName=".activities.SessionActivity">
+            android:parentActivityName=".activities.SessionActivity"
+            android:label="@string/title_settings">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.example.naziur.androidchat.activities.SessionActivity" />
@@ -104,7 +105,8 @@
             android:name=".activities.MemberSelectorActivity"
             android:label="@string/title_select_member" />
         <activity android:name=".activities.AboutActivity"
-            android:theme="@style/AppTheme.NoActionBar"></activity>
+            android:theme="@style/AppTheme.Transparent"
+            android:label=""/>
     </application>
 
 </manifest>

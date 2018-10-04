@@ -2,6 +2,8 @@ package com.example.naziur.androidchat.activities;
 
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuItem;
 
 import com.example.naziur.androidchat.R;
 
@@ -10,7 +12,10 @@ public class AboutActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setDisplayShowHomeEnabled(true);
         applyCorrectLayout();
+
     }
 
     private void applyCorrectLayout(){
@@ -25,5 +30,15 @@ public class AboutActivity extends AppCompatActivity {
                     break;
             }
         }
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home :
+                finish();
+                break;
+        }
+        return super.onOptionsItemSelected(item);
     }
 }
