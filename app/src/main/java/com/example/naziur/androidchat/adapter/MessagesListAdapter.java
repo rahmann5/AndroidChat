@@ -54,7 +54,9 @@ public class MessagesListAdapter extends ArrayAdapter<MessageCell> {
             }
 
             ImageView receiveStatusIv = (ImageView) convertView.findViewById(R.id.receive_status);
-            if(cellItem[position].getRecieved() == Constants.MESSAGE_RECEIVED)
+            if(context.getClass().getSimpleName().equals(GroupChatActivity.class.getSimpleName())){
+                receiveStatusIv.setVisibility(View.GONE);
+            } else if(cellItem[position].getRecieved() == Constants.MESSAGE_RECEIVED)
                 receiveStatusIv.setImageResource(R.drawable.ic_thumb_up_green);
 
         } else {
