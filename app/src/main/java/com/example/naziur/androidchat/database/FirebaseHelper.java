@@ -743,7 +743,7 @@ public class FirebaseHelper {
         final DatabaseReference messagesRef = database.getReference("messages").child(node).child(chatKey);
         DatabaseReference newRef = messagesRef.push();
             newRef.setValue(
-                    (membersDeviceTokens == null)? Network.makeNewMessageNode(msgType,wishMessage, friend) : Network.makeNewGroupMessageModel(chatKey, wishMessage, msgType),
+                    (grpTitle.isEmpty())? Network.makeNewMessageNode(msgType,wishMessage, friend) : Network.makeNewGroupMessageModel(chatKey, wishMessage, msgType),
                     new DatabaseReference.CompletionListener() {
             @Override
             public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
@@ -985,6 +985,7 @@ public class FirebaseHelper {
                 } else {
                     Container container = new Container();
                     container.setString(uniqueID);
+                    container.setStringList(allMembers);
                     listener.onCompleteTask("updateGroupKeyForMembers", condition, container);
                 }
             }

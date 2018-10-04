@@ -183,10 +183,9 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
             reportIssue.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
                 public boolean onPreferenceClick(Preference preference) {
                     User user = User.getInstance();
-                    Intent intent = new Intent(Intent.ACTION_SEND);
-                    intent.setType("plain/text");
-                    intent.putExtra(Intent.EXTRA_EMAIL, new String[] { "shr96@hotmail.co.uk" });
-                    intent.putExtra(Intent.EXTRA_SUBJECT, "Error Reporting by "+ user.profileName +" ("+user.name+")");
+                    Intent intent = new Intent(Intent.ACTION_VIEW);
+                    Uri data = Uri.parse("mailto:?subject=" + "Error Reporting by "+ user.profileName +" ("+user.name+")" + "&to=" +  "johnB1994@hotmail.co.uk");
+                    intent.setData(data);
                     startActivity(Intent.createChooser(intent, ""));
                     return true;
                 }
