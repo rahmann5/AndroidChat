@@ -276,7 +276,7 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
             case "getValueEventListener" :
                 switch (condition) {
                     case FirebaseHelper.CONDITION_2:
-                        Toast.makeText(getContext(), "No chats found for this user, as the account may no longer exist", Toast.LENGTH_SHORT).show();
+                        //Toast.makeText(getContext(), "No chats found for this user, as the account may no longer exist", Toast.LENGTH_SHORT).show();
                         emptyChats.setVisibility(View.VISIBLE);
                         break;
                     case FirebaseHelper.CONDITION_3:

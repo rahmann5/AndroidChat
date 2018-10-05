@@ -60,7 +60,6 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
     private Map<String, ValueEventListener> grpMsgValueEventListeners;
     private SimpleDateFormat formatter;
     FirebaseHelper firebaseHelper;
-    private ArrayList<String> redundantKeys;
 
     public GroupSessionFragment() {
         // Required empty public constructor
@@ -75,7 +74,6 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
         firebaseHelper = FirebaseHelper.getInstance();
         firebaseHelper.setFirebaseHelperListener(this);
         allGroups = new ArrayList<>();
-        redundantKeys = new ArrayList<>();
         grpValueEventListeners = new HashMap<>();
         grpMsgValueEventListeners = new HashMap<>();
         allGroupKeys = new ArrayList<>();
@@ -268,18 +266,12 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
                         for (int i = 0; i< allGroups.size(); i++) {
                             setUpGrpEventListeners(i, false, FirebaseHelper.CONDITION_6, FirebaseHelper.NON_CONDITION);
                         }
-                    } else {//NEED TO REMOVE KEYS THAT HAVE NO ASSOCIATED GROUPS
-                        for(int i = 0; i < redundantKeys.size(); i++){
-                            if(!allGroupKeys.contains(redundantKeys.get(i))){
-                                allGroupKeys.remove(i);
-                            }
-                        }
-                        redundantKeys = new ArrayList<>();
-                        firebaseHelper.updateChatKeys(user, getChatKeysAsString(), null, true);
+                        //firebaseHelper.updateChatKeys(user, getChatKeysAsString(), null, true);
                     }
                     break;
                 case FirebaseHelper.CONDITION_7:
-                    redundantKeys.add(container.getString());
+                    if(allGroupKeys.contains(container.getString()))
+                        allGroupKeys.remove(container.getString());
                     break;
 
             }
