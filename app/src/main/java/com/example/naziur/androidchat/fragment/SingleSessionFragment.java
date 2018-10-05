@@ -1,10 +1,13 @@
 package com.example.naziur.androidchat.fragment;
 
 
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.LinearLayoutManager;
@@ -20,6 +23,8 @@ import android.widget.Toast;
 import com.example.naziur.androidchat.R;
 import com.example.naziur.androidchat.activities.ChatActivity;
 import com.example.naziur.androidchat.activities.ChatDetailActivity;
+import com.example.naziur.androidchat.activities.MyContactsActivity;
+import com.example.naziur.androidchat.activities.SessionActivity;
 import com.example.naziur.androidchat.adapter.AllChatsAdapter;
 import com.example.naziur.androidchat.database.ContactDBHelper;
 import com.example.naziur.androidchat.database.FirebaseHelper;
@@ -46,7 +51,6 @@ import java.util.List;
 public class SingleSessionFragment extends Fragment implements FirebaseHelper.FirebaseHelperListener{
 
     private static final String TAG = SingleSessionFragment.class.getSimpleName();
-
     private ValueEventListener userListener;
     private AllChatsAdapter myChatsdapter;
     private RecyclerView recyclerView;
@@ -57,6 +61,7 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
     private ProgressDialog progressBar;
     private List<ValueEventListener> valueEventListeners;
     FirebaseHelper firebaseHelper;
+    SimpleDateFormat formatter;
 
     public SingleSessionFragment() {
         // Required empty public constructor
@@ -74,10 +79,13 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
         firebaseHelper.setFirebaseHelperListener(this);
         valueEventListeners = new ArrayList<>();
         allChatKeys = new ArrayList<>();
+        formatter = new SimpleDateFormat(getString(R.string.simple_date));
         emptyChats = (TextView) rootView.findViewById(R.id.no_chats);
         recyclerView = rootView.findViewById(R.id.all_chats_list);
         progressBar = new ProgressDialog(getActivity(), R.layout.progress_dialog, true);
         db = new ContactDBHelper(getContext());
+
+
         if (Network.isInternetAvailable(getActivity(), true)) {
             Cursor c = db.getAllMyContacts(null);
             if (c != null && c.getCount() > 0) {
@@ -251,6 +259,7 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
                         if (myChatsdapter.getItemCount() == 0) {
                             emptyChats.setVisibility(View.VISIBLE);
                         } else {
+                            myChatsdapter.sortAllChats();
                             emptyChats.setVisibility(View.GONE);
                         }
                         break;
@@ -345,11 +354,9 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
                         FirebaseMessageModel firebaseMessageModel = container.getMsgModel();
                         String isChattingTo = (firebaseMessageModel.getSenderName().equals(user.name)) ? db.getProfileNameAndPic(firebaseMessageModel.getReceiverName())[0] : db.getProfileNameAndPic(firebaseMessageModel.getSenderName())[0];
                         String username = (firebaseMessageModel.getSenderName().equals(user.name)) ? firebaseMessageModel.getReceiverName() : firebaseMessageModel.getSenderName();
-                        SimpleDateFormat formatter = new SimpleDateFormat(getString(R.string.simple_date));
                         String dateString = formatter.format(new Date(firebaseMessageModel.getCreatedDateLong()));
-                        Chat chat = new Chat(isChattingTo, username, firebaseMessageModel.getText(), db.getProfileNameAndPic(username)[1], dateString, container.getString(), firebaseMessageModel.getIsReceived(), firebaseMessageModel.getMediaType());
+                        Chat chat = new Chat(firebaseMessageModel.getSenderName(), isChattingTo, username, firebaseMessageModel.getText(), db.getProfileNameAndPic(username)[1], dateString, container.getString(), firebaseMessageModel.getIsReceived(), firebaseMessageModel.getMediaType());
                         myChatsdapter.addOrRemoveChat(chat, true);
-
                         break;
                 }
                 break;

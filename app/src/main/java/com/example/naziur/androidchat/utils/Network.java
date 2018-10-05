@@ -271,15 +271,14 @@ public class Network {
         return firebaseMessageModel;
     }
 
-    public static String getMembersText (Context context, String[] members, String admin) {
+    public static String getMembersText (Context context, String[] members, String admin, String currentUser) {
         ContactDBHelper db = new ContactDBHelper(context);
-        User user = User.getInstance();
-        String newMembersList = "you";
-        if (!admin.equals(user.name)) {
+        String newMembersList = "You";
+        if (!admin.equals(currentUser) && !admin.equals("")) {
             newMembersList += ", "+db.getProfileInfoIfExists(admin)[0];
         }
         for (String m : members) {
-            if (!m.equals(user.name)) {
+            if (!m.equals(currentUser) && !m.equals("")) {
                 newMembersList += ", " +db.getProfileInfoIfExists(m)[0];
             }
         }

@@ -24,12 +24,10 @@ import com.example.naziur.androidchat.R;
 import com.example.naziur.androidchat.adapter.MyContactsAdapter;
 import com.example.naziur.androidchat.database.FirebaseHelper;
 import com.example.naziur.androidchat.database.MyContactsContract;
-import com.example.naziur.androidchat.models.Chat;
 import com.example.naziur.androidchat.models.Contact;
 
 import com.example.naziur.androidchat.fragment.AddContactDialogFragment;
 import com.example.naziur.androidchat.models.FirebaseUserModel;
-import com.example.naziur.androidchat.models.Notification;
 import com.example.naziur.androidchat.models.User;
 import com.example.naziur.androidchat.utils.Constants;
 import com.example.naziur.androidchat.utils.Container;

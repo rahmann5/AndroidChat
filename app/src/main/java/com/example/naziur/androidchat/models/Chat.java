@@ -25,8 +25,9 @@ public class Chat {
 
     private String profilePic;
 
-    public Chat(String speakingTo, String username, String lastMsg, String pic, String time, String chatKey, int received, String msgType){
+    public Chat(String senderName, String speakingTo, String username, String lastMsg, String pic, String time, String chatKey, int received, String msgType){
         this.speakingTo = speakingTo;
+        this.senderName = senderName;
         usernameOfTheOneBeingSpokenTo = username;
         lastMsgInThisChat = lastMsg;
         profilePic = pic;

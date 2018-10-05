@@ -67,8 +67,14 @@ public class AllGroupsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         }
 
         public void bind (Context context, FirebaseGroupModel group) {
-            membersTv.setText(Network.getMembersText(context, group.getMembers().split(","), group.getAdmin()));
+            String [] members = (!group.getMembers().trim().equals("")) ? group.getMembers().split(",") : new String[0];
+            membersTv.setText(Network.getMembersText(context, members , group.getAdmin(), user.name));
             titleTv.setText(group.getTitle());
+            if (group.getAdmin().equals(user.name)) {
+                activeTv.setText(context.getResources().getString(R.string.profile_group_admin));
+            } else {
+                activeTv.setText("");
+            }
             Glide.with(context).load(group.getPic()).apply(new RequestOptions().placeholder(R.drawable.placeholder).error(R.drawable.unknown)).into(groupPicIv);
         }
 

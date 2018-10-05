@@ -19,7 +19,12 @@ import com.example.naziur.androidchat.models.Chat;
 import com.example.naziur.androidchat.models.User;
 import com.example.naziur.androidchat.utils.Constants;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
 
 import de.hdodenhof.circleimageview.CircleImageView;
@@ -71,8 +76,20 @@ public class AllChatsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
             if (allMyChats.get(i).getChatKey().equals(chat.getChatKey()))
                 allMyChats.remove(i);
         }
-        if(add)
+        if(add) {
             allMyChats.add(chat);
+        }
+    }
+
+    public void sortAllChats () {
+        Collections.sort(allMyChats, new Comparator<Chat>() {
+            @Override
+            public int compare(Chat c1, Chat c2) {
+                Integer c1i =  c1.getIsSeen();
+                Integer c2i =  c2.getIsSeen();
+                return c1i.compareTo(c2i);
+            }
+        });
         notifyDataSetChanged();
     }
 
@@ -124,6 +141,15 @@ public class AllChatsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                     addContactBtn.setVisibility(View.GONE);
                 }
                 profileTv.setText(chat.getSpeakingTo());
+                User user = User.getInstance();
+                if (!chat.getSenderName().equals(user.name)) {
+                    if (chat.getIsSeen() == Constants.MESSAGE_SENT){
+                        lastMsgTv.setTextColor(ContextCompat.getColor(context, R.color.red));
+                    } else {
+                        lastMsgTv.setTextColor(ContextCompat.getColor(context, R.color.black));
+                    }
+                }
+
             }
 
             itemView.setOnClickListener(new View.OnClickListener() {
@@ -144,11 +170,6 @@ public class AllChatsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
 
             dateTimeTv.setText(chat.getTimeOfMsg());
             lastMsgTv.setText(Constants.generateMediaText(context, chat.getMsgType(), chat.getLastMsgInThisChat()));
-            /*if (chat.getIsSeen() == Constants.MESSAGE_SENT){
-                lastMsgTv.setTextColor(ContextCompat.getColor(context, R.color.red));
-            } else {
-                lastMsgTv.setTextColor(ContextCompat.getColor(context, R.color.black));
-            }*/
             Glide.with(context)
                     .load(chat.getProfilePic()).apply(new RequestOptions()
                     .placeholder(chat.isGroup()? R.drawable.ic_group_unknown:R.drawable.unknown)

@@ -3,6 +3,7 @@ package com.example.naziur.androidchat.activities;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.ConnectivityManager;
+import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
 import android.support.v4.view.ViewPager;
@@ -13,6 +14,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.View;
 
 import com.example.naziur.androidchat.R;
 import com.example.naziur.androidchat.adapter.SessionFragmentPagerAdapter;
@@ -24,6 +26,8 @@ import com.example.naziur.androidchat.utils.NetworkChangeReceiver;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.ValueEventListener;
 
+import static android.R.attr.fragment;
+
 public class SessionActivity extends AppCompatActivity implements NetworkChangeReceiver.OnNetworkStateChangeListener, FirebaseHelper.FirebaseHelperListener{
     private static final String TAG = "SessionActivity";
     private User user = User.getInstance();
@@ -31,9 +35,12 @@ public class SessionActivity extends AppCompatActivity implements NetworkChangeR
     ViewPager viewPager;
     private Menu menu;
     private ValueEventListener notificationListener;
+    private FloatingActionButton startChat;
 
     SessionFragmentPagerAdapter sessionFragmentPagerAdapter;
     private FirebaseHelper firebaseHelper;
+    private int pos = 0;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -45,6 +52,15 @@ public class SessionActivity extends AppCompatActivity implements NetworkChangeR
 
         Toolbar mToolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(mToolbar);
+
+        startChat = (FloatingActionButton) findViewById(R.id.start_chat);
+
+        startChat.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                startActivity(new Intent(SessionActivity.this, MyContactsActivity.class));
+            }
+        });
 
         viewPager.setAdapter(sessionFragmentPagerAdapter);
         TabLayout tabLayout = (TabLayout) findViewById(R.id.sliding_tabs);
@@ -63,11 +79,15 @@ public class SessionActivity extends AppCompatActivity implements NetworkChangeR
             @Override
             public void onPageSelected(int position) {
                 Fragment fragment =(Fragment)sessionFragmentPagerAdapter.getRegisteredFragment(position);
+                pos = position;
                 if(menu != null) {
-                    if (fragment instanceof GroupSessionFragment)
+                    if (fragment instanceof GroupSessionFragment){
                         menu.findItem(R.id.action_group).setVisible(true);
-                    else
+                        startChat.setVisibility(View.GONE);
+                    } else {
                         menu.findItem(R.id.action_group).setVisible(false);
+                        startChat.setVisibility(View.VISIBLE);
+                    }
                 }
             }
 
@@ -95,7 +115,12 @@ public class SessionActivity extends AppCompatActivity implements NetworkChangeR
         inflater.inflate(R.menu.sessions_menu, menu);
         MenuItem groupItem = menu.findItem(R.id.action_group);
         groupItem.setVisible(false);
-
+        Fragment fragment = sessionFragmentPagerAdapter.getRegisteredFragment(pos);
+        if (fragment instanceof GroupSessionFragment){
+            startChat.setVisibility(View.GONE);
+        } else {
+            startChat.setVisibility(View.VISIBLE);
+        }
 
         return true;
     }
@@ -128,6 +153,7 @@ public class SessionActivity extends AppCompatActivity implements NetworkChangeR
     protected void onResume() {
         super.onResume();
         firebaseHelper.notificationNodeExists(null, null, notificationListener);
+
 
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);

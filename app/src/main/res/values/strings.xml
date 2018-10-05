@@ -16,6 +16,7 @@
     <string name="group_gallery_chooser">Group Picture</string>
     <string name="save_btn">Save &amp; Exit</string>
     <string name="profile_hint">Enter profile Name...</string>
+    <string name="profile_group_admin">Admin</string>
 
 
     <!-- Chat Activity -->
