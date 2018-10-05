@@ -2,6 +2,7 @@ package com.example.naziur.androidchat.activities;
 
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.res.Configuration;
 import android.net.ConnectivityManager;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.TabLayout;
@@ -20,6 +21,7 @@ import com.example.naziur.androidchat.R;
 import com.example.naziur.androidchat.adapter.SessionFragmentPagerAdapter;
 import com.example.naziur.androidchat.database.FirebaseHelper;
 import com.example.naziur.androidchat.fragment.GroupSessionFragment;
+import com.example.naziur.androidchat.fragment.SingleSessionFragment;
 import com.example.naziur.androidchat.models.User;
 import com.example.naziur.androidchat.utils.Container;
 import com.example.naziur.androidchat.utils.NetworkChangeReceiver;
@@ -30,7 +32,6 @@ import static android.R.attr.fragment;
 
 public class SessionActivity extends AppCompatActivity implements NetworkChangeReceiver.OnNetworkStateChangeListener, FirebaseHelper.FirebaseHelperListener{
     private static final String TAG = "SessionActivity";
-    private User user = User.getInstance();
     private NetworkChangeReceiver networkChangeReceiver;
     ViewPager viewPager;
     private Menu menu;
@@ -49,7 +50,6 @@ public class SessionActivity extends AppCompatActivity implements NetworkChangeR
         firebaseHelper.setFirebaseHelperListener(this);
         viewPager = (ViewPager) findViewById(R.id.viewpager);
         sessionFragmentPagerAdapter = new SessionFragmentPagerAdapter(getSupportFragmentManager());
-
         Toolbar mToolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(mToolbar);
 
@@ -113,16 +113,15 @@ public class SessionActivity extends AppCompatActivity implements NetworkChangeR
         this.menu = menu;
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.sessions_menu, menu);
-        MenuItem groupItem = menu.findItem(R.id.action_group);
-        groupItem.setVisible(false);
         Fragment fragment = sessionFragmentPagerAdapter.getRegisteredFragment(pos);
         if (fragment instanceof GroupSessionFragment){
             startChat.setVisibility(View.GONE);
         } else {
+            MenuItem groupItem = menu.findItem(R.id.action_group);
+            groupItem.setVisible(false);
             startChat.setVisibility(View.VISIBLE);
         }
-
-        return true;
+           return true;
     }
 
     @Override
@@ -153,7 +152,6 @@ public class SessionActivity extends AppCompatActivity implements NetworkChangeR
     protected void onResume() {
         super.onResume();
         firebaseHelper.notificationNodeExists(null, null, notificationListener);
-
 
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);

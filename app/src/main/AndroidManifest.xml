@@ -51,7 +51,8 @@
 
         <activity
             android:name=".activities.ChatActivity"
-            android:launchMode="singleTop" />
+            android:launchMode="singleTop"/>
+
         <activity
             android:name=".activities.SessionActivity"
             android:label="@string/title_all_chats"

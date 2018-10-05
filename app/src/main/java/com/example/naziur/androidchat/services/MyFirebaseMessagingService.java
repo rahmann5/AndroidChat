@@ -1,6 +1,6 @@
 package com.example.naziur.androidchat.services;
 
-import android.app.ActivityManager;
+import android.app.Activity;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
@@ -11,6 +11,7 @@ import android.net.Uri;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
+import com.example.naziur.androidchat.activities.ChatActivity;
 import com.example.naziur.androidchat.activities.MainActivity;
 import com.example.naziur.androidchat.R;
 import com.example.naziur.androidchat.utils.Network;
@@ -35,7 +36,6 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
     public void onMessageReceived(RemoteMessage remoteMessage) {
         Log.d(TAG, "From: " + remoteMessage.getFrom());
         Log.d(TAG, "Notification Message Body: " + remoteMessage.getNotification().getBody());
-
         //Calling method to show notification
         if (!Network.isForeground(getApplicationContext())){
             showNotification(remoteMessage.getNotification().getBody(),
@@ -66,7 +66,5 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
 
         mNotificationManager.notify(dToken, NOTIFICATION_ID, notificationBuilder.build());
     }
-
-
 
 }

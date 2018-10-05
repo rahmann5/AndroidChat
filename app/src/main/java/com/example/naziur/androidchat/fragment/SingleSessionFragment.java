@@ -61,8 +61,7 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
     private ProgressDialog progressBar;
     private List<ValueEventListener> valueEventListeners;
     FirebaseHelper firebaseHelper;
-    SimpleDateFormat formatter;
-
+    private SimpleDateFormat formatter;
     public SingleSessionFragment() {
         // Required empty public constructor
     }
@@ -84,8 +83,6 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
         recyclerView = rootView.findViewById(R.id.all_chats_list);
         progressBar = new ProgressDialog(getActivity(), R.layout.progress_dialog, true);
         db = new ContactDBHelper(getContext());
-
-
         if (Network.isInternetAvailable(getActivity(), true)) {
             Cursor c = db.getAllMyContacts(null);
             if (c != null && c.getCount() > 0) {
