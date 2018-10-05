@@ -214,8 +214,18 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
 
     private void updateUserChatKeys (Chat chatToRemove) {
         allGroupKeys.remove(chatToRemove.getChatKey());
-       // String updatedKeys = getChatKeysAsString();
-        //firebaseHelper.updateChatKeys(user, updatedKeys, chatToRemove, true);
+       String updatedKeys = getChatKeysAsString();
+        firebaseHelper.updateChatKeys(user, updatedKeys, chatToRemove, true);
+    }
+
+    private String getChatKeysAsString(){
+        String keys = "";
+        for(int i = 0; i < allGroupKeys.size(); i++){
+            keys += allGroupKeys.get(i);
+            if(i < allGroupKeys.size()-1)
+                keys += ",";
+        }
+        return keys;
     }
 
     private void updateGroupModel(FirebaseGroupModel grpModel) {
@@ -285,6 +295,16 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
                 case FirebaseHelper.CONDITION_1 :
                     Chat chat = container.getChat();
                     updateUserChatKeys(chat);
+                    break;
+
+                case FirebaseHelper.CONDITION_2 : // failure reattach listener for that previously removed group listener
+                    firebaseHelper.toggleListenerFor("groups", "groupKey" , container.getChat().getChatKey(), grpValueEventListeners.get(container.getString()), true, false);
+                    break;
+            }
+        } else if (tag.equals("updateChatKeys")) {
+            switch (condition) {
+                case FirebaseHelper.CONDITION_1 :
+                    Chat chat = container.getChat();
                     for(int i = 0; i < allGroups.size(); i++){
                         if(allGroups.get(i).getGroupKey().equals(chat.getChatKey())) {
                             allGroups.remove(i);
@@ -299,10 +319,6 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
                     String wishMessage = leaver + " has left the group.";
                     firebaseHelper.updateMessageNode(getActivity(), "group", chat.getChatKey(), wishMessage , null, Constants.MESSAGE_TYPE_SYSTEM, null, chat.getTitle());
                     firebaseHelper.deleteGroup(chat.getChatKey());
-                    break;
-
-                case FirebaseHelper.CONDITION_2 : // failure reattach listener for that previously removed group listener
-                    firebaseHelper.toggleListenerFor("groups", "groupKey" , container.getChat().getChatKey(), grpValueEventListeners.get(container.getString()), true, false);
                     break;
             }
         } else if (tag.equals("deleteGroup")) {
