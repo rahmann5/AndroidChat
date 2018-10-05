@@ -183,8 +183,12 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
                                 break;
 
                             case 2 : // leave/delete Chat
-                                firebaseHelper.toggleListenerFor("groups", "groupKey" , chat.getChatKey(), grpValueEventListeners.get(chat.getChatKey()), false, false);
-                                firebaseHelper.exitGroup(chat, user.name, chat.getAdmin().equals(user.name));
+                                if (allGroupKeys.contains(chat.getChatKey())) {
+                                    firebaseHelper.toggleListenerFor("groups", "groupKey" , chat.getChatKey(), grpValueEventListeners.get(chat.getChatKey()), false, false);
+                                    firebaseHelper.exitGroup(chat, user.name, chat.getAdmin().equals(user.name));
+                                } else {
+                                    Toast.makeText(getActivity(), "This is a empty group", Toast.LENGTH_LONG).show();
+                                }
                                 break;
 
                         }
@@ -193,15 +197,6 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
         return builder.create();
     }
 
-    private String getChatKeysAsString(){
-        String keys = "";
-        for(int i = 0; i < allGroupKeys.size(); i++){
-            keys += allGroupKeys.get(i);
-            if(i < allGroupKeys.size()-1)
-                keys += ",";
-        }
-        return keys;
-    }
 
     @Override
     public void onStop() {
@@ -266,22 +261,26 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
                         for (int i = 0; i< allGroups.size(); i++) {
                             setUpGrpEventListeners(i, false, FirebaseHelper.CONDITION_6, FirebaseHelper.NON_CONDITION);
                         }
-                        //firebaseHelper.updateChatKeys(user, getChatKeysAsString(), null, true);
                     }
                     break;
                 case FirebaseHelper.CONDITION_7:
-                    if(allGroupKeys.contains(container.getString()))
-                        allGroupKeys.remove(container.getString());
+                    if(allGroupKeys.contains(container.getString())) {
+                        FirebaseGroupModel emptyGroup = new FirebaseGroupModel();
+                        emptyGroup.setTitle("Empty Group");
+                        emptyGroup.setGroupKey(container.getString());
+                        emptyGroup.setPic("");
+                        emptyGroup.setAdmin("");
+                        emptyGroup.setMembers("");
+                        //allGroups.add(emptyGroup);
+                        Chat chat = new Chat(emptyGroup.getTitle(), "System", "This is a deleted group.", emptyGroup.getPic(), "", container.getString(), Constants.MESSAGE_TYPE_SYSTEM, "");
+                        myChatsdapter.addOrRemoveChat(chat, true);
+                        //myChatsdapter.notifyDataSetChanged();
+                        allGroupKeys.remove(container.getString()); // remove redundent keys
+                    }
                     break;
 
             }
-        } else if (tag.equals("updateChatKeys")){
-            switch (condition) {
-                case FirebaseHelper.CONDITION_1 :
-                    System.out.println("Updated chat keys by removing redundant keys");
-                    break;
-            }
-        }else if (tag.equals("exitGroup")) {
+        } else if (tag.equals("exitGroup")) {
             switch (condition) {
                 case FirebaseHelper.CONDITION_1 :
                     Chat chat = container.getChat();
