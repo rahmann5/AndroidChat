@@ -191,6 +191,7 @@ public class GroupChatActivity extends AppCompatActivity implements ImageViewDia
         if (Network.isInternetAvailable(this, true)) {
             progressBar.toggleDialog(true);
             groupListener = firebaseHelper.getGroupInfo(groupKey);
+            firebaseHelper.toggleListenerFor("groups", "groupKey", groupKey, groupListener, true, false);
             firebaseHelper.toggleMsgEventListeners("group", groupKey, msgValueEventListener, true);
         } else {
             Toast.makeText(this,"You need internet to view or send messages", Toast.LENGTH_SHORT).show();
@@ -200,7 +201,7 @@ public class GroupChatActivity extends AppCompatActivity implements ImageViewDia
     @Override
     protected void onStop() {
         super.onStop();
-        firebaseHelper.toggleMsgEventListeners("single", groupKey, msgValueEventListener, false);
+        firebaseHelper.toggleMsgEventListeners("group", groupKey, msgValueEventListener, false);
         firebaseHelper.toggleListenerFor("groups", "groupKey", groupKey, groupListener, false, false);
     }
 
@@ -309,11 +310,16 @@ public class GroupChatActivity extends AppCompatActivity implements ImageViewDia
         }
     }
 
+    private boolean isAMember () {
+        List<String> members = Arrays.asList(groupModel.getMembers().split(","));
+        return members.contains(user.name);
+    }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.group_chat_menu, menu);
         if (groupModel != null) {
-            if (groupModel.getAdmin().equals("")) {
+            if (groupModel.getAdmin().equals("") && isAMember ()) {
                 menu.findItem(R.id.admin).setVisible(true);
             } else {
                 menu.findItem(R.id.admin).setVisible(false);
@@ -442,6 +448,14 @@ public class GroupChatActivity extends AppCompatActivity implements ImageViewDia
                         if(members.size() > 0)
                             firebaseHelper.getDeviceTokensFor(members, groupModel.getTitle(), groupModel.getGroupKey());
                         invalidateOptionsMenu();
+                        break;
+
+                    case FirebaseHelper.CONDITION_2:
+                        progressBar.toggleDialog(false);
+                        Toast.makeText(this, "This group has been deleted." , Toast.LENGTH_LONG).show();
+                        //firebaseHelper.toggleMsgEventListeners("group", groupKey, msgValueEventListener, false);
+                        //firebaseHelper.toggleListenerFor("groups", "groupKey", groupKey, groupListener, false, false);
+                        finish();
                         break;
                 }
                 break;

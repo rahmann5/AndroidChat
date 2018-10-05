@@ -81,7 +81,30 @@ public class AllChatsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         }
     }
 
-    public void sortAllChats () {
+    public void sortAllChatsByDate (boolean sortByUnread, final SimpleDateFormat formatter) {
+        Collections.sort(allMyChats, new Comparator<Chat>() {
+
+            @Override
+            public int compare(Chat c1, Chat c2) {
+
+                try {
+                    Date d1 = formatter.parse(c1.getTimeOfMsg());
+                    Date d2 = formatter.parse(c2.getTimeOfMsg());
+                    return d1.compareTo(d2);
+                } catch (ParseException pe) {
+                    pe.printStackTrace();
+                    return 0;
+                }
+
+            }
+        });
+        if (sortByUnread) {
+            sortAllChatsByUnread ();
+        }
+        notifyDataSetChanged();
+    }
+
+    private  void sortAllChatsByUnread () {
         Collections.sort(allMyChats, new Comparator<Chat>() {
             @Override
             public int compare(Chat c1, Chat c2) {
@@ -90,7 +113,6 @@ public class AllChatsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                 return c1i.compareTo(c2i);
             }
         });
-        notifyDataSetChanged();
     }
 
 

@@ -256,7 +256,7 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
                         if (myChatsdapter.getItemCount() == 0) {
                             emptyChats.setVisibility(View.VISIBLE);
                         } else {
-                            myChatsdapter.sortAllChats();
+                            myChatsdapter.sortAllChatsByDate(true, formatter);
                             emptyChats.setVisibility(View.GONE);
                         }
                         break;

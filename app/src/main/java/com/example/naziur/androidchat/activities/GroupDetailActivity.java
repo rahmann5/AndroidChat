@@ -97,6 +97,7 @@ public class GroupDetailActivity extends AppCompatActivity implements FirebaseHe
         if (extra != null) {
             progressBar.toggleDialog(true);
             groupListener = firebaseHelper.getGroupInfo(extra.getString("g_uid"));
+            firebaseHelper.toggleListenerFor("groups", "groupKey", extra.getString("g_uid"), groupListener, true, false);
         } else {
             Toast.makeText(this, "Error occurred", Toast.LENGTH_LONG).show();
             finish();
@@ -426,6 +427,13 @@ public class GroupDetailActivity extends AppCompatActivity implements FirebaseHe
                         populateWithGroupData();
                         progressBar.toggleDialog(false);
                         break;
+                    case FirebaseHelper.CONDITION_2:
+                        Toast.makeText(this, "This group has been deleted." , Toast.LENGTH_LONG).show();
+                        progressBar.toggleDialog(false);
+                        //firebaseHelper.toggleListenerFor("groups", "groupKey", groupModel.getGroupKey(), groupListener, false, false);
+                        finish();
+                        break;
+
                 }
                 break;
             case "updateGroupInfo":

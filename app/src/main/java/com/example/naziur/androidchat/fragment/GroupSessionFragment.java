@@ -242,9 +242,9 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
                     if (myChatsdapter.getItemCount() == 0) {
                         emptyChats.setVisibility(View.VISIBLE);
                     } else {
+                        myChatsdapter.sortAllChatsByDate(false, formatter);
                         emptyChats.setVisibility(View.GONE);
                     }
-                    myChatsdapter.notifyDataSetChanged();
                     break;
             }
         } else if (tag.equals("getValueEventListener")) {

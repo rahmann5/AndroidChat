@@ -1196,24 +1196,29 @@ public class FirebaseHelper {
     }
 
     public ValueEventListener getGroupInfo(final String groupKey){
-        return database.getReference("groups").orderByChild("groupKey").equalTo(groupKey).addValueEventListener(new ValueEventListener() {
+        return new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
-                    FirebaseGroupModel groupModel = postSnapshot.getValue(FirebaseGroupModel.class);
-                    if (groupModel.getGroupKey().equals(groupKey)) {
-                        Container container = new Container();
-                        container.setGroupModel(groupModel);
-                        listener.onCompleteTask("getGroupInfo", CONDITION_1, container);
-                        break;
+                if (dataSnapshot.exists()) {
+                    for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
+                        FirebaseGroupModel groupModel = postSnapshot.getValue(FirebaseGroupModel.class);
+                        if (groupModel.getGroupKey().equals(groupKey)) {
+                            Container container = new Container();
+                            container.setGroupModel(groupModel);
+                            listener.onCompleteTask("getGroupInfo", CONDITION_1, container);
+                            break;
+                        }
                     }
+                } else {
+                    listener.onCompleteTask("getGroupInfo", CONDITION_2, null);
                 }
+
             }
             @Override
             public void onCancelled(DatabaseError databaseError) {
                 listener.onFailureTask("getGroupInfo", databaseError);
             }
-        });
+        };
     }
 
     public void updateGroupMembers (final String singleUser, final List<String> usernames, final String chatKey, final boolean admin) {
