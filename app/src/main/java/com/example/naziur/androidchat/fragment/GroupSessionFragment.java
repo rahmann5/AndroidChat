@@ -134,11 +134,15 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
         myChatsdapter = new AllChatsAdapter(getContext(), new AllChatsAdapter.OnItemClickListener() {
             @Override
             public void onItemClick(Chat chat, int pos) {
-                Intent chatActivity = new Intent(getActivity(), GroupChatActivity.class);
-                chatActivity.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                String chatKey = chat.getChatKey();
-                chatActivity.putExtra("group_uid", chatKey);
-                startActivity(chatActivity);
+                if (allGroupKeys.contains(chat.getChatKey())) {
+                    Intent chatActivity = new Intent(getActivity(), GroupChatActivity.class);
+                    chatActivity.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                    String chatKey = chat.getChatKey();
+                    chatActivity.putExtra("group_uid", chatKey);
+                    startActivity(chatActivity);
+                }  else {
+                    Toast.makeText(getActivity(), "This is a empty group", Toast.LENGTH_LONG).show();
+                }
             }
 
             @Override
@@ -168,18 +172,26 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
                     private void onActionSelected(int which, Chat chat, int position) {
                         switch (which) {
                             case 0 : // see group info
-                                Intent intent = new Intent(getActivity(), GroupDetailActivity.class);
-                                intent.putExtra("g_uid", chat.getChatKey());
-                                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                                startActivity(intent);
-                                break;
+                                if (allGroupKeys.contains(chat.getChatKey())) {
+                                    Intent intent = new Intent(getActivity(), GroupDetailActivity.class);
+                                    intent.putExtra("g_uid", chat.getChatKey());
+                                    intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                                    startActivity(intent);
+                                    break;
+                                } else {
+                                    Toast.makeText(getActivity(), "This is a empty group", Toast.LENGTH_LONG).show();
+                                }
 
                             case 1 : // chat with contact
-                                Intent chatActivity = new Intent(getActivity(), GroupChatActivity.class);
-                                chatActivity.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                                String chatKey = chat.getChatKey();
-                                chatActivity.putExtra("group_uid", chatKey);
-                                startActivity(chatActivity);
+                                if (allGroupKeys.contains(chat.getChatKey())) {
+                                    Intent chatActivity = new Intent(getActivity(), GroupChatActivity.class);
+                                    chatActivity.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                                    String chatKey = chat.getChatKey();
+                                    chatActivity.putExtra("group_uid", chatKey);
+                                    startActivity(chatActivity);
+                                } else {
+                                    Toast.makeText(getActivity(), "This is a empty group", Toast.LENGTH_LONG).show();
+                                }
                                 break;
 
                             case 2 : // leave/delete Chat
