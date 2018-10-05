@@ -57,7 +57,7 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
     private ProgressDialog progressBar;
     private List<ValueEventListener> valueEventListeners;
     FirebaseHelper firebaseHelper;
-
+    private SimpleDateFormat formatter;
     public SingleSessionFragment() {
         // Required empty public constructor
     }
@@ -77,6 +77,7 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
         emptyChats = (TextView) rootView.findViewById(R.id.no_chats);
         recyclerView = rootView.findViewById(R.id.all_chats_list);
         progressBar = new ProgressDialog(getActivity(), R.layout.progress_dialog, true);
+        formatter = new SimpleDateFormat(getString(R.string.simple_date));
         db = new ContactDBHelper(getContext());
         if (Network.isInternetAvailable(getActivity(), true)) {
             Cursor c = db.getAllMyContacts(null);
@@ -345,7 +346,6 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
                         FirebaseMessageModel firebaseMessageModel = container.getMsgModel();
                         String isChattingTo = (firebaseMessageModel.getSenderName().equals(user.name)) ? db.getProfileNameAndPic(firebaseMessageModel.getReceiverName())[0] : db.getProfileNameAndPic(firebaseMessageModel.getSenderName())[0];
                         String username = (firebaseMessageModel.getSenderName().equals(user.name)) ? firebaseMessageModel.getReceiverName() : firebaseMessageModel.getSenderName();
-                        SimpleDateFormat formatter = new SimpleDateFormat(getString(R.string.simple_date));
                         String dateString = formatter.format(new Date(firebaseMessageModel.getCreatedDateLong()));
                         Chat chat = new Chat(isChattingTo, username, firebaseMessageModel.getText(), db.getProfileNameAndPic(username)[1], dateString, container.getString(), firebaseMessageModel.getIsReceived(), firebaseMessageModel.getMediaType());
                         myChatsdapter.addOrRemoveChat(chat, true);

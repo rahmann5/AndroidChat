@@ -25,5 +25,6 @@
         android:orderInCategory="200"
         android:title="create group"
         app:showAsAction="always"
-        android:icon="@drawable/ic_friend"/>
+        android:icon="@drawable/ic_friend"
+        />
 </menu>

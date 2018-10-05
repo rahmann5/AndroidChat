@@ -2,6 +2,7 @@ package com.example.naziur.androidchat.activities;
 
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.res.Configuration;
 import android.net.ConnectivityManager;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
@@ -18,6 +19,7 @@ import com.example.naziur.androidchat.R;
 import com.example.naziur.androidchat.adapter.SessionFragmentPagerAdapter;
 import com.example.naziur.androidchat.database.FirebaseHelper;
 import com.example.naziur.androidchat.fragment.GroupSessionFragment;
+import com.example.naziur.androidchat.fragment.SingleSessionFragment;
 import com.example.naziur.androidchat.models.User;
 import com.example.naziur.androidchat.utils.Container;
 import com.example.naziur.androidchat.utils.NetworkChangeReceiver;
@@ -26,12 +28,11 @@ import com.google.firebase.database.ValueEventListener;
 
 public class SessionActivity extends AppCompatActivity implements NetworkChangeReceiver.OnNetworkStateChangeListener, FirebaseHelper.FirebaseHelperListener{
     private static final String TAG = "SessionActivity";
-    private User user = User.getInstance();
     private NetworkChangeReceiver networkChangeReceiver;
     ViewPager viewPager;
     private Menu menu;
     private ValueEventListener notificationListener;
-
+    private int pos = 0;
     SessionFragmentPagerAdapter sessionFragmentPagerAdapter;
     private FirebaseHelper firebaseHelper;
     @Override
@@ -42,7 +43,6 @@ public class SessionActivity extends AppCompatActivity implements NetworkChangeR
         firebaseHelper.setFirebaseHelperListener(this);
         viewPager = (ViewPager) findViewById(R.id.viewpager);
         sessionFragmentPagerAdapter = new SessionFragmentPagerAdapter(getSupportFragmentManager());
-
         Toolbar mToolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(mToolbar);
 
@@ -63,6 +63,7 @@ public class SessionActivity extends AppCompatActivity implements NetworkChangeR
             @Override
             public void onPageSelected(int position) {
                 Fragment fragment =(Fragment)sessionFragmentPagerAdapter.getRegisteredFragment(position);
+                pos = position;
                 if(menu != null) {
                     if (fragment instanceof GroupSessionFragment)
                         menu.findItem(R.id.action_group).setVisible(true);
@@ -93,9 +94,10 @@ public class SessionActivity extends AppCompatActivity implements NetworkChangeR
         this.menu = menu;
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.sessions_menu, menu);
-        MenuItem groupItem = menu.findItem(R.id.action_group);
-        groupItem.setVisible(false);
-
+        if(sessionFragmentPagerAdapter.getRegisteredFragment(pos) instanceof SingleSessionFragment) {
+            MenuItem groupItem = menu.findItem(R.id.action_group);
+            groupItem.setVisible(false);
+        }
 
         return true;
     }
