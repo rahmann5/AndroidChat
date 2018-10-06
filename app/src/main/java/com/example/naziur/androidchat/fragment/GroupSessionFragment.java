@@ -199,7 +199,7 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
                                     firebaseHelper.toggleListenerFor("groups", "groupKey" , chat.getChatKey(), grpValueEventListeners.get(chat.getChatKey()), false, false);
                                     firebaseHelper.exitGroup(chat, user.name, chat.getAdmin().equals(user.name));
                                 } else {
-                                    Toast.makeText(getActivity(), "This is a empty group", Toast.LENGTH_LONG).show();
+                                    updateUserChatKeys(chat);
                                 }
                                 break;
 
@@ -320,9 +320,11 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
         } else if (tag.equals("updateChatKeys")) {
             switch (condition) {
                 case FirebaseHelper.CONDITION_1 :
+                    boolean groupExists = false;
                     Chat chat = container.getChat();
                     for(int i = 0; i < allGroups.size(); i++){
                         if(allGroups.get(i).getGroupKey().equals(chat.getChatKey())) {
+                            groupExists = true;
                             allGroups.remove(i);
                             break;
                         }
@@ -330,11 +332,9 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
                     myChatsdapter.addOrRemoveChat(chat, false);
                     if(myChatsdapter.getItemCount() == 0)
                         emptyChats.setVisibility(View.VISIBLE);
-
-                    String leaver = (chat.getAdmin().equals(user.name)) ? "Admin " + user.name : user.name;
-                    String wishMessage = leaver + " has left the group.";
-                    firebaseHelper.updateMessageNode(getActivity(), "group", chat.getChatKey(), wishMessage , null, Constants.MESSAGE_TYPE_SYSTEM, null, chat.getTitle());
-                    firebaseHelper.deleteGroup(chat.getChatKey());
+                    if (groupExists) {
+                        firebaseHelper.deleteGroup(chat.getChatKey());
+                    }
                     break;
             }
         } else if (tag.equals("deleteGroup")) {
@@ -345,6 +345,10 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
                     break;
 
                 case FirebaseHelper.CONDITION_2 :
+                    FirebaseGroupModel fbgModel = container.getGroupModel();
+                    String leaver = (fbgModel.getAdmin().equals(user.name)) ? "Admin " + user.name : user.name;
+                    String wishMessage = leaver + " has left the group.";
+                    firebaseHelper.updateMessageNode(getActivity(), "group", fbgModel.getGroupKey(), wishMessage , null, Constants.MESSAGE_TYPE_SYSTEM, null, fbgModel.getTitle());
                     Toast.makeText(getActivity(), "Successfully left the group", Toast.LENGTH_SHORT).show();
                     break;
             }
