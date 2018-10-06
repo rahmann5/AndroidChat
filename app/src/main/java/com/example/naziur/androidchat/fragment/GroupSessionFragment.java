@@ -99,13 +99,13 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
         firebaseHelper.toggleListenerFor("users", "username" , user.name, userListener, true, false);
     }
 
-    private void setUpGrpEventListeners(int index, boolean single, int loop, int complete) {
+    private void setUpGrpEventListeners(int index, boolean single, int loop, int exit ,int complete) {
         /*grpValueEventListeners.clear();
         grpMsgValueEventListeners.clear();
         myChatsdapter.clearAllChats ();*/
         if (index < allGroupKeys.size()) {
             final String currentGroupKey = allGroupKeys.get(index);
-            ValueEventListener valueEventListener = firebaseHelper.getValueEventListener(currentGroupKey, loop, FirebaseHelper.CONDITION_7, complete, FirebaseGroupModel.class);
+            ValueEventListener valueEventListener = firebaseHelper.getValueEventListener(currentGroupKey, loop, exit, complete, FirebaseGroupModel.class);
             grpValueEventListeners.put(currentGroupKey, valueEventListener);
             firebaseHelper.toggleListenerFor("groups", "groupKey" , currentGroupKey, valueEventListener, true, single);
         }
@@ -274,14 +274,14 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
                 case FirebaseHelper.CONDITION_3 :
                     if (!allGroupKeys.isEmpty()) {
                         myChatsdapter.clearAllChats();
-                        setUpGrpEventListeners(0, true, FirebaseHelper.CONDITION_4, FirebaseHelper.CONDITION_5);
+                        setUpGrpEventListeners(0, true, FirebaseHelper.CONDITION_4, FirebaseHelper.CONDITION_7 , FirebaseHelper.CONDITION_5);
                     }
                     break;
 
                 case FirebaseHelper.CONDITION_5 :
                     if (allGroups.size() == allGroupKeys.size()) {
                         for (int i = 0; i< allGroups.size(); i++) {
-                            setUpGrpEventListeners(i, false, FirebaseHelper.CONDITION_6, FirebaseHelper.NON_CONDITION);
+                            setUpGrpEventListeners(i, false, FirebaseHelper.CONDITION_6, FirebaseHelper.NON_CONDITION ,FirebaseHelper.NON_CONDITION);
                         }
                     }
                     break;
@@ -298,6 +298,10 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
                         myChatsdapter.addOrRemoveChat(chat, true);
                         //myChatsdapter.notifyDataSetChanged();
                         allGroupKeys.remove(container.getString()); // remove redundent keys
+                        // never reaches condition 4 need to find way to continue recursive function
+                        if (allGroups.size() != allGroupKeys.size()) {
+                            setUpGrpEventListeners(allGroups.size(), true, FirebaseHelper.CONDITION_4, FirebaseHelper.CONDITION_7 ,FirebaseHelper.CONDITION_5);
+                        }
                     }
                     break;
 
@@ -412,7 +416,7 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
                         allGroups.add(firebaseGroupModel);
                     }
                     if (allGroups.size() != allGroupKeys.size()) {
-                        setUpGrpEventListeners(allGroups.size(), true, FirebaseHelper.CONDITION_4, FirebaseHelper.CONDITION_5);
+                        setUpGrpEventListeners(allGroups.size(), true, FirebaseHelper.CONDITION_4, FirebaseHelper.CONDITION_7 ,FirebaseHelper.CONDITION_5);
                     }
                     break;
 
