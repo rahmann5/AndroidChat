@@ -204,8 +204,8 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
     private void deleteChat(final Chat chat){
         progressBar.toggleDialog(true);
         allChatKeys.remove(chat.getChatKey());
-        final String updatedKeys = getChatKeysAsString();
-        firebaseHelper.updateChatKeys(user, updatedKeys, chat, false); //  initiate deletion of chat
+        //final String updatedKeys = getChatKeysAsString();
+        firebaseHelper.updateChatKeys(user, chat.getChatKey(), chat, false); //  initiate deletion of chat
     }
 
     private void addUserToContacts(final Chat chat, final int position){

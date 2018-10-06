@@ -227,8 +227,8 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
     private void updateUserChatKeys (Chat chatToRemove) {
         //This doesn't include redundant keys so they are removed from server
         allGroupKeys.remove(chatToRemove.getChatKey());
-       String updatedKeys = getChatKeysAsString();
-        firebaseHelper.updateChatKeys(user, updatedKeys, chatToRemove, true);
+       //String updatedKeys = getChatKeysAsString();
+        firebaseHelper.updateChatKeys(user, chatToRemove.getChatKey(), chatToRemove, true);
     }
 
     private String getChatKeysAsString(){
