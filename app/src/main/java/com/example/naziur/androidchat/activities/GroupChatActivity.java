@@ -417,7 +417,8 @@ public class GroupChatActivity extends AppCompatActivity implements ImageViewDia
 
     @Override
     public void onActionPressed() {
-        firebaseHelper.checkGroupsKeys("users", FirebaseHelper.CONDITION_1, FirebaseHelper.CONDITION_3 ,groupKey, getMembersThatNeedToReceiveMessage());
+        if(getMembersThatNeedToReceiveMessage().length > 0)
+            firebaseHelper.checkGroupsKeys("users", FirebaseHelper.CONDITION_1, FirebaseHelper.CONDITION_3 ,groupKey, getMembersThatNeedToReceiveMessage());
     }
 
     @Override
