@@ -85,9 +85,9 @@
         <de.hdodenhof.circleimageview.CircleImageView
             android:layout_gravity="top"
             android:id="@+id/send_invite_button"
-            android:layout_width="35dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:src="@drawable/ic_rotate_90_degrees_ccw"
+            android:src="@drawable/ic_invite"
             android:layout_marginLeft="2dp"
             android:layout_marginStart="2dp"
             android:clickable="true"
