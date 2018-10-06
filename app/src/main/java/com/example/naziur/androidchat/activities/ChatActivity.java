@@ -441,6 +441,14 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
         firebaseHelper.checkKeyListKey("users", FirebaseHelper.CONDITION_4, FirebaseHelper.CONDITION_5 ,chatKey, friend.getUsername());
     }
 
+    private boolean matchesMyKey(String friendKey, FirebaseUserModel me) {
+        for(String key: me.getChatKeys().split(",")){
+            if(key.equals(friendKey))
+                return true;
+        }
+        return false;
+    }
+
     @Override
     public void onCompleteTask(String tag, int condition, Container container) {
         if (tag.equals("createMessageEventListener")) {
@@ -472,7 +480,7 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
                     btnInvite.setVisibility(View.GONE);
                     btnSend.setVisibility(View.VISIBLE);
                     btnMedia.setEnabled(true);
-                    if (friendKey.equals("")) {
+                    if (friendKey.equals("") || !matchesMyKey(friendKey, me)) {
                         progressBar.toggleDialog(false);
                         // change send button to be able to send notification instead
                         btnInvite.setVisibility(View.VISIBLE);
@@ -514,7 +522,8 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
                     btnInvite.setVisibility(View.VISIBLE);
                     btnSend.setVisibility(View.GONE);
                     btnMedia.setEnabled(false);
-                    imageViewDialog.getDialog().dismiss();
+                    if(imageViewDialog != null)
+                        imageViewDialog.getDialog().dismiss();
                     break;
             }
         } else if (tag.equals("updateNotificationNode")) {
@@ -537,6 +546,8 @@ public class ChatActivity extends AppCompatActivity implements ImageViewDialogFr
             textComment.setText("");
         }
     }
+
+
 
     @Override
     public void onFailureTask(String tag, DatabaseError databaseError) {
