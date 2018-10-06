@@ -295,6 +295,7 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
                         emptyGroup.setMembers("");
                         //allGroups.add(emptyGroup);
                         Chat chat = new Chat(emptyGroup.getTitle(), "System", "This is a deleted group.", emptyGroup.getPic(), "", container.getString(), Constants.MESSAGE_TYPE_SYSTEM, "");
+                        chat.setEmptyChat(true);
                         myChatsdapter.addOrRemoveChat(chat, true);
                         //myChatsdapter.notifyDataSetChanged();
                         allGroupKeys.remove(container.getString()); // remove redundent keys
@@ -320,11 +321,9 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
         } else if (tag.equals("updateChatKeys")) {
             switch (condition) {
                 case FirebaseHelper.CONDITION_1 :
-                    boolean groupExists = false;
                     Chat chat = container.getChat();
                     for(int i = 0; i < allGroups.size(); i++){
                         if(allGroups.get(i).getGroupKey().equals(chat.getChatKey())) {
-                            groupExists = true;
                             allGroups.remove(i);
                             break;
                         }
@@ -332,7 +331,7 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
                     myChatsdapter.addOrRemoveChat(chat, false);
                     if(myChatsdapter.getItemCount() == 0)
                         emptyChats.setVisibility(View.VISIBLE);
-                    if (groupExists) {
+                    if (!chat.isEmptyChat()) {
                         firebaseHelper.deleteGroup(chat.getChatKey());
                     }
                     break;

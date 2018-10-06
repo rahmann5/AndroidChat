@@ -25,6 +25,8 @@ public class Chat {
 
     private String profilePic;
 
+    private boolean emptyChat = false;
+
     public Chat(String senderName, String speakingTo, String username, String lastMsg, String pic, String time, String chatKey, int received, String msgType){
         this.speakingTo = speakingTo;
         this.senderName = senderName;
@@ -105,5 +107,13 @@ public class Chat {
 
     public String getAdmin() {
         return admin;
+    }
+
+    public void setEmptyChat(boolean emptyChat) {
+        this.emptyChat = emptyChat;
+    }
+
+    public boolean isEmptyChat() {
+        return emptyChat;
     }
 }
