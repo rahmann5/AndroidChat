@@ -428,10 +428,12 @@ public class GroupDetailActivity extends AppCompatActivity implements FirebaseHe
                         progressBar.toggleDialog(false);
                         break;
                     case FirebaseHelper.CONDITION_2:
-                        Toast.makeText(this, "This group has been deleted." , Toast.LENGTH_LONG).show();
-                        progressBar.toggleDialog(false);
-                        //firebaseHelper.toggleListenerFor("groups", "groupKey", groupModel.getGroupKey(), groupListener, false, false);
-                        finish();
+                        if (groupModel.getMembers().equals("") && groupModel.getAdmin().equals("")) {
+                            Toast.makeText(this, "This group has been deleted." , Toast.LENGTH_LONG).show();
+                            progressBar.toggleDialog(false);
+                            //firebaseHelper.toggleListenerFor("groups", "groupKey", groupModel.getGroupKey(), groupListener, false, false);
+                            finish();
+                        }
                         break;
 
                 }

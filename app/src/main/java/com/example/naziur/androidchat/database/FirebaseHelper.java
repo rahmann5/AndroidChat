@@ -32,7 +32,6 @@ import com.loopj.android.http.TextHttpResponseHandler;
 import org.json.JSONArray;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 
 import java.util.Arrays;
@@ -866,7 +865,7 @@ public class FirebaseHelper {
     private static String removeAnyDuplicateKey (String[] myKeys, String keyToAdd , String searchDup) {
         String newKeys = keyToAdd;
         for (String key : myKeys) {
-            if (!key.equals(searchDup) || !key.equals(keyToAdd)) {
+            if (!key.equals(searchDup) && !key.equals(keyToAdd)) {
                 newKeys += "," + key;
             }
         }
@@ -1156,8 +1155,7 @@ public class FirebaseHelper {
         DatabaseReference groupRef = database.getReference("groups").orderByChild("groupKey").equalTo(chatKey).getRef();
         groupRef.runTransaction(new Transaction.Handler() {
             boolean isDeleted = false;
-            String groupPic = "";
-            private FirebaseGroupModel groupRemovedFrom;
+            private FirebaseGroupModel groupRemoved;
             @Override
             public Transaction.Result doTransaction(MutableData mutableData) {
                 for (MutableData data : mutableData.getChildren()) {
@@ -1166,11 +1164,11 @@ public class FirebaseHelper {
                     if (groupModel == null) return Transaction.success(mutableData);
 
                     if (groupModel.getGroupKey().equals(chatKey)) {
-                        groupRemovedFrom = new FirebaseGroupModel();
-                        groupRemovedFrom.setTitle(groupModel.getTitle());
-                        groupRemovedFrom.setGroupKey(chatKey);
-                        groupRemovedFrom.setPic(groupModel.getPic());
-                        groupRemovedFrom.setAdmin(groupModel.getAdmin());
+                        groupRemoved = new FirebaseGroupModel();
+                        groupRemoved.setTitle(groupModel.getTitle());
+                        groupRemoved.setGroupKey(chatKey);
+                        groupRemoved.setPic(groupModel.getPic());
+                        groupRemoved.setAdmin(groupModel.getAdmin());
                         if (groupModel.getAdmin().equals("") && groupModel.getMembers().equals("")) { // no admin and members left
                             isDeleted = true;
                             groupModel = null;
@@ -1188,7 +1186,7 @@ public class FirebaseHelper {
             public void onComplete(DatabaseError databaseError, boolean b, DataSnapshot dataSnapshot) {
                 if (databaseError == null) {
                     Container container = new Container();
-                    container.setGroupModel(groupRemovedFrom);
+                    container.setGroupModel(groupRemoved);
                     if (isDeleted) {
                         // complete delete
                         listener.onCompleteTask("deleteGroup", CONDITION_1, container);

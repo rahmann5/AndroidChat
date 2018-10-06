@@ -194,7 +194,7 @@ public class AllChatsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
             lastMsgTv.setText(Constants.generateMediaText(context, chat.getMsgType(), chat.getLastMsgInThisChat()));
             Glide.with(context)
                     .load(chat.getProfilePic()).apply(new RequestOptions()
-                    .placeholder(chat.isGroup()? R.drawable.ic_group_unknown:R.drawable.unknown)
+                    .placeholder(R.drawable.placeholder)
                     .error(chat.isGroup()? R.drawable.ic_group_unknown:R.drawable.unknown)).
                     into(profPicIv);
         }
