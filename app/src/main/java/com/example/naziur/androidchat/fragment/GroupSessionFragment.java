@@ -303,8 +303,13 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
                         if (allGroups.size() != allGroupKeys.size()) {
                             setUpGrpEventListeners(allGroups.size(), true, FirebaseHelper.CONDITION_4, FirebaseHelper.CONDITION_7 ,FirebaseHelper.CONDITION_5);
                         } else {
-                            for (int i = 0; i< allGroups.size(); i++) {
-                                setUpGrpEventListeners(i, false, FirebaseHelper.CONDITION_6, FirebaseHelper.NON_CONDITION ,FirebaseHelper.NON_CONDITION);
+                            System.out.println("Showing only group");
+                            if(!allGroups.isEmpty()) {
+                                for (int i = 0; i < allGroups.size(); i++) {
+                                    setUpGrpEventListeners(i, false, FirebaseHelper.CONDITION_6, FirebaseHelper.NON_CONDITION, FirebaseHelper.NON_CONDITION);
+                                }
+                            } else {
+                                myChatsdapter.notifyDataSetChanged();
                             }
                         }
                     }
