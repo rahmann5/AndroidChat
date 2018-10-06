@@ -139,7 +139,7 @@ public class ChatDetailActivity extends AppCompatActivity implements FirebaseHel
     }
 
     private void getGroupInfo (String key) {
-        ValueEventListener userListener = firebaseHelper.getValueEventListener(key, FirebaseHelper.CONDITION_3 , FirebaseHelper.NON_CONDITION, FirebaseHelper.NON_CONDITION, FirebaseGroupModel.class);
+        ValueEventListener userListener = firebaseHelper.getValueEventListener(key, FirebaseHelper.CONDITION_3 , FirebaseHelper.CONDITION_4, FirebaseHelper.NON_CONDITION, FirebaseGroupModel.class);
         firebaseHelper.toggleListenerFor("groups", "groupKey" , key, userListener, true, true); //  single event
     }
 
@@ -154,10 +154,7 @@ public class ChatDetailActivity extends AppCompatActivity implements FirebaseHel
                 break;
             }
         }
-        if (groupsAdapter.getItemCount() == 0)
-            emptyGroupsList.setVisibility(View.VISIBLE);
-        else
-            emptyGroupsList.setVisibility(View.GONE);
+        toggleEmptyState();
 
     }
 
@@ -255,6 +252,13 @@ public class ChatDetailActivity extends AppCompatActivity implements FirebaseHel
         }
     }
 
+    private void toggleEmptyState () {
+        if (groupsAdapter.getItemCount() == 0)
+            emptyGroupsList.setVisibility(View.VISIBLE);
+        else
+            emptyGroupsList.setVisibility(View.GONE);
+    }
+
     @Override
     public void onCompleteTask(String tag, int condition, Container container) {
         switch(tag){
@@ -269,6 +273,19 @@ public class ChatDetailActivity extends AppCompatActivity implements FirebaseHel
                         break;
                 }
                 progressBar.toggleDialog(false);
+                break;
+
+            case "getValueEventListener":
+                switch (condition) {
+                    case FirebaseHelper.CONDITION_4 :
+                        int index = groupKeys.indexOf(container.getString());
+                        if (index == groupKeys.size()-1) {
+                            toggleEmptyState();
+                        } else {
+                            getGroupInfo(groupKeys.get(index + 1));
+                        }
+                        break;
+                }
                 break;
         }
     }
@@ -299,7 +316,7 @@ public class ChatDetailActivity extends AppCompatActivity implements FirebaseHel
                         if (!groupKeys.isEmpty())
                             getGroupInfo(groupKeys.get(0)); // first item
                         else
-                            emptyGroupsList.setVisibility(View.VISIBLE);
+                            toggleEmptyState();
 
                         break;
 

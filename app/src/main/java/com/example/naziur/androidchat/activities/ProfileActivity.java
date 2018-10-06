@@ -193,7 +193,7 @@ public class ProfileActivity extends AppCompatActivity implements FirebaseHelper
 
     private void getGroupInfo (String key) {
         if (Network.isInternetAvailable(this, true)) {
-            ValueEventListener userListener = firebaseHelper.getValueEventListener(key, FirebaseHelper.CONDITION_3, FirebaseHelper.NON_CONDITION, FirebaseHelper.NON_CONDITION, FirebaseGroupModel.class);
+            ValueEventListener userListener = firebaseHelper.getValueEventListener(key, FirebaseHelper.CONDITION_3, FirebaseHelper.CONDITION_4, FirebaseHelper.NON_CONDITION, FirebaseGroupModel.class);
             firebaseHelper.toggleListenerFor("groups", "groupKey" , key, userListener, true, true); //  single event
         } else {
             toggleEmptyState(emptyGroupsList, groupsAdapter);
@@ -404,6 +404,17 @@ public class ProfileActivity extends AppCompatActivity implements FirebaseHelper
                     break;
             }
             progressBar.toggleDialog(false);
+        } else if (tag.equals("getValueEventListener")) {
+            switch (condition) {
+                case FirebaseHelper.CONDITION_4 :
+                    int index = groupKeys.indexOf(container.getString());
+                    if (index == groupKeys.size()-1) {
+                        toggleEmptyState(emptyGroupsList, groupsAdapter);
+                    } else {
+                        getGroupInfo(groupKeys.get(index + 1));
+                    }
+                    break;
+            }
         }
     }
 
@@ -444,20 +455,21 @@ public class ProfileActivity extends AppCompatActivity implements FirebaseHelper
                         if(!key.equals(""))
                             groupKeys.add(key);
                     }
-                    if (!groupKeys.isEmpty())
+                    if (!groupKeys.isEmpty()){
                         getGroupInfo(groupKeys.get(0)); // first item
-                    else
+                    } else {
                         toggleEmptyState(emptyGroupsList, groupsAdapter);
+                    }
 
                     break;
 
                 case FirebaseHelper.CONDITION_3 :
                     FirebaseGroupModel groupModel = (FirebaseGroupModel) container.getObject();
                     groupsAdapter.addGroupItem(groupModel);
-                    toggleEmptyState(emptyGroupsList, groupsAdapter);
                     int currentIndex = groupKeys.indexOf(groupModel.getGroupKey());
-                    if ((currentIndex + 1) < groupKeys.size())
+                    if ((currentIndex + 1) < groupKeys.size()) {
                         getGroupInfo(groupKeys.get(currentIndex + 1)); // subsequent item
+                    }
                     break;
             }
         }

@@ -63,6 +63,7 @@
         android:src="@drawable/ic_message"
         android:scaleType="fitCenter"
         android:visibility="gone"
+        app:backgroundTint="@color/main_theme_1"
         />
 
 </android.support.design.widget.CoordinatorLayout>

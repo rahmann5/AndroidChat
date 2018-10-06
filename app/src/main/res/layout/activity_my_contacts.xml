@@ -31,6 +31,7 @@
         android:layout_marginRight="20dp"
         android:src="@drawable/ic_add_contact"
         android:scaleType="center"
+        app:backgroundTint="@color/main_theme_1"
         />
 
 </RelativeLayout>
