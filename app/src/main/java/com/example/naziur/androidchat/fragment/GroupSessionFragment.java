@@ -225,6 +225,7 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
     }
 
     private void updateUserChatKeys (Chat chatToRemove) {
+        //This doesn't include redundant keys so they are removed from server
         allGroupKeys.remove(chatToRemove.getChatKey());
        String updatedKeys = getChatKeysAsString();
         firebaseHelper.updateChatKeys(user, updatedKeys, chatToRemove, true);
@@ -250,18 +251,22 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
         }
     }
 
+    private void toggleEmptyView(){
+        if (myChatsdapter.getItemCount() == 0) {
+            emptyChats.setVisibility(View.VISIBLE);
+        } else {
+            myChatsdapter.sortAllChatsByDate(false, formatter);
+            emptyChats.setVisibility(View.GONE);
+        }
+    }
+
 
     @Override
     public void onCompleteTask(String tag, int condition, Container container) {
         if (tag.equals("getMessageEventListener")) {
             switch (condition) {
                 case FirebaseHelper.CONDITION_2:
-                    if (myChatsdapter.getItemCount() == 0) {
-                        emptyChats.setVisibility(View.VISIBLE);
-                    } else {
-                        myChatsdapter.sortAllChatsByDate(false, formatter);
-                        emptyChats.setVisibility(View.GONE);
-                    }
+                    toggleEmptyView();
                     break;
             }
         } else if (tag.equals("getValueEventListener")) {
@@ -310,6 +315,7 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
                                 }
                             } else {
                                 myChatsdapter.notifyDataSetChanged();
+                                toggleEmptyView();
                             }
                         }
                     }

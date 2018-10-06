@@ -93,7 +93,7 @@ public class AllChatsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                     return d1.compareTo(d2);
                 } catch (ParseException pe) {
                     pe.printStackTrace();
-                    return 0;
+                    return allMyChats.size()-1;
                 }
 
             }
