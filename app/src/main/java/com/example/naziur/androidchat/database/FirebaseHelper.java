@@ -473,7 +473,7 @@ public class FirebaseHelper {
         };
     }
 
-    public void updateChatKeys(final User user, final String updatedKeys, final Chat chat, final boolean isGroup){
+    public void updateChatKeys(final User user, final String keyToRemove, final Chat chat, final boolean isGroup){
         DatabaseReference pendingTasks = database.getReference("users").orderByChild("username").equalTo(user.name).getRef();
         pendingTasks.runTransaction(new Transaction.Handler() {
             @Override
@@ -484,10 +484,17 @@ public class FirebaseHelper {
                         return Transaction.success(mutableData);
 
                     if(firebaseUserModel.getUsername().equals(user.name)){
+                        String [] keys = (isGroup) ? firebaseUserModel.getGroupKeys().split(",") : firebaseUserModel.getChatKeys().split(",");
+                        String newKeys = "";
+                        for (String key : keys) {
+                            if (!key.equals(keyToRemove)) {
+                                newKeys += (newKeys.equals("")) ? key : "," + key;
+                            }
+                        }
                         if (!isGroup) {
-                            firebaseUserModel.setChatKeys(updatedKeys);
+                            firebaseUserModel.setChatKeys(newKeys);
                         } else {
-                            firebaseUserModel.setGroupKeys(updatedKeys);
+                            firebaseUserModel.setGroupKeys(newKeys);
                         }
 
                         data.setValue(firebaseUserModel);
