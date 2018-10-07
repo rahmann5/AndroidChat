@@ -51,7 +51,7 @@
                     android:id="@+id/username"
                     android:layout_width="fill_parent"
                     android:layout_height="wrap_content"
-                    android:hint="@string/email"
+                    android:hint="@string/username"
                     android:inputType="textEmailAddress"
                     android:textColorHint="@color/white"
                     android:textColor="@color/white"
@@ -70,10 +70,9 @@
                     android:layout_height="wrap_content"
                     android:textColorHint="@color/white"
                     android:textColor="@color/white"
-                    android:hint="@string/username"
+                    android:hint="@string/email"
                     android:inputType="textEmailAddress"
                     app:backgroundTint="@color/main_theme_1"
-                    android:maxLength="@string/username_text"
                     android:maxLines="1" />
             </android.support.design.widget.TextInputLayout>
 

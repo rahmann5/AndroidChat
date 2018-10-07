@@ -69,10 +69,11 @@ public class MainActivity extends AppCompatActivity implements FirebaseHelper.Fi
     public void onStart() {
         super.onStart();
         FirebaseUser currentUser = mAuth.getCurrentUser();
+        user.sharedpreferences = PreferenceManager.getDefaultSharedPreferences(this);
         // Check if user is signed in (non-null) and update UI accordingly.
         if (user.getAutoLogin(this) && !user.getUserAuthentication(this).equals("")) {
 
-            user.sharedpreferences = PreferenceManager.getDefaultSharedPreferences(this);
+
             currentDeviceId = Settings.Secure.getString(getApplicationContext().getContentResolver(), Settings.Secure.ANDROID_ID);
 
             if (currentUser != null) {

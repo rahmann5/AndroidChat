@@ -25,6 +25,7 @@ import com.example.naziur.androidchat.fragment.SingleSessionFragment;
 import com.example.naziur.androidchat.models.User;
 import com.example.naziur.androidchat.utils.Container;
 import com.example.naziur.androidchat.utils.NetworkChangeReceiver;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.ValueEventListener;
 
@@ -136,6 +137,14 @@ public class SessionActivity extends AppCompatActivity implements NetworkChangeR
                 return true;
             case R.id.settings:
                 startActivity(new Intent(SessionActivity.this, SettingsActivity.class));
+                return true;
+            case R.id.logout:
+                FirebaseAuth mAuth = FirebaseAuth.getInstance();
+                if (mAuth.getCurrentUser() != null) {
+                    mAuth.signOut();
+                    startActivity(new Intent(SessionActivity.this, LoginActivity.class));
+                    finish();
+                }
                 return true;
             case R.id.action_notification:
                 startActivity(new Intent(SessionActivity.this, NotificationActivity.class));

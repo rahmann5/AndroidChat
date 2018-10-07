@@ -48,7 +48,7 @@ public class RegisterActivity extends AppCompatActivity implements FirebaseHelpe
         registerBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if(inputVerification(usernameEt.getText().toString().trim(), emailEt.getText().toString().trim(), profileEt.getText().toString().trim())){
+                if(!inputVerification(usernameEt.getText().toString().trim(), emailEt.getText().toString().trim(), profileEt.getText().toString().trim())){
                     Toast.makeText(RegisterActivity.this, "You must provide a valid username/email/profile", Toast.LENGTH_SHORT).show();
                     return;
                 }
