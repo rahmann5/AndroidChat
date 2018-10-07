@@ -80,13 +80,23 @@ public class User {
         editor.apply();
     }
 
-    public void setAutoLogin(boolean login) {
+    public void setUserAuthentication (Context context,String email) {
         SharedPreferences.Editor editor = sharedpreferences.edit();
-        editor.putBoolean("auto_login_user", login);
+        editor.putString(context.getResources().getString(R.string.key_auto_login), email);
         editor.apply();
     }
 
-    public boolean getAutoLogin() {
-        return sharedpreferences.getBoolean("auto_login_user", true);
+    public String getUserAuthentication (Context context) {
+        return sharedpreferences.getString(context.getResources().getString(R.string.key_auto_login), "");
+    }
+
+    public void setAutoLogin(Context context, boolean login) {
+        SharedPreferences.Editor editor = sharedpreferences.edit();
+        editor.putBoolean(context.getResources().getString(R.string.key_auto_login), login);
+        editor.apply();
+    }
+
+    public boolean getAutoLogin(Context context) {
+        return sharedpreferences.getBoolean(context.getResources().getString(R.string.key_auto_login), false);
     }
 }

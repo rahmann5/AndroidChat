@@ -2,10 +2,14 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
     <SwitchPreference
-        android:defaultValue="true"
+        android:defaultValue="false"
         android:key="@string/key_auto_login"
         android:summary="@string/pref_desc_auto_login"
         android:title="@string/pref_title_auto_login" />
+
+    <EditTextPreference
+        android:key="@string/key_email"
+        android:title="@string/pref_title_auth" />
 
     <Preference
         android:key="@string/key_block_list"

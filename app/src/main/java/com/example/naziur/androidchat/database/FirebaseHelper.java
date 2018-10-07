@@ -78,29 +78,24 @@ public class FirebaseHelper {
     }
 
     public void autoLogin(String node, final String currentDeviceId, final User user) {
-        DatabaseReference usersRef = database.getReference(node);
-        usersRef.addListenerForSingleValueEvent(new com.google.firebase.database.ValueEventListener() {
+        database.getReference(node).orderByChild("deviceId").equalTo(currentDeviceId)
+                .addListenerForSingleValueEvent(new com.google.firebase.database.ValueEventListener() {
             @Override
             public void onDataChange(com.google.firebase.database.DataSnapshot dataSnapshot) {
-                boolean fail = true;
-                for (com.google.firebase.database.DataSnapshot userSnapshot : dataSnapshot.getChildren()) {
-                    //Getting the data from snapshot
-                    FirebaseUserModel firebaseUserModel = userSnapshot.getValue(FirebaseUserModel.class);
-
-                    if (firebaseUserModel.getDeviceId().equals(currentDeviceId)) {
-                        fail = false;
-                        firebaseUserModel.setDeviceToken(FirebaseInstanceId.getInstance().getToken());
-                        user.login(firebaseUserModel);
-                        user.saveFirebaseKey(userSnapshot.getKey());
-                        listener.onCompleteTask("autoLogin", CONDITION_1, null);
-                        break;
+                if (dataSnapshot.exists()) {
+                    for (com.google.firebase.database.DataSnapshot userSnapshot : dataSnapshot.getChildren()) {
+                        FirebaseUserModel firebaseUserModel = userSnapshot.getValue(FirebaseUserModel.class);
+                        if (firebaseUserModel.getDeviceId().equals(currentDeviceId)) {
+                            firebaseUserModel.setDeviceToken(FirebaseInstanceId.getInstance().getToken());
+                            user.login(firebaseUserModel);
+                            user.saveFirebaseKey(userSnapshot.getKey());
+                            listener.onCompleteTask("autoLogin", CONDITION_1, null);
+                            break;
+                        }
                     }
-                }
-
-                if (fail) {
+                } else {
                     listener.onCompleteTask("autoLogin", CONDITION_2, null);
                 }
-
             }
 
             @Override
@@ -110,37 +105,24 @@ public class FirebaseHelper {
         });
     }
 
-    public void manualLogin(final User user, final String username, final String profileName, final String currentDeviceId){
+    public void manualLogin(final String username,final String currentDeviceId){
         DatabaseReference reference = database.getReference("users");
         reference.orderByChild("username").equalTo(username).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 Container container = new Container();
-                if(!dataSnapshot.exists()){
-                    List<String> contents = new ArrayList<>();
-                    contents.add(profileName);
-                    contents.add(username);
-                    container.setStringList(contents);
-                    listener.onCompleteTask("manualLogin", CONDITION_1, container);
-                } else {
-                    boolean foundMatch = false;
-
+                if(dataSnapshot.exists()){
                     for(DataSnapshot snapshot : dataSnapshot.getChildren()){
                         FirebaseUserModel firebaseUserModel = snapshot.getValue(FirebaseUserModel.class);
                         container.setUserModel(firebaseUserModel);
                         if(firebaseUserModel.getDeviceId().equals(currentDeviceId)){
-                            listener.onCompleteTask("manualLogin", CONDITION_2, container);
-                            user.saveFirebaseKey(snapshot.getKey());
-                            foundMatch = true;
-                            break;
+                            listener.onCompleteTask("manualLogin", CONDITION_1, container);
                         } else {
-                            listener.onCompleteTask("manualLogin", CONDITION_3, null);
+                            listener.onCompleteTask("manualLogin", CONDITION_2, null);
                         }
                     }
-                    if(!foundMatch)
-                        listener.onCompleteTask("manualLogin", CONDITION_4, null);
-                    else
-                        listener.onCompleteTask("manualLogin", CONDITION_5, null);
+                } else {
+                    listener.onCompleteTask("manualLogin", CONDITION_3, null);
                 }
             }
 

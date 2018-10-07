@@ -9,6 +9,7 @@ import android.content.SharedPreferences;
 import android.os.Build;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
+import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -23,6 +24,11 @@ import com.example.naziur.androidchat.models.User;
 
 import com.example.naziur.androidchat.utils.Container;
 import com.example.naziur.androidchat.utils.Network;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.AuthResult;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -40,6 +46,7 @@ public class MainActivity extends AppCompatActivity implements FirebaseHelper.Fi
     String currentDeviceId;
     private FirebaseHelper firebaseHelper;
     User user = User.getInstance();
+    private FirebaseAuth mAuth;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,18 +59,43 @@ public class MainActivity extends AppCompatActivity implements FirebaseHelper.Fi
             return;
         }
 
-        user.sharedpreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        mAuth = FirebaseAuth.getInstance();
 
-        currentDeviceId = Settings.Secure.getString(getApplicationContext().getContentResolver(), Settings.Secure.ANDROID_ID);
 
-        if (user.getAutoLogin()) {
-            firebaseHelper.autoLogin("users", currentDeviceId, user);
+
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+        // Check if user is signed in (non-null) and update UI accordingly.
+        if (user.getAutoLogin(this) && !user.getUserAuthentication(this).equals("")) {
+
+            user.sharedpreferences = PreferenceManager.getDefaultSharedPreferences(this);
+            currentDeviceId = Settings.Secure.getString(getApplicationContext().getContentResolver(), Settings.Secure.ANDROID_ID);
+
+            if (currentUser != null) {
+                firebaseHelper.autoLogin("users", currentDeviceId, user);
+            } else {
+                mAuth.signInWithEmailAndPassword(user.getUserAuthentication(this), currentDeviceId).addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
+                    @Override
+                    public void onComplete(@NonNull Task<AuthResult> task) {
+                        if (task.isSuccessful()) {
+                            firebaseHelper.autoLogin("users", currentDeviceId, user);
+                        } else {
+                            Toast.makeText(MainActivity.this, "Failed to authenticate user.", Toast.LENGTH_SHORT).show();
+                            moveToLoginActivity();
+                        }
+
+                    }
+                });
+            }
         }
         else {
+            if (currentUser != null) mAuth.signOut();
             moveToLoginActivity();
         }
-
-
     }
 
     public void moveToSessionScreen() {

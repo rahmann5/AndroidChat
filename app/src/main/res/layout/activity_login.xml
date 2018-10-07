@@ -38,6 +38,34 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
+                android:layout_marginBottom="5dp">
+
+                <ImageView
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:src="@android:drawable/ic_dialog_email"
+                    android:layout_gravity="center_vertical"/>
+
+                <EditText
+                    android:id="@+id/editTextEmail"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ems="10"
+                    android:hint="Email"
+                    android:inputType="textEmailAddress"
+                    android:background="@drawable/bottom_border_white"
+                    android:padding="15dp"
+                    android:layout_gravity="center_vertical"
+                    android:textColor="@color/white"
+                    android:textColorHint="@color/white"
+                    android:maxLines="1"
+                    />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
                 android:layout_marginBottom="5dp"
                 android:gravity="center_vertical">
 
@@ -62,35 +90,6 @@
                     android:maxLength="@string/username_text"
                     />
 
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginBottom="5dp">
-
-                <ImageView
-                    android:layout_width="35dp"
-                    android:layout_height="35dp"
-                    android:src="@drawable/ic_profile"
-                    android:layout_gravity="center_vertical"/>
-
-                <EditText
-                    android:id="@+id/editTextProfileName"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:ems="10"
-                    android:hint="Profile Name (New User Only)"
-                    android:inputType="textPersonName"
-                    android:background="@drawable/bottom_border_white"
-                    android:padding="15dp"
-                    android:layout_gravity="center_vertical"
-                    android:textColor="@color/white"
-                    android:textColorHint="@color/white"
-                    android:maxLines="1"
-                    android:maxLength="@string/profile_name_text"
-                    />
             </LinearLayout>
 
             <RelativeLayout
@@ -144,6 +143,17 @@
                 android:textColor="#6fd5b6"
                 android:textStyle="bold"
                 android:textSize="18sp"/>
+
+            <TextView
+                android:layout_marginTop="10dp"
+                android:id="@+id/register"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/register"
+                android:textColor="@color/white"
+                android:textStyle="bold"
+                android:textSize="16sp"
+                />
 
         </LinearLayout>
 
