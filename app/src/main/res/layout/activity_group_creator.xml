@@ -57,7 +57,7 @@
                         android:drawableLeft="@drawable/ic_title"
                         android:drawableTint="@color/main_theme_1"
                         android:maxLength="@string/group_name_text"
-                        android:hint="Group Name"
+                        android:hint="@string/title"
                         android:inputType="textEmailAddress"
                         android:maxLines="1" />
                 </android.support.design.widget.TextInputLayout>
@@ -110,7 +110,7 @@
                             android:drawableLeft="@android:drawable/ic_menu_search"
                             android:drawableTint="@color/main_theme_1"
                             android:maxLength="@string/username_text"
-                            android:hint="Enter Username"
+                            android:hint="@string/username"
                             android:inputType="textEmailAddress"
                             android:maxLines="1" />
                     </android.support.design.widget.TextInputLayout>

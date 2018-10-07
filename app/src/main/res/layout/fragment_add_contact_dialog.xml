@@ -6,20 +6,22 @@
         android:text="Add Contact"
         android:textColor="@color/white"
         android:gravity="center"
-        android:textSize="30sp"
+        android:textSize="25sp"
         android:layout_width="match_parent"
-        android:layout_height="64dp"
+        android:layout_height="50dp"
         android:background="@color/main_theme_1"
         android:contentDescription="@string/app_name" />
+
     <EditText
         android:id="@+id/username"
-        android:inputType="textEmailAddress"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
+        android:layout_marginBottom="4dp"
         android:layout_marginLeft="4dp"
         android:layout_marginRight="4dp"
-        android:layout_marginBottom="4dp"
-        android:hint="@string/username" />
+        android:layout_marginTop="16dp"
+        android:drawableLeft="@android:drawable/ic_menu_search"
+        android:hint="@string/username"
+        android:inputType="textEmailAddress" />
 
 </LinearLayout>

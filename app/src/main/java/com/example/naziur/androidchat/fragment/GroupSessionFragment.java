@@ -347,7 +347,7 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
                     myChatsdapter.notifyDataSetChanged();
                     toggleEmptyView();
                     if (!chat.isEmptyChat()) {
-                        firebaseHelper.deleteGroup(chat.getChatKey());
+                        firebaseHelper.deleteGroup(chat);
                     }
                     break;
             }

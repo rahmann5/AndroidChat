@@ -1151,8 +1151,9 @@ public class FirebaseHelper {
         });
     }
 
-    public void deleteGroup (final String chatKey) {
-        DatabaseReference groupRef = database.getReference("groups").orderByChild("groupKey").equalTo(chatKey).getRef();
+    public void deleteGroup (final Chat chat) {
+        final User user = User.getInstance();
+        DatabaseReference groupRef = database.getReference("groups").orderByChild("groupKey").equalTo(chat.getChatKey()).getRef();
         groupRef.runTransaction(new Transaction.Handler() {
             boolean isDeleted = false;
             private FirebaseGroupModel groupRemoved;
@@ -1163,12 +1164,12 @@ public class FirebaseHelper {
 
                     if (groupModel == null) return Transaction.success(mutableData);
 
-                    if (groupModel.getGroupKey().equals(chatKey)) {
+                    if (groupModel.getGroupKey().equals(chat.getChatKey())) {
                         groupRemoved = new FirebaseGroupModel();
                         groupRemoved.setTitle(groupModel.getTitle());
-                        groupRemoved.setGroupKey(chatKey);
+                        groupRemoved.setGroupKey(chat.getChatKey());
                         groupRemoved.setPic(groupModel.getPic());
-                        groupRemoved.setAdmin(groupModel.getAdmin());
+                        groupRemoved.setAdmin(chat.getAdmin());
                         if (groupModel.getAdmin().equals("") && groupModel.getMembers().equals("")) { // no admin and members left
                             isDeleted = true;
                             groupModel = null;
