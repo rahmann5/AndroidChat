@@ -133,10 +133,9 @@ public class FirebaseHelper {
         });
     }
 
-    public void registerNewUser(final FirebaseUserModel firebaseUserModel){
-        DatabaseReference reference = database.getReference("users");
-        final DatabaseReference newRef = reference.push();
-        newRef.setValue(firebaseUserModel, new DatabaseReference.CompletionListener() {
+    public void registerNewUser(final FirebaseUserModel firebaseUserModel, String uid){
+        DatabaseReference reference = database.getReference("users").child(uid);
+        reference.setValue(firebaseUserModel, new DatabaseReference.CompletionListener() {
             @Override
             public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
                 if (databaseError == null) {
