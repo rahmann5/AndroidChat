@@ -51,8 +51,7 @@
 
         <activity
             android:name=".activities.ChatActivity"
-            android:launchMode="singleTop"/>
-
+            android:launchMode="singleTop" />
         <activity
             android:name=".activities.SessionActivity"
             android:label="@string/title_all_chats"
@@ -96,8 +95,8 @@
             android:theme="@style/AppTheme.NoActionBar" />
         <activity
             android:name=".activities.SettingsActivity"
-            android:parentActivityName=".activities.SessionActivity"
-            android:label="@string/title_settings">
+            android:label="@string/title_settings"
+            android:parentActivityName=".activities.SessionActivity">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.example.naziur.androidchat.activities.SessionActivity" />
@@ -105,9 +104,11 @@
         <activity
             android:name=".activities.MemberSelectorActivity"
             android:label="@string/title_select_member" />
-        <activity android:name=".activities.AboutActivity"
-            android:theme="@style/AppTheme.Transparent"
-            android:label=""/>
+        <activity
+            android:name=".activities.AboutActivity"
+            android:label=""
+            android:theme="@style/AppTheme.Transparent" />
+        <activity android:name=".activities.RegisterActivity"></activity>
     </application>
 
 </manifest>
