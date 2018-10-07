@@ -61,6 +61,7 @@ public class LoginActivity extends AppCompatActivity implements FirebaseHelper.F
 
         editTextUsername = (EditText) findViewById(R.id.editTextUsername);
         editTextEmail = (EditText) findViewById(R.id.editTextEmail);
+        editTextEmail.setText(user.getUserAuthentication(this));
 
         autoLog = (CheckBox) findViewById(R.id.auto_log);
         autoLog.setChecked(user.getAutoLogin(this));
@@ -74,15 +75,33 @@ public class LoginActivity extends AppCompatActivity implements FirebaseHelper.F
                 finish();
             }
         });
+
         TextView forgotUsername = (TextView) findViewById(R.id.forgot_username);
-        /*forgotUsername.setOnClickListener(new View.OnClickListener() {
+        forgotUsername.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (!Network.isInternetAvailable(LoginActivity.this, true)) return;
-                progressDialog.toggleDialog(true);
-                firebaseHelper.autoLogin("users", currentDeviceId, user);
+                if (!editTextEmail.getText().toString().trim().equals("")) {
+                    if (!Network.isInternetAvailable(LoginActivity.this, true)) return;
+                    progressDialog.toggleDialog(true);
+                    String email = editTextEmail.getText().toString().trim();
+                    mAuth.signInWithEmailAndPassword(email, currentDeviceId)
+                            .addOnCompleteListener(LoginActivity.this, new OnCompleteListener<AuthResult>() {
+                        @Override
+                        public void onComplete(@NonNull Task<AuthResult> task) {
+                            if (task.isSuccessful()) {
+                                firebaseHelper.autoLogin("users", currentDeviceId, user);
+                            } else {
+                                progressDialog.toggleDialog(false);
+                                Toast.makeText(LoginActivity.this, "Email provided does not match.", Toast.LENGTH_SHORT).show();
+                            }
+
+                        }
+                    });
+                } else {
+                    Toast.makeText(LoginActivity.this, "Please enter your email address.", Toast.LENGTH_LONG).show();
+                }
             }
-        });*/
+        });
     }
 
     public void btnLoginTapped(View view) {
@@ -103,18 +122,21 @@ public class LoginActivity extends AppCompatActivity implements FirebaseHelper.F
             FirebaseUser currentUser = mAuth.getCurrentUser();
 
             if (currentUser == null) {
+                progressDialog.toggleDialog(true);
                 mAuth.signInWithEmailAndPassword(strEmail, currentDeviceId).addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         if (task.isSuccessful()) {
                             firebaseHelper.manualLogin(strUsername, currentDeviceId);
                         } else {
+                            progressDialog.toggleDialog(false);
                             Toast.makeText(LoginActivity.this, "Failed to authenticate user.", Toast.LENGTH_SHORT).show();
                         }
 
                     }
                 });
             } else {
+                progressDialog.toggleDialog(true);
                 firebaseHelper.manualLogin(strUsername, currentDeviceId);
             }
 
@@ -127,6 +149,7 @@ public class LoginActivity extends AppCompatActivity implements FirebaseHelper.F
 
     @Override
     public void onCompleteTask(String tag, int condition, Container container) {
+        progressDialog.toggleDialog(false);
         switch (tag){
             case "manualLogin":
                 switch (condition){
@@ -162,7 +185,6 @@ public class LoginActivity extends AppCompatActivity implements FirebaseHelper.F
 
 
         }
-        progressDialog.toggleDialog(false);
     }
 
     @Override

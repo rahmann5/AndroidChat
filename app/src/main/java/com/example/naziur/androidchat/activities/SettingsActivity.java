@@ -133,6 +133,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
             // to their values. When their values change, their summaries are
             // updated to reflect the new value, per the Android Design
             // guidelines.
+            bindPreferenceSummaryToValue(findPreference(getString(R.string.key_email)));
             Preference blockListPref = findPreference(getString(R.string.key_block_list));
             blockListPref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
                 public boolean onPreferenceClick(Preference preference) {
