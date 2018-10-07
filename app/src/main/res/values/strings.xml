@@ -65,6 +65,7 @@
     <!-- LOGIN -->
     <string name="forgot_username"><u>Forgot Username?</u></string>
     <string name="register">Create a account</string>
+    <string name="login">Already have an account</string>
 
     <!-- Notification Activity -->
     <string name="empty_text">Nothing Found...</string>

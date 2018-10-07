@@ -108,7 +108,8 @@
             android:name=".activities.AboutActivity"
             android:label=""
             android:theme="@style/AppTheme.Transparent" />
-        <activity android:name=".activities.RegisterActivity"></activity>
+        <activity android:name=".activities.RegisterActivity"
+            android:theme="@style/AppTheme.NoActionBar"/>
     </application>
 
 </manifest>

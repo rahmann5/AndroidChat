@@ -9,6 +9,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.naziur.androidchat.R;
@@ -44,16 +45,25 @@ public class RegisterActivity extends AppCompatActivity implements FirebaseHelpe
         final EditText usernameEt = (EditText) findViewById(R.id.username);
         final EditText emailEt = (EditText) findViewById(R.id.email);
         final EditText profileEt = (EditText) findViewById(R.id.profile);
+        TextView loginTv = (TextView) findViewById(R.id.login);
+
         final Button registerBtn = (Button) findViewById(R.id.register_btn);
         registerBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if(inputVerification(usernameEt.getText().toString().trim(), emailEt.getText().toString().trim(), profileEt.getText().toString().trim())){
+                if(!inputVerification(usernameEt.getText().toString().trim(), emailEt.getText().toString().trim(), profileEt.getText().toString().trim())){
                     Toast.makeText(RegisterActivity.this, "You must provide a valid username/email/profile", Toast.LENGTH_SHORT).show();
                     return;
                 }
                 progressDialog.toggleDialog(true);
                 registerUser(emailEt.getText().toString().trim(), usernameEt.getText().toString().trim(), profileEt.getText().toString().trim());
+            }
+        });
+
+        loginTv.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                startActivity(new Intent(RegisterActivity.this, LoginActivity.class));
             }
         });
 
@@ -111,6 +121,7 @@ public class RegisterActivity extends AppCompatActivity implements FirebaseHelpe
                 switch (condition){
                     case FirebaseHelper.CONDITION_1:
                         if (user.login(container.getUserModel())) {
+                            user.setUserAuthentication(this, mAuth.getCurrentUser().getEmail());
                             Intent intent = new Intent(RegisterActivity.this, SessionActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                             startActivity(intent);
                             finish();

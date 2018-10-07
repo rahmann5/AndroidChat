@@ -111,7 +111,7 @@ public class LoginActivity extends AppCompatActivity implements FirebaseHelper.F
         final String strUsername = editTextUsername.getText().toString().trim();
         final String strEmail = editTextEmail.getText().toString().trim();
 
-        if (inputVerification(strUsername, strEmail)) {
+        if (!inputVerification(strUsername, strEmail)) {
             Toast.makeText(this, "Username can only contain numbers and letter and both fields cannot be empty", Toast.LENGTH_LONG).show();
         } else {
 

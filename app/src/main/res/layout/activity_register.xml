@@ -5,13 +5,13 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:weightSum="6"
+    android:weightSum="8"
     tools:context="com.example.naziur.androidchat.activities.RegisterActivity">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="3"
+        android:layout_weight="4"
         android:orientation="vertical">
 
         <LinearLayout
@@ -34,14 +34,14 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="3"
+        android:layout_weight="4"
         android:orientation="vertical">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="30dp">
+            android:padding="10dp">
 
             <android.support.design.widget.TextInputLayout
                 android:layout_width="match_parent"
@@ -51,7 +51,7 @@
                     android:id="@+id/username"
                     android:layout_width="fill_parent"
                     android:layout_height="wrap_content"
-                    android:hint="@string/email"
+                    android:hint="@string/username"
                     android:inputType="textEmailAddress"
                     android:textColorHint="@color/white"
                     android:textColor="@color/white"
@@ -70,10 +70,9 @@
                     android:layout_height="wrap_content"
                     android:textColorHint="@color/white"
                     android:textColor="@color/white"
-                    android:hint="@string/username"
+                    android:hint="@string/email"
                     android:inputType="textEmailAddress"
                     app:backgroundTint="@color/main_theme_1"
-                    android:maxLength="@string/username_text"
                     android:maxLines="1" />
             </android.support.design.widget.TextInputLayout>
 
@@ -95,6 +94,17 @@
             </android.support.design.widget.TextInputLayout>
 
         </LinearLayout>
+
+        <TextView
+            android:layout_marginTop="10dp"
+            android:id="@+id/login"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/login"
+            android:textStyle="bold"
+            android:textSize="16sp"
+            android:layout_gravity="center_horizontal"
+            />
 
         <Button
             android:id="@+id/register_btn"
