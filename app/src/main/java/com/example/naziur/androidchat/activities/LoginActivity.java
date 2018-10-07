@@ -155,6 +155,7 @@ public class LoginActivity extends AppCompatActivity implements FirebaseHelper.F
                 switch (condition){
                     case FirebaseHelper.CONDITION_1:
                         user.login(container.getUserModel());
+                        user.setUserAuthentication(this, editTextEmail.getText().toString().trim());
                         user.setAutoLogin(this, autoLog.isChecked());
                         startActivity(new Intent(LoginActivity.this, SessionActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
                         finish();

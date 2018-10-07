@@ -87,7 +87,7 @@ public class User {
     }
 
     public String getUserAuthentication (Context context) {
-        return sharedpreferences.getString(context.getResources().getString(R.string.key_auto_login), "");
+        return sharedpreferences.getString(context.getResources().getString(R.string.key_email), "");
     }
 
     public void setAutoLogin(Context context, boolean login) {
