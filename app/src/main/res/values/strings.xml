@@ -55,7 +55,8 @@
 
     <string name="add_contact">Add</string>
     <string name="cancel_contact">Cancel</string>
-    <string name="username">Username</string>
+    <string name="username">Enter username...</string>
+    <string name="title">Enter title...</string>
     <string name="title_activity_first">FirstActivity</string>
 
     <string name="media_message">Picture</string>
