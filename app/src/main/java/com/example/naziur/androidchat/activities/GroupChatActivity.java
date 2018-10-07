@@ -265,17 +265,20 @@ public class GroupChatActivity extends AppCompatActivity implements ImageViewDia
         String members = "";
         if(!groupModel.getMembers().isEmpty()){
             String [] membersArr = groupModel.getMembers().split(",");
+
             if(!membersArr[0].isEmpty()) {
-                for (int i = 0; i < membersArr.length; i++) {
-                    if (membersArr[i].equals(user.name))
-                        isStillInGroup = true;
+                ArrayList<String> test = new ArrayList<String>(Arrays.asList(membersArr));
+                if(test.contains(user.name)){
+                    isStillInGroup = true;
+                    test.remove(user.name);
+                }
 
-                    if (!membersArr[i].equals(user.name)) {
-                        members += db.getProfileInfoIfExists(membersArr[i])[0];
+                for (int i = 0; i < test.size(); i++) {
 
-                        if (i < membersArr.length - 1)
+                    members += db.getProfileInfoIfExists(test.get(i))[0];
+
+                    if (i < test.size() - 1)
                             members += ", ";
-                    }
                 }
             }
         }
