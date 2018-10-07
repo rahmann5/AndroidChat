@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:weightSum="5"
+    android:weightSum="6"
     tools:context="com.example.naziur.androidchat.activities.RegisterActivity">
 
     <LinearLayout
@@ -34,7 +34,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="2"
+        android:layout_weight="3"
         android:orientation="vertical">
 
         <LinearLayout
@@ -77,9 +77,27 @@
                     android:maxLines="1" />
             </android.support.design.widget.TextInputLayout>
 
+            <android.support.design.widget.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <EditText
+                    android:id="@+id/profile"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="@string/profile_hint"
+                    android:inputType="textEmailAddress"
+                    android:textColorHint="@color/white"
+                    android:textColor="@color/white"
+                    app:backgroundTint="@color/main_theme_1"
+                    android:maxLength="@string/username_text"
+                    android:maxLines="1" />
+            </android.support.design.widget.TextInputLayout>
+
         </LinearLayout>
 
         <Button
+            android:id="@+id/register_btn"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@color/main_theme_1"
