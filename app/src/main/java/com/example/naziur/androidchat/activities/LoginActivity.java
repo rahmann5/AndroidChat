@@ -95,7 +95,8 @@ public class LoginActivity extends AppCompatActivity implements FirebaseHelper.F
                     if (!Network.isInternetAvailable(LoginActivity.this, true)) return;
                     progressDialog.toggleDialog(true);
                     String email = editTextEmail.getText().toString().trim();
-                    mAuth.signInWithEmailAndPassword(email, currentDeviceId)
+                    firebaseHelper.autoLogin("users", currentDeviceId, user);
+                   /* mAuth.signInWithEmailAndPassword(email, currentDeviceId)
                             .addOnCompleteListener(LoginActivity.this, new OnCompleteListener<AuthResult>() {
                         @Override
                         public void onComplete(@NonNull Task<AuthResult> task) {
@@ -107,7 +108,7 @@ public class LoginActivity extends AppCompatActivity implements FirebaseHelper.F
                             }
 
                         }
-                    });
+                    });*/
                 } else {
                     Toast.makeText(LoginActivity.this, "Please enter your email address.", Toast.LENGTH_LONG).show();
                 }
@@ -134,7 +135,8 @@ public class LoginActivity extends AppCompatActivity implements FirebaseHelper.F
 
             if (currentUser == null) {
                 progressDialog.toggleDialog(true);
-                mAuth.signInWithEmailAndPassword(strEmail, currentDeviceId).addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
+                firebaseHelper.manualLogin(strUsername, currentDeviceId);
+                /*mAuth.signInWithEmailAndPassword(strEmail, currentDeviceId).addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         if (task.isSuccessful()) {
@@ -145,7 +147,7 @@ public class LoginActivity extends AppCompatActivity implements FirebaseHelper.F
                         }
 
                     }
-                });
+                });*/
             } else {
                 progressDialog.toggleDialog(true);
                 firebaseHelper.manualLogin(strUsername, currentDeviceId);
