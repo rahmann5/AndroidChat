@@ -77,7 +77,6 @@ public class MainActivity extends AppCompatActivity implements FirebaseHelper.Fi
             if (currentUser != null) {
                 firebaseHelper.autoLogin("users", currentDeviceId, user);
             } else {
-                firebaseHelper.autoLogin("users", currentDeviceId, user);
                 mAuth.signInWithEmailAndPassword(user.getUserAuthentication(this), currentDeviceId).addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
@@ -162,7 +161,9 @@ public class MainActivity extends AppCompatActivity implements FirebaseHelper.Fi
 
     @Override
     public void onFailureTask(String tag, DatabaseError databaseError) {
-        moveToLoginActivity ();
+        if (tag.equals("autoLogin")) {
+            moveToLoginActivity ();
+        }
         Log.i(TAG, tag + " "+ databaseError.getMessage());
     }
 

@@ -83,15 +83,32 @@ public class FirebaseHelper {
         final DatabaseReference usersRef = database.getReference("users").orderByChild("username").equalTo(user.name).getRef();
         final Container container = new Container();
         container.setString(strToken);
-        usersRef.child("deviceToken").setValue(strToken).addOnSuccessListener(new OnSuccessListener<Void>() {
+        usersRef.runTransaction(new Transaction.Handler() {
             @Override
-            public void onSuccess(Void aVoid) {
-                listener.onCompleteTask("updateUserDeviceToken", CONDITION_1, container);
+            public Transaction.Result doTransaction(MutableData mutableData) {
+                for (MutableData data : mutableData.getChildren()) {
+                    FirebaseUserModel userModel = data.getValue(FirebaseUserModel.class);
+
+                    if (userModel == null) return Transaction.success(mutableData);
+
+                    if (strToken != null && userModel.getDeviceId().equals(user.deviceId) && !strToken.equals(userModel.getDeviceToken())) {
+                        userModel.setDeviceToken(strToken);
+                        data.setValue(userModel);
+                        break;
+                    }
+
+                }
+
+                return Transaction.success(mutableData);
             }
-        }).addOnFailureListener(new OnFailureListener() {
+
             @Override
-            public void onFailure(@NonNull Exception e) {
-                listener.onCompleteTask("updateUserDeviceToken", CONDITION_2, container);
+            public void onComplete(DatabaseError databaseError, boolean b, DataSnapshot dataSnapshot) {
+                if (databaseError == null) {
+                    listener.onCompleteTask("updateUserDeviceToken", CONDITION_1, container);
+                } else {
+                    listener.onCompleteTask("updateUserDeviceToken", CONDITION_2, container);
+                }
             }
         });
     }
@@ -145,8 +162,8 @@ public class FirebaseHelper {
                         if(firebaseUserModel.getDeviceId().equals(currentDeviceId)){
                             String deviceToken = FirebaseInstanceId.getInstance().getToken();
                             user.saveFirebaseKey(snapshot.getKey());
+                            user.login(container.getUserModel());
                             if (firebaseUserModel.getDeviceToken().equals(deviceToken)) {
-                                user.login(container.getUserModel());
                                 listener.onCompleteTask("manualLogin", CONDITION_1, container);
                             } else {
                                 container.setString(deviceToken);

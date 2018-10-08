@@ -46,10 +46,11 @@ public class MyFirebaseInstanceIdService extends FirebaseInstanceIdService imple
 
     public void sendTokenToServer(final String strToken) {
         // API call to send token to Server
-        firebaseHelper = FirebaseHelper.getInstance();
-        firebaseHelper.setFirebaseHelperListener(this);
-        ValueEventListener listener = firebaseHelper.getValueEventListener(strToken, FirebaseHelper.CONDITION_1, FirebaseHelper.NON_CONDITION, FirebaseHelper.NON_CONDITION, FirebaseUserModel.class);
-        firebaseHelper.toggleListenerFor("users", "username", user.name, listener, true, true);
+        if (strToken != null) {
+            firebaseHelper = FirebaseHelper.getInstance();
+            firebaseHelper.setFirebaseHelperListener(this);
+            firebaseHelper.updateUserDeviceToken(strToken);
+        }
     }
 
 
@@ -75,16 +76,6 @@ public class MyFirebaseInstanceIdService extends FirebaseInstanceIdService imple
 
     @Override
     public void onChange(String tag, int condition, Container container) {
-        if (tag.equals("getValueEventListener")){
-            switch (condition) {
-                case FirebaseHelper.CONDITION_1 :
-                    FirebaseUserModel firebaseUserModel = (FirebaseUserModel) container.getObject();
-                    String strToken = container.getString();
-                    if (strToken != null && firebaseUserModel.getDeviceId().equals(user.deviceId) && !strToken.equals(firebaseUserModel.getDeviceToken())) {
-                        firebaseHelper.updateUserDeviceToken(strToken);
-                    }
-                    break;
-            }
-        }
+
     }
 }
