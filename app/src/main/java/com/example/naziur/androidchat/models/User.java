@@ -82,7 +82,7 @@ public class User {
 
     public void setUserAuthentication (Context context,String email) {
         SharedPreferences.Editor editor = sharedpreferences.edit();
-        editor.putString(context.getResources().getString(R.string.key_auto_login), email);
+        editor.putString(context.getResources().getString(R.string.key_email), email);
         editor.apply();
     }
 

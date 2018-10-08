@@ -133,6 +133,27 @@ public class FirebaseHelper {
         });
     }
 
+    public void isDeviceAlreadyRegistered(final String deviceId){
+        DatabaseReference reference = database.getReference("users").orderByChild("deviceId").equalTo(deviceId).getRef();
+        reference.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if(!dataSnapshot.exists()){
+                    Container container = new Container();
+                    container.setString(deviceId);
+                    listener.onCompleteTask("isDeviceAlreadyRegistered", CONDITION_1, container);
+                } else {
+                    listener.onCompleteTask("isDeviceAlreadyRegistered", CONDITION_2, null);
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                listener.onFailureTask("isDeviceAlreadyRegistered", databaseError);
+            }
+        });
+    }
+
     public void registerNewUser(final FirebaseUserModel firebaseUserModel, String uid){
         DatabaseReference reference = database.getReference("users").child(uid);
         reference.setValue(firebaseUserModel, new DatabaseReference.CompletionListener() {
