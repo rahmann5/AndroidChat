@@ -230,8 +230,14 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
     private BroadcastReceiver mReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            // TODO Act when in foreground here
-            abortBroadcast();
+            Bundle extra = intent.getExtras();
+            if (extra != null) {
+                if(friend != null) {
+                    if(friend.getDeviceId().equals(extra.getString("tag"))) {
+                        abortBroadcast();
+                    }
+                }
+            }
         }
     };
 

@@ -1,9 +1,11 @@
 package com.example.naziur.androidchat.activities;
 
+import android.content.BroadcastReceiver;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.ActionBar;
@@ -78,6 +80,7 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
     FirebaseHelper firebaseHelper;
     private ImageViewDialogFragment imageViewDialog;
     private ContactDBHelper db;
+    private IntentFilter mFilter = new IntentFilter("my.custom.action");
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -90,6 +93,7 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
             return;
         }
         db = new ContactDBHelper(this);
+        mFilter.setPriority(IntentFilter.SYSTEM_HIGH_PRIORITY);
         listView = (ListView) findViewById(R.id.chattingList);
         textComment = (EditText) findViewById(R.id.comment_text);
         btnSend = (CircleImageView) findViewById(R.id.send_button);
@@ -185,6 +189,24 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
         });
     }
 
+    private BroadcastReceiver mReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Bundle extra = intent.getExtras();
+            if (extra != null) {
+                if(groupKey.equals(extra.getString("tag"))) {
+                    abortBroadcast();
+                }
+            }
+        }
+    };
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        registerReceiver(mReceiver, mFilter);
+    }
+
     @Override
     protected void onResume() {
         super.onResume();
@@ -201,6 +223,7 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
     @Override
     protected void onStop() {
         super.onStop();
+        unregisterReceiver(mReceiver);
         firebaseHelper.toggleMsgEventListeners("group", groupKey, msgValueEventListener, false);
         firebaseHelper.toggleListenerFor("groups", "groupKey", groupKey, groupListener, false, false);
     }

@@ -37,10 +37,16 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         Log.d(TAG, "From: " + remoteMessage.getFrom());
         Log.d(TAG, "Notification Message Body: " + remoteMessage.getNotification().getBody());
         //Calling method to show notification
-        if (!Network.isForeground(getApplicationContext())){
+        Intent intent = new Intent();
+        intent.setAction("my.custom.action");
+        intent.putExtra("body",  remoteMessage.getNotification().getBody());
+        intent.putExtra("tag",  remoteMessage.getNotification().getTag());
+        intent.putExtra("title",  remoteMessage.getNotification().getTitle());
+        sendOrderedBroadcast(intent,null);
+        /*if (!Network.isForeground(getApplicationContext())){
             showNotification(remoteMessage.getNotification().getBody(),
                     remoteMessage.getNotification().getTag());
-        }
+        }*/
 
     }
 

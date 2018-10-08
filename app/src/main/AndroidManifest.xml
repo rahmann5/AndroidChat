@@ -7,21 +7,6 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.INTERNET" />
 
-    <receiver
-        android:name=".NetworkChangeReceiver"
-        android:label="NetworkChangeReceiver">
-        <intent-filter>
-            <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
-            <action android:name="android.net.wifi.WIFI_STATE_CHANGED" />
-        </intent-filter>
-    </receiver>
-
-    <receiver android:name=".MyReceiver">
-        <intent-filter>
-            <action android:name="my.custom.action"/>
-        </intent-filter>
-    </receiver>
-
     <application
         android:allowBackup="true"
         android:configChanges="orientation|screenSize"
@@ -54,6 +39,12 @@
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
+
+        <receiver android:name=".utils.MyReceiver">
+            <intent-filter android:priority="200">
+                <action android:name="my.custom.action"/>
+            </intent-filter>
+        </receiver>
 
         <activity
             android:name=".activities.ChatActivity"
