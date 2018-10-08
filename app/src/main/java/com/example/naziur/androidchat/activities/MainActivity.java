@@ -26,9 +26,6 @@ import com.example.naziur.androidchat.utils.Container;
 import com.example.naziur.androidchat.utils.Network;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
-import com.google.firebase.auth.AuthResult;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -46,7 +43,7 @@ public class MainActivity extends AppCompatActivity implements FirebaseHelper.Fi
     String currentDeviceId;
     private FirebaseHelper firebaseHelper;
     User user = User.getInstance();
-    private FirebaseAuth mAuth;
+    //private FirebaseAuth mAuth;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,7 +56,7 @@ public class MainActivity extends AppCompatActivity implements FirebaseHelper.Fi
             return;
         }
 
-        mAuth = FirebaseAuth.getInstance();
+        //mAuth = FirebaseAuth.getInstance();
 
 
 
@@ -68,18 +65,19 @@ public class MainActivity extends AppCompatActivity implements FirebaseHelper.Fi
     @Override
     public void onStart() {
         super.onStart();
-        FirebaseUser currentUser = mAuth.getCurrentUser();
+        //FirebaseUser currentUser = mAuth.getCurrentUser();
         user.sharedpreferences = PreferenceManager.getDefaultSharedPreferences(this);
         // Check if user is signed in (non-null) and update UI accordingly.
         if (user.getAutoLogin(this) && !user.getUserAuthentication(this).equals("")) {
 
 
             currentDeviceId = Settings.Secure.getString(getApplicationContext().getContentResolver(), Settings.Secure.ANDROID_ID);
-
+            Object currentUser = null;
             if (currentUser != null) {
                 firebaseHelper.autoLogin("users", currentDeviceId, user);
             } else {
-                mAuth.signInWithEmailAndPassword(user.getUserAuthentication(this), currentDeviceId).addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
+                firebaseHelper.autoLogin("users", currentDeviceId, user);
+                /*mAuth.signInWithEmailAndPassword(user.getUserAuthentication(this), currentDeviceId).addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         if (task.isSuccessful()) {
@@ -90,11 +88,11 @@ public class MainActivity extends AppCompatActivity implements FirebaseHelper.Fi
                         }
 
                     }
-                });
+                });*/
             }
         }
         else {
-            if (currentUser != null) mAuth.signOut();
+            //if (currentUser != null) mAuth.signOut();
             moveToLoginActivity();
         }
     }
