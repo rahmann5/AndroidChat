@@ -77,7 +77,6 @@ public class MainActivity extends AppCompatActivity implements FirebaseHelper.Fi
             if (currentUser != null) {
                 firebaseHelper.autoLogin("users", currentDeviceId, user);
             } else {
-                firebaseHelper.autoLogin("users", currentDeviceId, user);
                 mAuth.signInWithEmailAndPassword(user.getUserAuthentication(this), currentDeviceId).addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
@@ -132,20 +131,39 @@ public class MainActivity extends AppCompatActivity implements FirebaseHelper.Fi
 
     @Override
     public void onCompleteTask(String tag, int condition, Container container) {
-        switch (condition) {
-            case FirebaseHelper.CONDITION_1 :
-                moveToSessionScreen();
-                break;
+        if (tag.equals("autoLogin")) {
+            switch (condition) {
+                case FirebaseHelper.CONDITION_1 :
+                    moveToSessionScreen();
+                    break;
 
-            case FirebaseHelper.CONDITION_2 :
-                moveToLoginActivity ();
-                break;
+                case FirebaseHelper.CONDITION_2 :
+                    moveToLoginActivity ();
+                    break;
+
+                case FirebaseHelper.CONDITION_3 :
+                    firebaseHelper.updateUserDeviceToken(container.getString());
+                    break;
+            }
+        } else if (tag.equals("updateUserDeviceToken")) {
+            switch (condition) {
+                case FirebaseHelper.CONDITION_1 :
+                    moveToSessionScreen();
+                    break;
+
+                case FirebaseHelper.CONDITION_2 :
+                    Toast.makeText(this, "Failed to register new device token, cannot receive notification.", Toast.LENGTH_SHORT).show();
+                    Log.i(TAG, tag + ": Failed to update new device token " + container.getString());
+                    break;
+            }
         }
     }
 
     @Override
     public void onFailureTask(String tag, DatabaseError databaseError) {
-        moveToLoginActivity ();
+        if (tag.equals("autoLogin")) {
+            moveToLoginActivity ();
+        }
         Log.i(TAG, tag + " "+ databaseError.getMessage());
     }
 

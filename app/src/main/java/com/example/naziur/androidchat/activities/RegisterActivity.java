@@ -71,6 +71,7 @@ public class RegisterActivity extends AppCompatActivity implements FirebaseHelpe
 
     private void addUserToDatabase(final String strUsername, String strProfileName, final String currentDeviceId, String uid){
         final FirebaseUserModel firebaseUserModel = new FirebaseUserModel();
+        user.saveFirebaseKey(uid);
         firebaseUserModel.setUsername(strUsername);
         firebaseUserModel.setProfileName(strProfileName);
         firebaseUserModel.setStatus(getResources().getString(R.string.status_available));
@@ -92,8 +93,8 @@ public class RegisterActivity extends AppCompatActivity implements FirebaseHelpe
                         if (task.isSuccessful()) {
                             // Sign in success, update UI with the signed-in user's information
                             Log.i(TAG, "createUserWithEmail:success");
-                            FirebaseUser user = mAuth.getCurrentUser();
-                            addUserToDatabase(username, profile, password, user.getUid());
+                            FirebaseUser authUser = mAuth.getCurrentUser();
+                            addUserToDatabase(username, profile, password, authUser.getUid());
                         } else {
                             progressDialog.toggleDialog(false);
                             // If sign in fails, display a message to the user.

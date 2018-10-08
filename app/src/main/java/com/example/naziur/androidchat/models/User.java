@@ -23,7 +23,6 @@ public class User {
     public String name = "Owner";
     public String profileName = "Profile";
     public String deviceId = "";
-    public String deviceToken = "";
     public String status = "";
     public String profilePic = "";
 
@@ -43,7 +42,6 @@ public class User {
         name = firebaseUserModel.getUsername();
         profileName = firebaseUserModel.getProfileName();
         deviceId = firebaseUserModel.getDeviceId();
-        deviceToken = firebaseUserModel.getDeviceToken();
         status = firebaseUserModel.getStatus();
         profilePic = firebaseUserModel.getProfilePic();
 
@@ -70,7 +68,6 @@ public class User {
         firebaseKey = "";
         name = "";
         deviceId = "";
-        deviceToken = "";
 
         SharedPreferences.Editor editor = sharedpreferences.edit();
         editor.putString(Key, firebaseKey);
