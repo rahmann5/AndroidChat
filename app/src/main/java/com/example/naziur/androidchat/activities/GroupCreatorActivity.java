@@ -66,7 +66,7 @@ import pl.aprilapps.easyphotopicker.EasyImage;
 
 import static android.R.attr.mode;
 
-public class GroupCreatorActivity extends AppCompatActivity implements FirebaseHelper.FirebaseHelperListener{
+public class GroupCreatorActivity extends AuthenticatedActivity implements FirebaseHelper.FirebaseHelperListener{
     private static final int REQUEST_CODE_GALLERY_CAMERA = 0;
     private final String TAG = getClass().getSimpleName();
 

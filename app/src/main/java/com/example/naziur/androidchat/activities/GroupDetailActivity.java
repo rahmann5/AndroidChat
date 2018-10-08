@@ -47,7 +47,7 @@ import java.util.List;
 import pl.aprilapps.easyphotopicker.DefaultCallback;
 import pl.aprilapps.easyphotopicker.EasyImage;
 
-public class GroupDetailActivity extends AppCompatActivity implements FirebaseHelper.FirebaseHelperListener{
+public class GroupDetailActivity extends AuthenticatedActivity implements FirebaseHelper.FirebaseHelperListener{
     private static final String TAG = GroupDetailActivity.class.getSimpleName();
     private static final int REQUEST_CODE_GALLERY_CAMERA = 0;
     public static final int MEMBER_REQUEST_CODE = 1;

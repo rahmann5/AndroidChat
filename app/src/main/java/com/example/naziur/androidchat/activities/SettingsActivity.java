@@ -16,6 +16,7 @@ import android.widget.Toast;
 
 import com.example.naziur.androidchat.R;
 import com.example.naziur.androidchat.models.User;
+import com.google.firebase.auth.FirebaseAuth;
 
 import java.util.List;
 
@@ -134,6 +135,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
             // updated to reflect the new value, per the Android Design
             // guidelines.
             bindPreferenceSummaryToValue(findPreference(getString(R.string.key_email)));
+
             Preference blockListPref = findPreference(getString(R.string.key_block_list));
             blockListPref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
                 public boolean onPreferenceClick(Preference preference) {
@@ -149,7 +151,17 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
                     return true;
                 }
             });
-            //bindPreferenceSummaryToValue(findPreference("auto_login_user"));
+
+            Preference logoutPref = findPreference(getString(R.string.key_logout));
+            logoutPref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+                public boolean onPreferenceClick(Preference preference) {
+                    FirebaseAuth mAuth = FirebaseAuth.getInstance();
+                    mAuth.signOut();
+                    startActivity(new Intent(getActivity(), LoginActivity.class).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK));
+                    getActivity().finish();
+                    return true;
+                }
+            });
         }
 
     }

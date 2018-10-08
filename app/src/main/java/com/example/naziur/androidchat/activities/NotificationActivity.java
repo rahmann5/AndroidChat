@@ -36,7 +36,7 @@ import com.google.firebase.database.ValueEventListener;
 import java.util.ArrayList;
 import java.util.List;
 
-public class NotificationActivity extends AppCompatActivity implements NotificationAdapter.OnItemClickListener, FirebaseHelper.FirebaseHelperListener{
+public class NotificationActivity extends AuthenticatedActivity implements NotificationAdapter.OnItemClickListener, FirebaseHelper.FirebaseHelperListener{
 
     private static final String TAG = "NotificationActivity";
     private User user = User.getInstance();

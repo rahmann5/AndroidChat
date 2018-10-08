@@ -26,12 +26,13 @@ import com.example.naziur.androidchat.models.User;
 import com.example.naziur.androidchat.utils.Container;
 import com.example.naziur.androidchat.utils.NetworkChangeReceiver;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.ValueEventListener;
 
 import static android.R.attr.fragment;
 
-public class SessionActivity extends AppCompatActivity implements NetworkChangeReceiver.OnNetworkStateChangeListener, FirebaseHelper.FirebaseHelperListener{
+public class SessionActivity extends AuthenticatedActivity implements NetworkChangeReceiver.OnNetworkStateChangeListener, FirebaseHelper.FirebaseHelperListener{
     private static final String TAG = "SessionActivity";
     private NetworkChangeReceiver networkChangeReceiver;
     ViewPager viewPager;
@@ -43,6 +44,7 @@ public class SessionActivity extends AppCompatActivity implements NetworkChangeR
     private FirebaseHelper firebaseHelper;
     private int pos = 0;
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -53,7 +55,6 @@ public class SessionActivity extends AppCompatActivity implements NetworkChangeR
         sessionFragmentPagerAdapter = new SessionFragmentPagerAdapter(getSupportFragmentManager());
         Toolbar mToolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(mToolbar);
-
         startChat = (FloatingActionButton) findViewById(R.id.start_chat);
 
         startChat.setOnClickListener(new View.OnClickListener() {
@@ -103,6 +104,7 @@ public class SessionActivity extends AppCompatActivity implements NetworkChangeR
 
     }
 
+
     @Override
     public void onPause() {
         super.onPause();
@@ -137,14 +139,6 @@ public class SessionActivity extends AppCompatActivity implements NetworkChangeR
                 return true;
             case R.id.settings:
                 startActivity(new Intent(SessionActivity.this, SettingsActivity.class));
-                return true;
-            case R.id.logout:
-                FirebaseAuth mAuth = FirebaseAuth.getInstance();
-                if (mAuth.getCurrentUser() != null) {
-                    mAuth.signOut();
-                    startActivity(new Intent(SessionActivity.this, LoginActivity.class));
-                    finish();
-                }
                 return true;
             case R.id.action_notification:
                 startActivity(new Intent(SessionActivity.this, NotificationActivity.class));
