@@ -38,11 +38,8 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         Log.d(TAG, "Notification Message Body: " + remoteMessage.getNotification().getBody());
         //Calling method to show notification
         if (!Network.isForeground(getApplicationContext())){
-            System.out.println("Showing notification");
             showNotification(remoteMessage.getNotification().getBody(),
                     remoteMessage.getNotification().getTag());
-        } else {
-            System.out.println("APP IN FOREGROUND");
         }
 
     }

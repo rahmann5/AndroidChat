@@ -159,6 +159,14 @@ public class LoginActivity extends AppCompatActivity implements FirebaseHelper.F
         return (!username.isEmpty() && username.matches("[a-zA-Z0-9]*") && !email.isEmpty());
     }
 
+    private void moveToSessionActivity() {
+        Intent intent = new Intent(LoginActivity.this, SessionActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        user.setUserAuthentication(this, editTextEmail.getText().toString().trim());
+        user.setAutoLogin(this, autoLog.isChecked());
+        startActivity(intent);
+        finish();
+    }
+
     @Override
     public void onCompleteTask(String tag, int condition, Container container) {
         progressDialog.toggleDialog(false);
@@ -166,11 +174,7 @@ public class LoginActivity extends AppCompatActivity implements FirebaseHelper.F
             case "manualLogin":
                 switch (condition){
                     case FirebaseHelper.CONDITION_1:
-                        user.login(container.getUserModel());
-                        user.setUserAuthentication(this, editTextEmail.getText().toString().trim());
-                        user.setAutoLogin(this, autoLog.isChecked());
-                        startActivity(new Intent(LoginActivity.this, SessionActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
-                        finish();
+                        moveToSessionActivity();
                         break;
                     case FirebaseHelper.CONDITION_2:
                         Toast.makeText(LoginActivity.this, "Device Id do not match", Toast.LENGTH_LONG).show();
@@ -178,23 +182,41 @@ public class LoginActivity extends AppCompatActivity implements FirebaseHelper.F
                     case FirebaseHelper.CONDITION_3:
                         Toast.makeText(LoginActivity.this, "This username does not exist.", Toast.LENGTH_LONG).show();
                         break;
+                    case FirebaseHelper.CONDITION_4:
+                        firebaseHelper.updateUserDeviceToken(container.getString());
+                        break;
                 }
                 break;
             case "autoLogin" :
                 switch (condition) {
                     case FirebaseHelper.CONDITION_1 :
-                        Intent intent = new Intent(LoginActivity.this, SessionActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                        user.setUserAuthentication(this, editTextEmail.getText().toString().trim());
-                        user.setAutoLogin(this, autoLog.isChecked());
-                        startActivity(intent);
-                        finish();
+                        moveToSessionActivity();
                     break;
 
                     case FirebaseHelper.CONDITION_2 :
                         Toast.makeText(LoginActivity.this, "Error: This device maybe new therefore please register again.", Toast.LENGTH_LONG).show();
                         break;
 
+                    case FirebaseHelper.CONDITION_3 :
+                        firebaseHelper.updateUserDeviceToken(container.getString());
+                        break;
+
                 }
+
+                case "updateUserDeviceToken" :
+                    switch (condition) {
+                        case FirebaseHelper.CONDITION_1 :
+                            user.deviceToken = container.getString();
+                            moveToSessionActivity();
+                            Log.i(TAG, tag + ": Successfully updated new device token " + container.getString());
+                            break;
+
+                        case FirebaseHelper.CONDITION_2 :
+                            Toast.makeText(this, "Failed to register new device token, cannot receive notification.", Toast.LENGTH_SHORT).show();
+                            Log.i(TAG, tag + ": Failed to update new device token " + container.getString());
+                            break;
+                    }
+                    break;
 
 
         }

@@ -3,6 +3,7 @@ package com.example.naziur.androidchat.database;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.content.Context;
+import android.util.Log;
 import android.widget.Toast;
 
 import com.example.naziur.androidchat.models.Chat;
@@ -77,6 +78,24 @@ public class FirebaseHelper {
         listener = fbListener;
     }
 
+    public void updateUserDeviceToken (final String strToken) {
+        final User user = User.getInstance();
+        final DatabaseReference usersRef = database.getReference("users").orderByChild("username").equalTo(user.name).getRef();
+        final Container container = new Container();
+        container.setString(strToken);
+        usersRef.child("deviceToken").setValue(strToken).addOnSuccessListener(new OnSuccessListener<Void>() {
+            @Override
+            public void onSuccess(Void aVoid) {
+                listener.onCompleteTask("updateUserDeviceToken", CONDITION_1, container);
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                listener.onCompleteTask("updateUserDeviceToken", CONDITION_2, container);
+            }
+        });
+    }
+
     public void autoLogin(String node, final String currentDeviceId, final User user) {
         database.getReference(node).orderByChild("deviceId").equalTo(currentDeviceId)
                 .addListenerForSingleValueEvent(new com.google.firebase.database.ValueEventListener() {
@@ -85,11 +104,18 @@ public class FirebaseHelper {
                 if (dataSnapshot.exists()) {
                     for (com.google.firebase.database.DataSnapshot userSnapshot : dataSnapshot.getChildren()) {
                         FirebaseUserModel firebaseUserModel = userSnapshot.getValue(FirebaseUserModel.class);
+                        String deviceToken = FirebaseInstanceId.getInstance().getToken();
                         if (firebaseUserModel.getDeviceId().equals(currentDeviceId)) {
-                            firebaseUserModel.setDeviceToken(FirebaseInstanceId.getInstance().getToken());
+                            if (firebaseUserModel.getDeviceToken().equals(deviceToken)) {
+                                listener.onCompleteTask("autoLogin", CONDITION_1, null);
+                            } else{
+                                Container container = new Container();
+                                container.setString(deviceToken);
+                                listener.onCompleteTask("autoLogin", CONDITION_3, container);
+                            }
+                            firebaseUserModel.setDeviceToken(deviceToken);
                             user.login(firebaseUserModel);
                             user.saveFirebaseKey(userSnapshot.getKey());
-                            listener.onCompleteTask("autoLogin", CONDITION_1, null);
                             break;
                         }
                     }
@@ -106,6 +132,7 @@ public class FirebaseHelper {
     }
 
     public void manualLogin(final String username,final String currentDeviceId){
+        final User user = User.getInstance();
         DatabaseReference reference = database.getReference("users");
         reference.orderByChild("username").equalTo(username).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
@@ -116,7 +143,15 @@ public class FirebaseHelper {
                         FirebaseUserModel firebaseUserModel = snapshot.getValue(FirebaseUserModel.class);
                         container.setUserModel(firebaseUserModel);
                         if(firebaseUserModel.getDeviceId().equals(currentDeviceId)){
-                            listener.onCompleteTask("manualLogin", CONDITION_1, container);
+                            String deviceToken = FirebaseInstanceId.getInstance().getToken();
+                            user.saveFirebaseKey(snapshot.getKey());
+                            if (firebaseUserModel.getDeviceToken().equals(deviceToken)) {
+                                user.login(container.getUserModel());
+                                listener.onCompleteTask("manualLogin", CONDITION_1, container);
+                            } else {
+                                container.setString(deviceToken);
+                                listener.onCompleteTask("manualLogin", CONDITION_4, container);
+                            }
                         } else {
                             listener.onCompleteTask("manualLogin", CONDITION_2, null);
                         }

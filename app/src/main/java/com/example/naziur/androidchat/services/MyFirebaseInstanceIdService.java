@@ -1,9 +1,12 @@
 package com.example.naziur.androidchat.services;
 
+import com.example.naziur.androidchat.database.FirebaseHelper;
 import com.example.naziur.androidchat.models.FirebaseUserModel;
 import com.example.naziur.androidchat.models.User;
+import com.example.naziur.androidchat.utils.Container;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.iid.FirebaseInstanceIdService;
 
 import android.support.annotation.NonNull;
@@ -21,10 +24,10 @@ import com.google.firebase.iid.FirebaseInstanceId;
  * Created by Naziur on 27/08/2018.
  */
 
-public class MyFirebaseInstanceIdService extends FirebaseInstanceIdService {
+public class MyFirebaseInstanceIdService extends FirebaseInstanceIdService implements FirebaseHelper.FirebaseHelperListener{
 
     private static final String TAG = "MyFirebaseIIDService";
-
+    private FirebaseHelper firebaseHelper;
     User user = com.example.naziur.androidchat.models.User.getInstance();
 
     @Override
@@ -43,43 +46,45 @@ public class MyFirebaseInstanceIdService extends FirebaseInstanceIdService {
 
     public void sendTokenToServer(final String strToken) {
         // API call to send token to Server
-
-        FirebaseDatabase database = FirebaseDatabase.getInstance();
-        final DatabaseReference usersRef = database.getReference("users");
-
-        usersRef.addListenerForSingleValueEvent(new com.google.firebase.database.ValueEventListener() {
-            @Override
-            public void onDataChange(com.google.firebase.database.DataSnapshot dataSnapshot) {
-
-                for (com.google.firebase.database.DataSnapshot userSnapshot : dataSnapshot.getChildren()) {
-                    //Getting the data from snapshot
-                    FirebaseUserModel firebaseUserModel = userSnapshot.getValue(FirebaseUserModel.class);
-
-                    if (strToken != null && firebaseUserModel.getDeviceId().equals(user.deviceId) && !strToken.equals(firebaseUserModel.getDeviceToken())) {
-                        user.deviceToken = strToken;
-                        usersRef.child(userSnapshot.getKey()).child("deviceToken").setValue(strToken).addOnSuccessListener(new OnSuccessListener<Void>() {
-                            @Override
-                            public void onSuccess(Void aVoid) {
-                                System.out.println("Refreshed Token Updated");
-                            }
-                        }).addOnFailureListener(new OnFailureListener() {
-                            @Override
-                            public void onFailure(@NonNull Exception e) {
-                                Log.i(TAG, e.getMessage());
-                            }
-                        });
-
-                    }
-                }
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-                System.out.println("The read failed: " + databaseError.getMessage());
-            }
-        });
-
+        firebaseHelper = FirebaseHelper.getInstance();
+        firebaseHelper.setFirebaseHelperListener(this);
+        ValueEventListener listener = firebaseHelper.getValueEventListener(strToken, FirebaseHelper.CONDITION_1, FirebaseHelper.NON_CONDITION, FirebaseHelper.NON_CONDITION, FirebaseUserModel.class);
+        firebaseHelper.toggleListenerFor("users", "username", user.name, listener, true, true);
     }
 
 
+    @Override
+    public void onCompleteTask(String tag, int condition, Container container) {
+        if (tag.equals("updateUserDeviceToken")){
+            switch (condition) {
+                case FirebaseHelper.CONDITION_1 :
+                    Log.i(TAG, tag + ": Successfully updated new device token " + container.getString());
+                    break;
+
+                case FirebaseHelper.CONDITION_2 :
+                    Log.i(TAG, tag + ": Failed to update new device token " + container.getString());
+                    break;
+            }
+        }
+    }
+
+    @Override
+    public void onFailureTask(String tag, DatabaseError databaseError) {
+        Log.i(TAG, tag + ": " + databaseError.getMessage());
+    }
+
+    @Override
+    public void onChange(String tag, int condition, Container container) {
+        if (tag.equals("getValueEventListener")){
+            switch (condition) {
+                case FirebaseHelper.CONDITION_1 :
+                    FirebaseUserModel firebaseUserModel = (FirebaseUserModel) container.getObject();
+                    String strToken = container.getString();
+                    if (strToken != null && firebaseUserModel.getDeviceId().equals(user.deviceId) && !strToken.equals(firebaseUserModel.getDeviceToken())) {
+                        firebaseHelper.updateUserDeviceToken(strToken);
+                    }
+                    break;
+            }
+        }
+    }
 }
