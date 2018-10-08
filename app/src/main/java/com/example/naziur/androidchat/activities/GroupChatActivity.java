@@ -57,7 +57,7 @@ import de.hdodenhof.circleimageview.CircleImageView;
 import pl.aprilapps.easyphotopicker.DefaultCallback;
 import pl.aprilapps.easyphotopicker.EasyImage;
 
-public class GroupChatActivity extends AppCompatActivity implements ImageViewDialogFragment.ImageViewDialogListener, FirebaseHelper.FirebaseHelperListener{
+public class GroupChatActivity extends AuthenticatedActivity implements ImageViewDialogFragment.ImageViewDialogListener, FirebaseHelper.FirebaseHelperListener{
     private static final String TAG = "GroupChatActivity";
     private static final int REQUEST_CODE_GALLERY_CAMERA = 0;
     User user = User.getInstance();

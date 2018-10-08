@@ -62,6 +62,17 @@ public class LoginActivity extends AppCompatActivity implements FirebaseHelper.F
         editTextUsername = (EditText) findViewById(R.id.editTextUsername);
         editTextEmail = (EditText) findViewById(R.id.editTextEmail);
         editTextEmail.setText(user.getUserAuthentication(this));
+        TextView autoLogText = (TextView) findViewById(R.id.auto_log_text);
+        autoLogText.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (autoLog.isChecked()) {
+                    autoLog.setChecked(false);
+                } else {
+                    autoLog.setChecked(true);
+                }
+            }
+        });
 
         autoLog = (CheckBox) findViewById(R.id.auto_log);
         autoLog.setChecked(user.getAutoLogin(this));

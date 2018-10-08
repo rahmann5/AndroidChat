@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-
 <RelativeLayout
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -8,11 +7,9 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     tools:context="com.example.naziur.androidchat.activities.MainActivity"
-    android:orientation="vertical"
     >
 
     <ScrollView
-        android:id="@+id/scroller_content"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         >
@@ -109,14 +106,15 @@
                     />
 
                 <TextView
+                    android:id="@+id/auto_log_text"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Auto-Login"
                     android:textColor="@color/white"
+                    android:layout_alignBaseline="@+id/auto_log"
+                    android:layout_alignBottom="@+id/auto_log"
                     android:layout_toRightOf="@+id/auto_log"
-                    android:layout_toEndOf="@+id/auto_log"
-                    android:layout_centerVertical="true"
-                    />
+                    android:layout_toEndOf="@+id/auto_log" />
 
                 <TextView
                     android:id="@+id/forgot_username"

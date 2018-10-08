@@ -40,7 +40,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class ChatDetailActivity extends AppCompatActivity implements FirebaseHelper.FirebaseHelperListener{
+public class ChatDetailActivity extends AuthenticatedActivity implements FirebaseHelper.FirebaseHelperListener{
 
     private static final String TAG = ChatDetailActivity.class.getSimpleName();
     private User user = User.getInstance();

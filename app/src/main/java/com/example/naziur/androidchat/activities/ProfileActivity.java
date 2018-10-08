@@ -55,7 +55,7 @@ import de.hdodenhof.circleimageview.CircleImageView;
 import pl.aprilapps.easyphotopicker.DefaultCallback;
 import pl.aprilapps.easyphotopicker.EasyImage;
 
-public class ProfileActivity extends AppCompatActivity implements FirebaseHelper.FirebaseHelperListener{
+public class ProfileActivity extends AuthenticatedActivity implements FirebaseHelper.FirebaseHelperListener{
 
     private static final int REQUEST_CODE_GALLERY_CAMERA = 0;
     private static final String TAG = ProfileActivity.class.getSimpleName();

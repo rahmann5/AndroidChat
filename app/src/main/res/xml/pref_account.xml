@@ -22,4 +22,9 @@
         android:summary="@string/pref_desc_delete_acc"
         android:title="@string/pref_title_delete_acc" />
 
+    <Preference
+        android:key="@string/key_logout"
+        android:summary="@string/pref_desc_logout"
+        android:title="@string/pref_title_logout" />
+
 </PreferenceScreen>

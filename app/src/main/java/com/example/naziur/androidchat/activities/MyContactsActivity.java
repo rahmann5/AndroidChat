@@ -55,7 +55,7 @@ import java.util.List;
 import cz.msebera.android.httpclient.Header;
 import cz.msebera.android.httpclient.entity.StringEntity;
 
-public class MyContactsActivity extends AppCompatActivity implements AddContactDialogFragment.ContactDialogListener, FirebaseHelper.FirebaseHelperListener{
+public class MyContactsActivity extends AuthenticatedActivity implements AddContactDialogFragment.ContactDialogListener, FirebaseHelper.FirebaseHelperListener{
     private static final String TAG = "MyContactsActivity";
     private ContactDBHelper db;
     private RecyclerView myContactsRecycler;

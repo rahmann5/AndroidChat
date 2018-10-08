@@ -80,7 +80,7 @@ import pl.aprilapps.easyphotopicker.DefaultCallback;
 import pl.aprilapps.easyphotopicker.EasyImage;
 
 
-public class ChatActivity extends AppCompatActivity implements ImageViewDialogFragment.ImageViewDialogListener,
+public class ChatActivity extends AuthenticatedActivity implements ImageViewDialogFragment.ImageViewDialogListener,
         FirebaseHelper.FirebaseHelperListener{
     private static final String TAG = "ChatActivity";
     private static final int REQUEST_CODE_GALLERY_CAMERA = 0;

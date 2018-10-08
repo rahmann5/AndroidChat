@@ -121,6 +121,9 @@
     <string name="key_delete_acc">delete_acc</string>
     <string name="pref_desc_delete_acc">Warning: this action cannot be undone.</string>
     <string name="pref_title_delete_acc">Delete Account</string>
+    <string name="key_logout">logout</string>
+    <string name="pref_desc_logout">Logout of the current session.</string>
+    <string name="pref_title_logout">Logout</string>
 
     <string name="key_email">user_auth</string>
     <string name="pref_title_auth">Account Email</string>
