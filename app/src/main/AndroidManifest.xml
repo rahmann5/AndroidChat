@@ -16,6 +16,12 @@
         </intent-filter>
     </receiver>
 
+    <receiver android:name=".MyReceiver">
+        <intent-filter>
+            <action android:name="my.custom.action"/>
+        </intent-filter>
+    </receiver>
+
     <application
         android:allowBackup="true"
         android:configChanges="orientation|screenSize"

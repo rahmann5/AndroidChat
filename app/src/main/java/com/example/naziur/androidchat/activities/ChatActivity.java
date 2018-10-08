@@ -106,6 +106,8 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
 
     private FirebaseHelper firebaseHelper;
 
+    private IntentFilter mFilter = new IntentFilter("my.custom.action");
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -121,6 +123,7 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
             Toast.makeText(this, "Error occurred", Toast.LENGTH_LONG).show();
             finish();
         }
+        mFilter.setPriority(IntentFilter.SYSTEM_HIGH_PRIORITY);
         firebaseHelper = FirebaseHelper.getInstance();
         firebaseHelper.setFirebaseHelperListener(this);
         createCustomActionBar();
@@ -224,6 +227,14 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
 
     }
 
+    private BroadcastReceiver mReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            // TODO Act when in foreground here
+            abortBroadcast();
+        }
+    };
+
     @Override
     protected void onResume() {
         super.onResume();
@@ -236,8 +247,15 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
     }
 
     @Override
+    protected void onStart() {
+        super.onStart();
+        registerReceiver(mReceiver, mFilter);
+    }
+
+    @Override
     protected void onStop() {
         super.onStop();
+        unregisterReceiver(mReceiver);
         firebaseHelper.toggleMsgEventListeners("single", chatKey, commentValueEventListener, false);
     }
 
