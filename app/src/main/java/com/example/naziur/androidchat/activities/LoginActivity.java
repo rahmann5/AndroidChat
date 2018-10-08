@@ -24,9 +24,6 @@ import com.example.naziur.androidchat.utils.Network;
 import com.example.naziur.androidchat.utils.ProgressDialog;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
-import com.google.firebase.auth.AuthResult;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -44,7 +41,7 @@ public class LoginActivity extends AppCompatActivity implements FirebaseHelper.F
     private ProgressDialog progressDialog;
     private FirebaseHelper firebaseHelper;
     private CheckBox autoLog;
-    private FirebaseAuth mAuth;
+    //private FirebaseAuth mAuth;
 
 
     @Override
@@ -57,7 +54,7 @@ public class LoginActivity extends AppCompatActivity implements FirebaseHelper.F
         firebaseHelper.setFirebaseHelperListener(this);
         currentDeviceId = Settings.Secure.getString(getApplicationContext().getContentResolver(), Settings.Secure.ANDROID_ID);
 
-        mAuth = FirebaseAuth.getInstance();
+        //mAuth = FirebaseAuth.getInstance();
 
         editTextUsername = (EditText) findViewById(R.id.editTextUsername);
         editTextEmail = (EditText) findViewById(R.id.editTextEmail);
@@ -95,7 +92,8 @@ public class LoginActivity extends AppCompatActivity implements FirebaseHelper.F
                     if (!Network.isInternetAvailable(LoginActivity.this, true)) return;
                     progressDialog.toggleDialog(true);
                     String email = editTextEmail.getText().toString().trim();
-                    mAuth.signInWithEmailAndPassword(email, currentDeviceId)
+                    firebaseHelper.autoLogin("users", currentDeviceId, user);
+                   /* mAuth.signInWithEmailAndPassword(email, currentDeviceId)
                             .addOnCompleteListener(LoginActivity.this, new OnCompleteListener<AuthResult>() {
                         @Override
                         public void onComplete(@NonNull Task<AuthResult> task) {
@@ -107,7 +105,7 @@ public class LoginActivity extends AppCompatActivity implements FirebaseHelper.F
                             }
 
                         }
-                    });
+                    });*/
                 } else {
                     Toast.makeText(LoginActivity.this, "Please enter your email address.", Toast.LENGTH_LONG).show();
                 }
@@ -130,11 +128,12 @@ public class LoginActivity extends AppCompatActivity implements FirebaseHelper.F
                 return;
             }
 
-            FirebaseUser currentUser = mAuth.getCurrentUser();
-
+            //FirebaseUser currentUser = mAuth.getCurrentUser();
+            Object currentUser = null;
             if (currentUser == null) {
                 progressDialog.toggleDialog(true);
-                mAuth.signInWithEmailAndPassword(strEmail, currentDeviceId).addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
+                firebaseHelper.manualLogin(strUsername, currentDeviceId);
+                /*mAuth.signInWithEmailAndPassword(strEmail, currentDeviceId).addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         if (task.isSuccessful()) {
@@ -145,7 +144,7 @@ public class LoginActivity extends AppCompatActivity implements FirebaseHelper.F
                         }
 
                     }
-                });
+                });*/
             } else {
                 progressDialog.toggleDialog(true);
                 firebaseHelper.manualLogin(strUsername, currentDeviceId);

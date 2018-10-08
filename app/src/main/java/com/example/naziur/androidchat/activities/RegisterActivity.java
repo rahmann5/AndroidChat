@@ -20,9 +20,6 @@ import com.example.naziur.androidchat.utils.Container;
 import com.example.naziur.androidchat.utils.ProgressDialog;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
-import com.google.firebase.auth.AuthResult;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.iid.FirebaseInstanceId;
 
@@ -33,7 +30,6 @@ public class RegisterActivity extends AppCompatActivity implements FirebaseHelpe
     private ProgressDialog progressDialog;
     private FirebaseHelper firebaseHelper;
     private User user = User.getInstance();
-    private EditText usernameEt, emailEt, profileEt;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,9 +39,9 @@ public class RegisterActivity extends AppCompatActivity implements FirebaseHelpe
         firebaseHelper =FirebaseHelper.getInstance();
         firebaseHelper.setFirebaseHelperListener(this);
         progressDialog = new ProgressDialog(this, R.layout.progress_dialog, false);
-        usernameEt = (EditText) findViewById(R.id.username);
-        emailEt = (EditText) findViewById(R.id.email);
-        profileEt = (EditText) findViewById(R.id.profile);
+        final EditText usernameEt = (EditText) findViewById(R.id.username);
+        final EditText emailEt = (EditText) findViewById(R.id.email);
+        final EditText profileEt = (EditText) findViewById(R.id.profile);
         TextView loginTv = (TextView) findViewById(R.id.login);
 
         final Button registerBtn = (Button) findViewById(R.id.register_btn);
@@ -57,8 +53,8 @@ public class RegisterActivity extends AppCompatActivity implements FirebaseHelpe
                     return;
                 }
                 progressDialog.toggleDialog(true);
-                firebaseHelper.isDeviceAlreadyRegistered(Settings.Secure.getString(getApplicationContext().getContentResolver(), Settings.Secure.ANDROID_ID));
-                }
+                registerUser(emailEt.getText().toString().trim(), usernameEt.getText().toString().trim(), profileEt.getText().toString().trim());
+            }
         });
 
         loginTv.setOnClickListener(new View.OnClickListener() {
@@ -84,7 +80,8 @@ public class RegisterActivity extends AppCompatActivity implements FirebaseHelpe
         return (!username.isEmpty() && username.matches("[a-zA-Z0-9]*") && !email.isEmpty() && !profile.isEmpty());
     }
 
-    private void registerUser(String email, final String username, final String profile, final String password){
+    private void registerUser(String email, final String username, final String profile){
+        final String password = Settings.Secure.getString(getApplicationContext().getContentResolver(), Settings.Secure.ANDROID_ID);
         mAuth.createUserWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
                     @Override
@@ -108,30 +105,20 @@ public class RegisterActivity extends AppCompatActivity implements FirebaseHelpe
     @Override
     protected void onStart() {
         super.onStart();
-        if(mAuth.getCurrentUser() != null){
+       /* if(mAuth.getCurrentUser() != null){
             startActivity(new Intent(RegisterActivity.this, SessionActivity.class));
-        }
+        }*/
     }
 
 
     @Override
     public void onCompleteTask(String tag, int condition, Container container) {
         switch (tag){
-            case "isDeviceAlreadyRegistered":
-                switch (condition){
-                    case FirebaseHelper.CONDITION_1:
-                        registerUser(emailEt.getText().toString().trim(), usernameEt.getText().toString().trim(), profileEt.getText().toString().trim(), container.getString());
-                        break;
-                    case FirebaseHelper.CONDITION_2:
-                        progressDialog.toggleDialog(false);
-                        Toast.makeText(this, "This device is already registered to an account", Toast.LENGTH_SHORT).show();
-                        break;
-                }
             case "registerNewUser":
                 switch (condition){
                     case FirebaseHelper.CONDITION_1:
                         if (user.login(container.getUserModel())) {
-                            user.setUserAuthentication(this, mAuth.getCurrentUser().getEmail());
+                            //user.setUserAuthentication(this, mAuth.getCurrentUser().getEmail());
                             Intent intent = new Intent(RegisterActivity.this, SessionActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                             startActivity(intent);
                             finish();
