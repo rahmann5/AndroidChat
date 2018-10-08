@@ -16,6 +16,7 @@ import android.widget.Toast;
 
 import com.example.naziur.androidchat.R;
 import com.example.naziur.androidchat.models.User;
+import com.google.firebase.auth.FirebaseAuth;
 
 import java.util.List;
 
