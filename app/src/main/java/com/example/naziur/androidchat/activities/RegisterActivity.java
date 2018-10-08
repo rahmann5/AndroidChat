@@ -26,7 +26,7 @@ import com.google.firebase.iid.FirebaseInstanceId;
 public class RegisterActivity extends AppCompatActivity implements FirebaseHelper.FirebaseHelperListener{
 
     private static final String TAG = "RegisterActivity";
-    //private FirebaseAuth mAuth;
+    private FirebaseAuth mAuth;
     private ProgressDialog progressDialog;
     private FirebaseHelper firebaseHelper;
     private User user = User.getInstance();
@@ -35,7 +35,7 @@ public class RegisterActivity extends AppCompatActivity implements FirebaseHelpe
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_register);
-        //mAuth = FirebaseAuth.getInstance();
+        mAuth = FirebaseAuth.getInstance();
         firebaseHelper =FirebaseHelper.getInstance();
         firebaseHelper.setFirebaseHelperListener(this);
         progressDialog = new ProgressDialog(this, R.layout.progress_dialog, false);
@@ -81,7 +81,7 @@ public class RegisterActivity extends AppCompatActivity implements FirebaseHelpe
     }
 
     private void registerUser(String email, final String username, final String profile){
-       /* final String password = Settings.Secure.getString(getApplicationContext().getContentResolver(), Settings.Secure.ANDROID_ID);
+        final String password = Settings.Secure.getString(getApplicationContext().getContentResolver(), Settings.Secure.ANDROID_ID);
         mAuth.createUserWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
                     @Override
@@ -99,7 +99,7 @@ public class RegisterActivity extends AppCompatActivity implements FirebaseHelpe
                                     Toast.LENGTH_SHORT).show();
                         }
                     }
-                });*/
+                });
     }
 
     @Override

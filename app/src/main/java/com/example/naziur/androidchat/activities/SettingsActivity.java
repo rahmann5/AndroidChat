@@ -154,8 +154,8 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
             Preference logoutPref = findPreference(getString(R.string.key_logout));
             logoutPref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
                 public boolean onPreferenceClick(Preference preference) {
-                    //FirebaseAuth mAuth = FirebaseAuth.getInstance();
-                    //mAuth.signOut();
+                    FirebaseAuth mAuth = FirebaseAuth.getInstance();
+                    mAuth.signOut();
                     startActivity(new Intent(getActivity(), LoginActivity.class).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK));
                     getActivity().finish();
                     return true;
