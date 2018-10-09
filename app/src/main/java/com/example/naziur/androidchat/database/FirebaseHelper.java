@@ -229,14 +229,14 @@ public class FirebaseHelper {
         query.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                if(dataSnapshot.exists()){
+                if (dataSnapshot.exists()) {
                     for (com.google.firebase.database.DataSnapshot userSnapshot : dataSnapshot.getChildren()) {
                         FirebaseUserModel firebaseUserModel = userSnapshot.getValue(FirebaseUserModel.class);
-                        if(firebaseUserModel.getUsername().equals(fbModel.getUsername())) {
+                        if (firebaseUserModel.getUsername().equals(fbModel.getUsername())) {
                             db.updateProfile(firebaseUserModel.getUsername(), firebaseUserModel.getProfileName(), firebaseUserModel.getProfilePic());
                             Container container = new Container();
                             container.setContact(new Contact(firebaseUserModel));
-                            listener.onChange("updateLocalContactsFromFirebase",CONDITION_1, container);
+                            listener.onChange("updateLocalContactsFromFirebase", CONDITION_1, container);
                             break;
                         }
                     }
@@ -252,7 +252,7 @@ public class FirebaseHelper {
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
-               listener.onFailureTask("updateLocalContactsFromFirebase", databaseError);
+                listener.onFailureTask("updateLocalContactsFromFirebase", databaseError);
             }
         });
     }
@@ -270,6 +270,7 @@ public class FirebaseHelper {
                     //Getting the data from snapshot
                     FirebaseMessageModel firebaseMessageModel = postSnapshot.getValue(FirebaseMessageModel.class);
                     Container container = new Container();
+                    firebaseMessageModel.setId(postSnapshot.getKey());
                     container.setMsgModel(firebaseMessageModel);
                     listener.onChange("createMessageEventListener", CONDITION_1, container);
                 }
@@ -328,6 +329,53 @@ public class FirebaseHelper {
                 listener.onFailureTask("setUpSingleChat", databaseError);
             }
         });
+    }
+
+    public void getLastFiveMessages(String child, String key, final String start, int amount) {
+        Query query = FirebaseDatabase.getInstance().getReference("messages").child(child)
+                .child(key).endAt(start);
+
+        query.limitToLast(amount).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                String key = start;
+                for (DataSnapshot child : dataSnapshot.getChildren()) {
+                    FirebaseMessageModel firebaseMessageModel = child.getValue(FirebaseMessageModel.class);
+                    key = child.getKey();
+                    firebaseMessageModel.setId(key);
+                    Container container = new Container();
+                    container.setMsgModel(firebaseMessageModel);
+
+                    listener.onChange("getLastFiveMessages", CONDITION_1, container);
+                }
+                Container container = new Container();
+                container.setString(key);
+                listener.onCompleteTask("getLastFiveMessages", CONDITION_1, container);
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                listener.onFailureTask("getLastFiveMessages", databaseError);
+            }
+        });
+    }
+
+    public void toggleMsgEventListeners2 (String node, String chatKey, ValueEventListener commentValueEventListener, int amount ,boolean add, boolean single) {
+        Query messagesRef = database.getReference("messages")
+                .child(node)
+                .child(chatKey)
+                .orderByKey()
+                .limitToLast(amount);
+
+        if (!single) {
+            if (add) {
+                messagesRef.addValueEventListener(commentValueEventListener);
+            } else {
+                messagesRef.removeEventListener(commentValueEventListener);
+            }
+        } else {
+            messagesRef.addListenerForSingleValueEvent(commentValueEventListener);
+        }
     }
 
     public void toggleMsgEventListeners (String node, String chatKey, ValueEventListener commentValueEventListener, boolean add) {

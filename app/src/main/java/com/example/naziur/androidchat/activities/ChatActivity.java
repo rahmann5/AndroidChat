@@ -108,6 +108,8 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
 
     private IntentFilter mFilter = new IntentFilter("my.custom.action");
 
+    private String lastKey;
+    public int currentFirstVisibleItem, currentVisibleItemCount, totalItem, currentScrollState;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -169,7 +171,9 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
 
         listView.setOnScrollListener(new AbsListView.OnScrollListener(){
             public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
-
+                currentFirstVisibleItem = firstVisibleItem;
+                currentVisibleItemCount = visibleItemCount;
+                totalItem = totalItemCount;
             }
             public void onScrollStateChanged(AbsListView view, int scrollState) {
 
@@ -177,6 +181,13 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
                     sendBottom.setVisibility(View.VISIBLE);
                 } else {
                     sendBottom.setVisibility(View.GONE);
+                }
+                currentScrollState = scrollState;
+                if (currentVisibleItemCount > 0 && currentScrollState == SCROLL_STATE_IDLE) {
+                    if (currentFirstVisibleItem == 0) {
+                        firebaseHelper.getLastFiveMessages("single", chatKey, lastKey, 4);
+
+                    }
                 }
             }
         });
@@ -262,7 +273,7 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
     protected void onStop() {
         super.onStop();
         unregisterReceiver(mReceiver);
-        firebaseHelper.toggleMsgEventListeners("single", chatKey, commentValueEventListener, false);
+        firebaseHelper.toggleMsgEventListeners2("single", chatKey, commentValueEventListener,1 , false, false);
     }
 
     private void sendMessage(final String wishMessage){
@@ -478,12 +489,10 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
         if (tag.equals("createMessageEventListener")) {
             switch (condition) {
                 case FirebaseHelper.CONDITION_1 :
-                    messages.clear();
+                    //messages.clear();
                     break;
 
                 case FirebaseHelper.CONDITION_2 :
-                    updateListView();
-                    progressBar.toggleDialog(false);
                     break;
             }
         } else if (tag.equals("setUpSingleChat")) {
@@ -499,7 +508,7 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
 
                 case FirebaseHelper.CONDITION_2:
                     //String myKey = findChatKey(me, friend);
-                    firebaseHelper.toggleMsgEventListeners("single", chatKey, commentValueEventListener, true);
+                    firebaseHelper.toggleMsgEventListeners2("single", chatKey, commentValueEventListener, 1, true, false);
                     String friendKey = findChatKey(friend, me);
                     btnInvite.setVisibility(View.GONE);
                     btnSend.setVisibility(View.VISIBLE);
@@ -568,6 +577,15 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
             btnSend.setEnabled(true);
             progressBar.toggleDialog(false);
             textComment.setText("");
+
+        } else if (tag.equals("getLastFiveMessages")) {
+            switch (condition) {
+                case FirebaseHelper.CONDITION_1 :
+                    lastKey = container.getString();
+                    updateListView();
+                    progressBar.toggleDialog(false);
+                    break;
+            }
         }
     }
 
@@ -604,7 +622,17 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
         if (tag.equals("createMessageEventListener")) {
             switch (condition) {
                 case FirebaseHelper.CONDITION_1 :
-                    messages.add(container.getMsgModel());
+                    FirebaseMessageModel firebaseMessageModel = container.getMsgModel();
+                    if (firebaseMessageModel != null) {
+                        if (!messages.isEmpty()) {
+                            if ((!messages.get(messages.size()-1).getId().equals(firebaseMessageModel.getId())))
+                                messages.add(firebaseMessageModel);
+                        } else {
+                            lastKey = firebaseMessageModel.getId();
+                            messages.add(firebaseMessageModel);
+                            firebaseHelper.getLastFiveMessages("single", chatKey, lastKey, 6);
+                        }
+                    }
                     break;
             }
         } else if (tag.equals("setUpSingleChat")) {
@@ -620,6 +648,16 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
 
                 case FirebaseHelper.CONDITION_2 :
                     me = container.getUserModel();
+                    break;
+            }
+        } else if (tag.equals("getLastFiveMessages")) {
+            switch (condition) {
+                case FirebaseHelper.CONDITION_1 :
+                    FirebaseMessageModel firebaseMessageModel = container.getMsgModel();
+                    if (!firebaseMessageModel.getId().equals(lastKey)) {
+                        lastKey = firebaseMessageModel.getId();
+                        messages.add(messages.size()-1,firebaseMessageModel);
+                    }
                     break;
             }
         }
