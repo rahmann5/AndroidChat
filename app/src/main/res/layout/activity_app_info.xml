@@ -66,13 +66,27 @@
 
     </LinearLayout>
 
-    <TextView
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:layout_alignParentRight="true"
+        android:layout_margin="5dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:textColor="@color/white"
-        android:text="Version 1.0"
-        android:layout_margin="5dp"/>
+        android:text="Version "
+        />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/white"
+        android:text="@string/pref_version_summary"
+        />
+
+    </LinearLayout>
 
 </RelativeLayout>

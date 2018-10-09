@@ -1,5 +1,6 @@
 package com.example.naziur.androidchat.utils;
 
+import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
@@ -8,12 +9,15 @@ import android.content.Intent;
 import android.graphics.BitmapFactory;
 import android.media.RingtoneManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
 import android.widget.Toast;
 
 import com.example.naziur.androidchat.R;
 import com.example.naziur.androidchat.activities.MainActivity;
+
+import java.util.HashMap;
 
 /**
  * Created by Naziur on 08/10/2018.
@@ -28,6 +32,7 @@ public class MyReceiver extends BroadcastReceiver {
         // TODO Implement action when not in foreground here
         Bundle extra = intent.getExtras();
         if (extra != null) {
+            //System.out.println(extra.getString("singleChatKey"));
             showNotification(context, extra.getString("body"),
                     extra.getString("tag"),extra.getString("title"));
         }
@@ -52,6 +57,8 @@ public class MyReceiver extends BroadcastReceiver {
                 .setAutoCancel(true)
                 .setSound(defaultSoundUri)
                 .setContentIntent(pendingIntent);
+
+
 
         mNotificationManager.notify(dToken, NOTIFICATION_ID, notificationBuilder.build());
     }

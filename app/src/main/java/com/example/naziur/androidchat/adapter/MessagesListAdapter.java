@@ -13,6 +13,7 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
 import com.example.naziur.androidchat.R;
 import com.example.naziur.androidchat.activities.GroupChatActivity;
+import com.example.naziur.androidchat.database.ContactDBHelper;
 import com.example.naziur.androidchat.models.MessageCell;
 import com.example.naziur.androidchat.utils.Constants;
 
@@ -29,11 +30,13 @@ import java.util.Locale;
 public class MessagesListAdapter extends ArrayAdapter<MessageCell> {
     MessageCell[] cellItem = null;
     Context context;
+    private ContactDBHelper db;
     public MessagesListAdapter(Context context, MessageCell[] resource) {
         super(context, R.layout.receiving_message_cell, resource);
         // TODO Auto-generated constructor stub
         this.context = context;
         this.cellItem = resource;
+        db = new ContactDBHelper(context);
     }
 
     @Override
@@ -103,7 +106,7 @@ public class MessagesListAdapter extends ArrayAdapter<MessageCell> {
     private void setSenderName(View convertView, int position){
         if(context.getClass().getSimpleName().equals(GroupChatActivity.class.getSimpleName())){
             TextView senderName = convertView.findViewById(R.id.sender_id);
-            senderName.setText(cellItem[position].getMessageSender());
+            senderName.setText(db.getProfileNameAndPic(cellItem[position].getMessageSender())[0]);
             senderName.setVisibility(View.VISIBLE);
         }
     }

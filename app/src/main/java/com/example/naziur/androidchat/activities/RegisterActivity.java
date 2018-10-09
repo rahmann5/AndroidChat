@@ -33,6 +33,7 @@ public class RegisterActivity extends AppCompatActivity implements FirebaseHelpe
     private ProgressDialog progressDialog;
     private FirebaseHelper firebaseHelper;
     private User user = User.getInstance();
+    private EditText usernameEt,emailEt,profileEt;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,9 +43,9 @@ public class RegisterActivity extends AppCompatActivity implements FirebaseHelpe
         firebaseHelper =FirebaseHelper.getInstance();
         firebaseHelper.setFirebaseHelperListener(this);
         progressDialog = new ProgressDialog(this, R.layout.progress_dialog, false);
-        final EditText usernameEt = (EditText) findViewById(R.id.username);
-        final EditText emailEt = (EditText) findViewById(R.id.email);
-        final EditText profileEt = (EditText) findViewById(R.id.profile);
+        usernameEt = (EditText) findViewById(R.id.username);
+        emailEt  = (EditText) findViewById(R.id.email);
+        profileEt  = (EditText) findViewById(R.id.profile);
         TextView loginTv = (TextView) findViewById(R.id.login);
 
         final Button registerBtn = (Button) findViewById(R.id.register_btn);
@@ -56,7 +57,7 @@ public class RegisterActivity extends AppCompatActivity implements FirebaseHelpe
                     return;
                 }
                 progressDialog.toggleDialog(true);
-                registerUser(emailEt.getText().toString().trim(), usernameEt.getText().toString().trim(), profileEt.getText().toString().trim());
+                firebaseHelper.isDeviceAlreadyRegistered(Settings.Secure.getString(getApplicationContext().getContentResolver(), Settings.Secure.ANDROID_ID));
             }
         });
 
@@ -84,8 +85,7 @@ public class RegisterActivity extends AppCompatActivity implements FirebaseHelpe
         return (!username.isEmpty() && username.matches("[a-zA-Z0-9]*") && !email.isEmpty() && !profile.isEmpty());
     }
 
-    private void registerUser(String email, final String username, final String profile){
-        final String password = Settings.Secure.getString(getApplicationContext().getContentResolver(), Settings.Secure.ANDROID_ID);
+    private void registerUser(String email, final String username, final String profile, final String password){
         mAuth.createUserWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
                     @Override
@@ -109,9 +109,9 @@ public class RegisterActivity extends AppCompatActivity implements FirebaseHelpe
     @Override
     protected void onStart() {
         super.onStart();
-       /* if(mAuth.getCurrentUser() != null){
+        if(mAuth.getCurrentUser() != null){
             startActivity(new Intent(RegisterActivity.this, SessionActivity.class));
-        }*/
+        }
     }
 
 
@@ -127,6 +127,17 @@ public class RegisterActivity extends AppCompatActivity implements FirebaseHelpe
                             startActivity(intent);
                             finish();
                         }
+                        progressDialog.toggleDialog(false);
+                        break;
+                }
+                break;
+            case "isDeviceAlreadyRegistered":
+                switch (condition) {
+                    case FirebaseHelper.CONDITION_1:
+                        registerUser(emailEt.getText().toString().trim(), usernameEt.getText().toString().trim(), profileEt.getText().toString().trim(), container.getString());
+                        break;
+                    case FirebaseHelper.CONDITION_2:
+                        Toast.makeText(RegisterActivity.this, "A user is already registered to this device", Toast.LENGTH_LONG).show();
                         progressDialog.toggleDialog(false);
                         break;
                 }

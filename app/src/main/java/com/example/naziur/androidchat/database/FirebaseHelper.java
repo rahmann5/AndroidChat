@@ -186,8 +186,8 @@ public class FirebaseHelper {
     }
 
     public void isDeviceAlreadyRegistered(final String deviceId){
-        DatabaseReference reference = database.getReference("users").orderByChild("deviceId").equalTo(deviceId).getRef();
-        reference.addListenerForSingleValueEvent(new ValueEventListener() {
+        DatabaseReference reference = database.getReference("users");
+        reference.orderByChild("deviceId").equalTo(deviceId).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if(!dataSnapshot.exists()){
@@ -195,6 +195,7 @@ public class FirebaseHelper {
                     container.setString(deviceId);
                     listener.onCompleteTask("isDeviceAlreadyRegistered", CONDITION_1, container);
                 } else {
+                    System.out.println(deviceId+" VS "+dataSnapshot.getValue());
                     listener.onCompleteTask("isDeviceAlreadyRegistered", CONDITION_2, null);
                 }
             }

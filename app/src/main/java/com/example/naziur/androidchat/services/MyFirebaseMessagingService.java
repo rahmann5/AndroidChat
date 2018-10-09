@@ -18,9 +18,13 @@ import com.example.naziur.androidchat.utils.Network;
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.Serializable;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by Naziur on 27/08/2018.
@@ -42,6 +46,15 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         intent.putExtra("body",  remoteMessage.getNotification().getBody());
         intent.putExtra("tag",  remoteMessage.getNotification().getTag());
         intent.putExtra("title",  remoteMessage.getNotification().getTitle());
+        Map<String, String> map = remoteMessage.getData();
+        /*JSONObject object = new JSONObject(map);
+        try {
+            intent.putExtra("singleChatKey", object.getString("chatKey") );
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }*/
+
+
         sendOrderedBroadcast(intent,null);
         /*if (!Network.isForeground(getApplicationContext())){
             showNotification(remoteMessage.getNotification().getBody(),
