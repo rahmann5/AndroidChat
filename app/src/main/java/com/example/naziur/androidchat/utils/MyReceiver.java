@@ -29,20 +29,20 @@ public class MyReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        // TODO Implement action when not in foreground here
         Bundle extra = intent.getExtras();
         if (extra != null) {
-            //System.out.println(extra.getString("singleChatKey"));
             showNotification(context, extra.getString("body"),
-                    extra.getString("tag"),extra.getString("title"));
+                    extra.getString("tag"),extra.getString("title"),extra.getString("payLoad"),extra.getString("key"));
         }
     }
 
-    private void showNotification(Context context, String messageBody,String dToken, String title) {
+    private void showNotification(Context context, String messageBody,String dToken, String title, String payLoadData, String payloadKey) {
+
         Intent intent = new Intent(context, MainActivity.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        intent.putExtra(payloadKey,payLoadData);
+        intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
         PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent,
-                PendingIntent.FLAG_ONE_SHOT);
+                PendingIntent.FLAG_UPDATE_CURRENT);
 
         NotificationManager mNotificationManager =
                 (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
@@ -62,4 +62,5 @@ public class MyReceiver extends BroadcastReceiver {
 
         mNotificationManager.notify(dToken, NOTIFICATION_ID, notificationBuilder.build());
     }
+
 }

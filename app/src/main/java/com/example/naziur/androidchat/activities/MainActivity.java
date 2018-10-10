@@ -112,8 +112,6 @@ public class MainActivity extends AppCompatActivity implements FirebaseHelper.Fi
                 intent = new Intent(this, GroupChatActivity.class);
                 intent.putExtra("group_uid", extra.getString("group_uid"));
             }
-        } else {
-            System.out.println("Extra was null");
         }
         if (intent == null) {
             intent = new Intent(this, SessionActivity.class);
@@ -129,7 +127,6 @@ public class MainActivity extends AppCompatActivity implements FirebaseHelper.Fi
         startActivity(intent);
         finish();
     }
-
 
     @Override
     public void onCompleteTask(String tag, int condition, Container container) {
