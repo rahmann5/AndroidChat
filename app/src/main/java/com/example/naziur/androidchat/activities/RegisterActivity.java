@@ -110,7 +110,7 @@ public class RegisterActivity extends AppCompatActivity implements FirebaseHelpe
     protected void onStart() {
         super.onStart();
         if(mAuth.getCurrentUser() != null){
-            startActivity(new Intent(RegisterActivity.this, SessionActivity.class));
+            mAuth.signOut();
         }
     }
 
