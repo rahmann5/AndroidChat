@@ -112,6 +112,7 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
 
     public int currentFirstVisibleItem, currentVisibleItemCount, totalItem, currentScrollState;
     private List<FirebaseMessageModel> tempMsg;
+    private boolean isScrolling = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -186,9 +187,12 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
                 }
 
                 currentScrollState = scrollState;
-                if (currentVisibleItemCount > 0 && currentScrollState == SCROLL_STATE_IDLE) {
-                    if (currentFirstVisibleItem == 0) {
-                        firebaseHelper.getNextNMessages("single", chatKey, messages.get(0).getId(), 4);
+                if (!isScrolling) {
+                    if (currentVisibleItemCount > 0 && currentScrollState == SCROLL_STATE_IDLE) {
+                        if (currentFirstVisibleItem == 0) {
+                            firebaseHelper.getNextNMessages("single", chatKey, messages.get(0).getId(), 4);
+                            isScrolling = true;
+                        }
                     }
                 }
             }
@@ -592,6 +596,7 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
                     updateListView(false);
                     progressBar.toggleDialog(false);
                     tempMsg = new ArrayList<>();
+                    isScrolling = false;
                     break;
             }
         }
@@ -603,7 +608,7 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
     public void onFailureTask(String tag, DatabaseError databaseError) {
         switch (tag) {
             case "createMessageEventListener" :
-                updateListView(true);
+                //updateListView(true);
                 progressBar.toggleDialog(false);
                 break;
 
@@ -618,6 +623,10 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
             case "updateNotificationNode" :
                 btnInvite.setEnabled(true);
                 Log.i(TAG, "Error checking notification table in firebase server");
+                break;
+            case "getNextFiveMessages" :
+                isScrolling = false;
+                progressBar.toggleDialog(false);
                 break;
 
         }

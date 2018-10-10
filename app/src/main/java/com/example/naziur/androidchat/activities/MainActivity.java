@@ -75,13 +75,13 @@ public class MainActivity extends AppCompatActivity implements FirebaseHelper.Fi
 
             currentDeviceId = Settings.Secure.getString(getApplicationContext().getContentResolver(), Settings.Secure.ANDROID_ID);
             if (currentUser != null) {
-                firebaseHelper.autoLogin("users", currentDeviceId, user);
+                firebaseHelper.autoLogin("users", mAuth.getCurrentUser().getUid() ,currentDeviceId, user);
             } else {
                 mAuth.signInWithEmailAndPassword(user.getUserAuthentication(this), currentDeviceId).addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         if (task.isSuccessful()) {
-                            firebaseHelper.autoLogin("users", currentDeviceId, user);
+                            firebaseHelper.autoLogin("users", mAuth.getCurrentUser().getUid(), currentDeviceId, user);
                         } else {
                             Toast.makeText(MainActivity.this, "Failed to authenticate user.", Toast.LENGTH_SHORT).show();
                             moveToLoginActivity();

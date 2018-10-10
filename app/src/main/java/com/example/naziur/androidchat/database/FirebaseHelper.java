@@ -113,8 +113,8 @@ public class FirebaseHelper {
         });
     }
 
-    public void autoLogin(String node, final String currentDeviceId, final User user) {
-        database.getReference(node).orderByChild("deviceId").equalTo(currentDeviceId)
+    public void autoLogin(String node, String userKey ,final String currentDeviceId, final User user) {
+        database.getReference(node).child(userKey)
                 .addListenerForSingleValueEvent(new com.google.firebase.database.ValueEventListener() {
             @Override
             public void onDataChange(com.google.firebase.database.DataSnapshot dataSnapshot) {
