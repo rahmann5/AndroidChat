@@ -69,6 +69,8 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -108,8 +110,8 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
 
     private IntentFilter mFilter = new IntentFilter("my.custom.action");
 
-    private String lastKey;
     public int currentFirstVisibleItem, currentVisibleItemCount, totalItem, currentScrollState;
+    private List<FirebaseMessageModel> tempMsg;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -182,11 +184,11 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
                 } else {
                     sendBottom.setVisibility(View.GONE);
                 }
+
                 currentScrollState = scrollState;
                 if (currentVisibleItemCount > 0 && currentScrollState == SCROLL_STATE_IDLE) {
                     if (currentFirstVisibleItem == 0) {
-                        firebaseHelper.getLastFiveMessages("single", chatKey, lastKey, 4);
-
+                        firebaseHelper.getNextNMessages("single", chatKey, messages.get(0).getId(), 4);
                     }
                 }
             }
@@ -273,7 +275,7 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
     protected void onStop() {
         super.onStop();
         unregisterReceiver(mReceiver);
-        firebaseHelper.toggleMsgEventListeners2("single", chatKey, commentValueEventListener,1 , false, false);
+        firebaseHelper.toggleMsgEventListeners("single", chatKey, commentValueEventListener,1 , false, false);
     }
 
     private void sendMessage(final String wishMessage){
@@ -408,7 +410,7 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
         }
     }
 
-    public void updateListView() {
+    public void updateListView(boolean scrollToBottom) {
         Log.i(TAG, "Inside prepareWishList()");
 
         int totalWishes = messages.size();
@@ -439,7 +441,7 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
         // Assign adapter to ListView
         listView.setAdapter(adapter);
 
-        listView.setSelection(listView.getCount() - 1);
+        if (scrollToBottom) listView.setSelection(listView.getCount() - 1);
 
         listView.requestFocus();
     }
@@ -489,10 +491,11 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
         if (tag.equals("createMessageEventListener")) {
             switch (condition) {
                 case FirebaseHelper.CONDITION_1 :
-                    //messages.clear();
                     break;
 
                 case FirebaseHelper.CONDITION_2 :
+                    updateListView(true);
+                    progressBar.toggleDialog(false);
                     break;
             }
         } else if (tag.equals("setUpSingleChat")) {
@@ -508,7 +511,7 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
 
                 case FirebaseHelper.CONDITION_2:
                     //String myKey = findChatKey(me, friend);
-                    firebaseHelper.toggleMsgEventListeners2("single", chatKey, commentValueEventListener, 1, true, false);
+                    firebaseHelper.toggleMsgEventListeners("single", chatKey, commentValueEventListener, 1, true, false);
                     String friendKey = findChatKey(friend, me);
                     btnInvite.setVisibility(View.GONE);
                     btnSend.setVisibility(View.VISIBLE);
@@ -578,12 +581,17 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
             progressBar.toggleDialog(false);
             textComment.setText("");
 
-        } else if (tag.equals("getLastFiveMessages")) {
+        }  else if (tag.equals("getNextFiveMessages")) {
             switch (condition) {
                 case FirebaseHelper.CONDITION_1 :
-                    lastKey = container.getString();
-                    updateListView();
+                    //lastKey = container.getString();
+                    Collections.reverse(tempMsg);
+                    for (FirebaseMessageModel fbm : tempMsg) {
+                        messages.add(0, fbm);
+                    }
+                    updateListView(false);
                     progressBar.toggleDialog(false);
+                    tempMsg = new ArrayList<>();
                     break;
             }
         }
@@ -595,8 +603,7 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
     public void onFailureTask(String tag, DatabaseError databaseError) {
         switch (tag) {
             case "createMessageEventListener" :
-                messages.clear();
-                updateListView();
+                updateListView(true);
                 progressBar.toggleDialog(false);
                 break;
 
@@ -628,9 +635,9 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
                             if ((!messages.get(messages.size()-1).getId().equals(firebaseMessageModel.getId())))
                                 messages.add(firebaseMessageModel);
                         } else {
-                            lastKey = firebaseMessageModel.getId();
                             messages.add(firebaseMessageModel);
-                            firebaseHelper.getLastFiveMessages("single", chatKey, lastKey, 6);
+                            tempMsg = new ArrayList<>();
+                            firebaseHelper.getNextNMessages("single", chatKey, firebaseMessageModel.getId(), 5);
                         }
                     }
                     break;
@@ -650,14 +657,11 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
                     me = container.getUserModel();
                     break;
             }
-        } else if (tag.equals("getLastFiveMessages")) {
+        }  else if (tag.equals("getNextFiveMessages")) {
             switch (condition) {
                 case FirebaseHelper.CONDITION_1 :
                     FirebaseMessageModel firebaseMessageModel = container.getMsgModel();
-                    if (!firebaseMessageModel.getId().equals(lastKey)) {
-                        lastKey = firebaseMessageModel.getId();
-                        messages.add(messages.size()-1,firebaseMessageModel);
-                    }
+                    tempMsg.add(firebaseMessageModel);
                     break;
             }
         }

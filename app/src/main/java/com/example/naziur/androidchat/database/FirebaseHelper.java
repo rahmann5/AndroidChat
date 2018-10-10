@@ -332,36 +332,40 @@ public class FirebaseHelper {
         });
     }
 
-    public void getLastFiveMessages(String child, String key, final String start, int amount) {
+    public void getNextNMessages (String child, String key, final String start, int amount) {
         Query query = FirebaseDatabase.getInstance().getReference("messages").child(child)
-                .child(key).endAt(start);
+                .child(key).orderByKey().endAt(start);
 
         query.limitToLast(amount).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                String key = start;
-                for (DataSnapshot child : dataSnapshot.getChildren()) {
-                    FirebaseMessageModel firebaseMessageModel = child.getValue(FirebaseMessageModel.class);
-                    key = child.getKey();
-                    firebaseMessageModel.setId(key);
-                    Container container = new Container();
-                    container.setMsgModel(firebaseMessageModel);
-
-                    listener.onChange("getLastFiveMessages", CONDITION_1, container);
+                if (dataSnapshot.exists()) {
+                    for (DataSnapshot child : dataSnapshot.getChildren()) {
+                        FirebaseMessageModel firebaseMessageModel = child.getValue(FirebaseMessageModel.class);
+                        if (!child.getKey().equals(start)) {
+                            firebaseMessageModel.setId(child.getKey());
+                            Container container = new Container();
+                            container.setMsgModel(firebaseMessageModel);
+                            listener.onChange("getNextFiveMessages", CONDITION_1, container);
+                        } else {
+                            break;
+                        }
+                    }
+                    listener.onCompleteTask("getNextFiveMessages", CONDITION_1, null);
+                } else {
+                    listener.onCompleteTask("getNextFiveMessages", CONDITION_2, null);
                 }
-                Container container = new Container();
-                container.setString(key);
-                listener.onCompleteTask("getLastFiveMessages", CONDITION_1, container);
             }
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
-                listener.onFailureTask("getLastFiveMessages", databaseError);
+                listener.onFailureTask("getNextFiveMessages", databaseError);
             }
         });
     }
 
-    public void toggleMsgEventListeners2 (String node, String chatKey, ValueEventListener commentValueEventListener, int amount ,boolean add, boolean single) {
+
+    public void toggleMsgEventListeners (String node, String chatKey, ValueEventListener commentValueEventListener, int amount ,boolean add, boolean single) {
         Query messagesRef = database.getReference("messages")
                 .child(node)
                 .child(chatKey)
@@ -376,18 +380,6 @@ public class FirebaseHelper {
             }
         } else {
             messagesRef.addListenerForSingleValueEvent(commentValueEventListener);
-        }
-    }
-
-    public void toggleMsgEventListeners (String node, String chatKey, ValueEventListener commentValueEventListener, boolean add) {
-        DatabaseReference messagesRef = database.getReference("messages")
-                .child(node)
-                .child(chatKey);
-        //Value event listener for realtime data update
-        if (add) {
-            messagesRef.addValueEventListener(commentValueEventListener);
-        } else {
-            messagesRef.removeEventListener(commentValueEventListener);
         }
     }
 
