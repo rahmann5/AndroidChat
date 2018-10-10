@@ -100,14 +100,6 @@ public class Network {
         return false;
     }
 
-    public static boolean isInForegroundAndInChatScreen(Context context){
-        if(isForeground(context)) {
-            System.out.println(context.getClass().getSimpleName() + " is being compared to " + ChatActivity.class.getSimpleName());
-            return context.getClass().getSimpleName().equals(ChatActivity.class.getSimpleName());
-        } else
-            return false;
-    }
-
     public static void deleteUploadImages (final FirebaseHelper firebaseHelper, final List<String> allUris, final String chatKey, final String loc) {
         if (!allUris.isEmpty()) {
             String uri = allUris.remove(0);

@@ -47,12 +47,22 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         intent.putExtra("tag",  remoteMessage.getNotification().getTag());
         intent.putExtra("title",  remoteMessage.getNotification().getTitle());
         Map<String, String> map = remoteMessage.getData();
-        /*JSONObject object = new JSONObject(map);
+        JSONObject object = new JSONObject(map);
         try {
-            intent.putExtra("singleChatKey", object.getString("chatKey") );
+            if(object.has("chatKey")) {
+                intent.putExtra("payLoad", object.getString("chatKey"));
+                intent.putExtra("key", "chatKey");
+            }else if(object.has("group_uid")) {
+                intent.putExtra("payLoad", object.getString("group_uid"));
+                intent.putExtra("key", "group_uid");
+            }else if(object.has("notification")) {
+                intent.putExtra("payLoad", object.getString("notification"));
+                intent.putExtra("key", "notification");
+            }
+
         } catch (JSONException e) {
             e.printStackTrace();
-        }*/
+        }
 
 
         sendOrderedBroadcast(intent,null);
