@@ -100,7 +100,7 @@ public class LoginActivity extends AppCompatActivity implements FirebaseHelper.F
                         @Override
                         public void onComplete(@NonNull Task<AuthResult> task) {
                             if (task.isSuccessful()) {
-                                firebaseHelper.autoLogin("users", mAuth.getCurrentUser().getUid() ,currentDeviceId, user);
+                                firebaseHelper.autoLogin("users", currentDeviceId, user);
                             } else {
                                 progressDialog.toggleDialog(false);
                                 Toast.makeText(LoginActivity.this, "Email provided does not match.", Toast.LENGTH_SHORT).show();
