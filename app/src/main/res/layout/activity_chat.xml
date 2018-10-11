@@ -128,7 +128,7 @@
         app:backgroundTint="@color/white"
         android:scaleType="center"
         android:src="@drawable/ic_bottom"
-
+        android:visibility="gone"
         />
 
 </RelativeLayout>
