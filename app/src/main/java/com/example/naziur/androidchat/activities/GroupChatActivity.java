@@ -84,6 +84,7 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
     private IntentFilter mFilter = new IntentFilter("my.custom.action");
     public int currentFirstVisibleItem, currentVisibleItemCount, totalItem, currentScrollState;
     private List<FirebaseMessageModel> tempMsg;
+    private boolean isScrolling = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -191,9 +192,12 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
                     sendBottom.setVisibility(View.GONE);
                 }
                 currentScrollState = scrollState;
-                if (currentVisibleItemCount > 0 && currentScrollState == SCROLL_STATE_IDLE) {
-                    if (currentFirstVisibleItem == 0) {
-                        firebaseHelper.getNextNMessages("group", groupKey, messages.get(0).getId(), 4);
+                if (!isScrolling) {
+                    if (currentVisibleItemCount > 0 && currentScrollState == SCROLL_STATE_IDLE) {
+                        if (currentFirstVisibleItem == 0) {
+                            firebaseHelper.getNextNMessages("group", groupKey, messages.get(0).getId(), 4);
+                            isScrolling = true;
+                        }
                     }
                 }
             }
@@ -492,8 +496,6 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
                     case FirebaseHelper.CONDITION_2:
                         progressBar.toggleDialog(false);
                         Toast.makeText(this, "This group has been deleted." , Toast.LENGTH_LONG).show();
-                        //firebaseHelper.toggleMsgEventListeners("group", groupKey, msgValueEventListener, false);
-                        //firebaseHelper.toggleListenerFor("groups", "groupKey", groupKey, groupListener, false, false);
                         finish();
                         break;
                 }
@@ -544,6 +546,7 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
                         updateListView(false);
                         progressBar.toggleDialog(false);
                         tempMsg = new ArrayList<>();
+                        isScrolling = false;
                         break;
                 }
                 break;
@@ -560,11 +563,15 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
                 progressBar.toggleDialog(false);
                 break;
             case "createMessageEventListener":
-                updateListView(true);
+                //updateListView(true);
                 progressBar.toggleDialog(false);
                 break;
             case "updateGroupMembers":
                 Toast.makeText(this, "Failed to become admin", Toast.LENGTH_SHORT).show();
+                break;
+            case "getNextFiveMessages" :
+                isScrolling = false;
+                progressBar.toggleDialog(false);
                 break;
         }
         Log.i(TAG, tag+" "+databaseError.getMessage());

@@ -42,7 +42,7 @@
 
         <receiver android:name=".utils.MyReceiver">
             <intent-filter android:priority="200">
-                <action android:name="my.custom.action"/>
+                <action android:name="my.custom.action" />
             </intent-filter>
         </receiver>
 
@@ -105,8 +105,10 @@
             android:name=".activities.AboutActivity"
             android:label=""
             android:theme="@style/AppTheme.Transparent" />
-        <activity android:name=".activities.RegisterActivity"
-            android:theme="@style/AppTheme.NoActionBar"/>
+        <activity
+            android:name=".activities.RegisterActivity"
+            android:theme="@style/AppTheme.NoActionBar" />
+        <activity android:name=".activities.TestBedActivity"></activity>
     </application>
 
 </manifest>

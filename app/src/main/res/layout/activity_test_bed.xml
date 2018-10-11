@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <Button
+        android:id="@+id/login"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Login"
+        android:layout_alignParentTop="true"/>
+
+    <Button
+        android:id="@+id/logout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Logout"
+        android:layout_alignParentRight="true"/>
+
+   <LinearLayout
+       android:layout_centerInParent="true"
+       android:layout_width="match_parent"
+       android:layout_height="wrap_content"
+       android:orientation="vertical">
+
+       <TextView
+           android:id="@+id/complete"
+           android:layout_width="wrap_content"
+           android:layout_height="wrap_content"
+           android:text="OnComplete"
+           android:layout_margin="5dp"/>
+
+       <TextView
+           android:id="@+id/fail"
+           android:layout_width="wrap_content"
+           android:layout_height="wrap_content"
+           android:text="OnFailure"
+           android:layout_margin="5dp"/>
+
+       <TextView
+           android:id="@+id/change"
+           android:layout_width="wrap_content"
+           android:layout_height="wrap_content"
+           android:text="OnChange"
+           android:layout_margin="5dp"/>
+
+   </LinearLayout>
+
+    <Button
+        android:id="@+id/run"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="RUN"
+        android:layout_alignParentBottom="true"/>
+
+</RelativeLayout>
