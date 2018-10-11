@@ -108,7 +108,6 @@
         <activity
             android:name=".activities.RegisterActivity"
             android:theme="@style/AppTheme.NoActionBar" />
-        <activity android:name=".activities.TestBedActivity"></activity>
     </application>
 
 </manifest>
