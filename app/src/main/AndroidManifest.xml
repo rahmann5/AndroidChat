@@ -99,8 +99,7 @@
                 android:value="com.example.naziur.androidchat.activities.SessionActivity" />
         </activity>
         <activity
-            android:name=".activities.MemberSelectorActivity"
-            android:label="@string/title_select_member" />
+            android:name=".activities.MemberSelectorActivity" />
         <activity
             android:name=".activities.AboutActivity"
             android:label=""

@@ -84,19 +84,19 @@ public class MyContactsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
     }
 
     public void addNewItem(FirebaseUserModel fbModel){
-        if (!isExists(fbModel)) {
+        if (isExists(fbModel) == -1) {
             allMyContacts.add(new Contact(fbModel));
             notifyDataSetChanged();
         }
     }
 
-    private boolean isExists (FirebaseUserModel fbModel) {
-        for (Contact c : allMyContacts) {
-            if (c.getContact().getUsername().equals(fbModel.getUsername())){
-                return true;
+    private int isExists (FirebaseUserModel fbModel) {
+        for (int i = 0; i < allMyContacts.size(); i++) {
+            if (allMyContacts.get(i).getContact().getUsername().equals(fbModel.getUsername())){
+                return i;
             }
         }
-        return false;
+        return -1;
     }
 
     private static class MyContactViewHolder extends RecyclerView.ViewHolder {

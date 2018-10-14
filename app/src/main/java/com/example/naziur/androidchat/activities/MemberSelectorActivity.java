@@ -30,30 +30,42 @@ import com.example.naziur.androidchat.models.FirebaseUserModel;
 import com.example.naziur.androidchat.models.User;
 import com.example.naziur.androidchat.utils.Container;
 import com.example.naziur.androidchat.utils.Network;
+import com.example.naziur.androidchat.utils.ProgressDialog;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.ValueEventListener;
+
+import org.json.JSONArray;
+import org.json.JSONException;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class MemberSelectorActivity extends AppCompatActivity implements FirebaseHelper.FirebaseHelperListener, MyContactsAdapter.OnItemClickListener,  AddContactDialogFragment.ContactDialogListener{
+public class MemberSelectorActivity extends AuthenticatedActivity implements FirebaseHelper.FirebaseHelperListener, MyContactsAdapter.OnItemClickListener,  AddContactDialogFragment.ContactDialogListener{
     private static final String TAG = "MemberSelectorActivity";
+    private User user = User.getInstance();
     private FirebaseHelper firebaseHelper;
     private LinearLayout emptyState;
     private MyContactsAdapter myContactsAdapter;
     private ArrayList<String> selectedContacts;
     private String [] currentMembers;
-
+    private boolean blockListMode = false;
+    private RecyclerView myContactsRecycler;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_my_contacts);
         Bundle extra = getIntent().getExtras();
         if (extra != null) {
-            if (extra.getString("current_members") != null && !extra.getString("current_members").equals("") ){
-                currentMembers = extra.getString("current_members").split(",");
+            if (extra.getString("current_members") != null){
+                if (extra.getString("current_members").equals("")) {
+                    currentMembers = extra.getString("current_members").split(",");
+                }
+            } else if (extra.getString("block_list") != null ) {
+                blockListMode = true;
+            } else {
+                finish();
             }
         }
         firebaseHelper = FirebaseHelper.getInstance();
@@ -67,7 +79,22 @@ public class MemberSelectorActivity extends AppCompatActivity implements Firebas
                 showContctsDialog();
             }
         });
-        loadContacts ();
+        myContactsRecycler = (RecyclerView) findViewById(R.id.contacts_recycler);
+        LinearLayoutManager mLayoutManager = new LinearLayoutManager(this);
+        myContactsRecycler.setLayoutManager(mLayoutManager);
+        DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(this,
+                mLayoutManager.getOrientation());
+        myContactsRecycler.addItemDecoration(dividerItemDecoration);
+        if (blockListMode) {
+            floatingActionButton.setVisibility(View.GONE);
+            if (!Network.isInternetAvailable(this, true)) {
+                return;
+            }
+            createSingleEvent(user.name, FirebaseHelper.CONDITION_2); // load block listed users
+        } else {
+            loadContacts ();
+        }
+
         createActionBar ();
     }
 
@@ -79,12 +106,6 @@ public class MemberSelectorActivity extends AppCompatActivity implements Firebas
 
     private void loadContacts () {
         ContactDBHelper db = new ContactDBHelper(getApplicationContext());
-        RecyclerView myContactsRecycler = (RecyclerView) findViewById(R.id.contacts_recycler);
-        LinearLayoutManager mLayoutManager = new LinearLayoutManager(this);
-        myContactsRecycler.setLayoutManager(mLayoutManager);
-        DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(this,
-                mLayoutManager.getOrientation());
-        myContactsRecycler.addItemDecoration(dividerItemDecoration);
 
         Cursor c = db.getAllMyContacts(null);
         List<Contact> allContacts = new ArrayList<>();
@@ -94,10 +115,9 @@ public class MemberSelectorActivity extends AppCompatActivity implements Firebas
                if (!isAlreadyMember(username)) {
                    FirebaseUserModel fbModel = new FirebaseUserModel();
                    fbModel.setUsername(username);
-                   fbModel.setProfileName(c.getString(c.getColumnIndex(MyContactsContract.MyContactsContractEntry.COLUMN_PROFILE)));
-                   fbModel.setProfilePic(c.getString(c.getColumnIndex(MyContactsContract.MyContactsContractEntry.COLUMN_PROFILE_PIC)));
-
-                   allContacts.add(new Contact(fbModel));
+                   String profileName = c.getString(c.getColumnIndex(MyContactsContract.MyContactsContractEntry.COLUMN_PROFILE));
+                   String profilePic = c.getString(c.getColumnIndex(MyContactsContract.MyContactsContractEntry.COLUMN_PROFILE_PIC));
+                   allContacts.add(new Contact(createFirebaseUserModel(username, profileName, profilePic)));
                }
 
            }
@@ -116,10 +136,24 @@ public class MemberSelectorActivity extends AppCompatActivity implements Firebas
         } else {
             emptyState.setVisibility(View.GONE);
         }
+
+    }
+
+    private FirebaseUserModel createFirebaseUserModel(String username, String profileName, String profilePic) {
+        FirebaseUserModel fbModel = new FirebaseUserModel();
+        fbModel.setUsername(username);
+        fbModel.setProfileName(profileName);
+        fbModel.setProfilePic(profilePic);
+        return fbModel;
     }
 
     private void createActionBar () {
         ActionBar actionBar = getSupportActionBar();
+        if (blockListMode) {
+            actionBar.setTitle(getResources().getString(R.string.title_block_list));
+        } else {
+            actionBar.setTitle(getResources().getString(R.string.title_select_member));
+        }
         actionBar.setDisplayOptions(ActionBar.DISPLAY_HOME_AS_UP| ActionBar.DISPLAY_SHOW_TITLE| ActionBar.DISPLAY_SHOW_CUSTOM);
         ImageView imageView = new ImageView(actionBar.getThemedContext());
         imageView.setScaleType(ImageView.ScaleType.CENTER);
@@ -133,10 +167,18 @@ public class MemberSelectorActivity extends AppCompatActivity implements Firebas
         imageView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent data = new Intent();
-                data.putStringArrayListExtra("members", selectedContacts);
-                setResult(RESULT_OK,data);
-                finish();
+                if (Network.isInternetAvailable(MemberSelectorActivity.this, true)) {
+                    if (!blockListMode) {
+                        Intent data = new Intent();
+                        data.putStringArrayListExtra("members", selectedContacts);
+                        setResult(RESULT_OK,data);
+                        finish();
+                    } else {
+                        firebaseHelper.updateBlockList(selectedContacts.toArray(new String[selectedContacts.size()]), false);
+                    }
+                }
+
+
             }
         });
     }
@@ -180,15 +222,18 @@ public class MemberSelectorActivity extends AppCompatActivity implements Firebas
             return;
         }
 
-        User user = User.getInstance();
         ContactDBHelper db = new ContactDBHelper(getApplicationContext());
         if(!db.isUserAlreadyInContacts(username) && !username.equals(user.name) && !isAlreadyMember(username)){
-            ValueEventListener valueEventListener = firebaseHelper.getValueEventListener(username,
-                    FirebaseHelper.NON_CONDITION, FirebaseHelper.NON_CONDITION, FirebaseHelper.CONDITION_1, FirebaseUserModel.class);
-            firebaseHelper.toggleListenerFor("users", "username", username, valueEventListener, true, true);
+            createSingleEvent(username, FirebaseHelper.CONDITION_1);
         } else {
             Toast.makeText(MemberSelectorActivity.this, "User cannot be added as they may already exist or it is your username", Toast.LENGTH_LONG).show();
         }
+    }
+
+    private void createSingleEvent (String target, int condition) {
+        ValueEventListener valueEventListener = firebaseHelper.getValueEventListener(target,
+                FirebaseHelper.NON_CONDITION, FirebaseHelper.NON_CONDITION, condition, FirebaseUserModel.class);
+        firebaseHelper.toggleListenerFor("users", "username", target, valueEventListener, true, true);
     }
 
     @Override
@@ -205,8 +250,46 @@ public class MemberSelectorActivity extends AppCompatActivity implements Firebas
                     myContactsAdapter.addNewItem(fbModel);
                     toggleEmptyState();
                     break;
+
+                case FirebaseHelper.CONDITION_2 :
+                    ContactDBHelper db = new ContactDBHelper(getApplicationContext());
+                    FirebaseUserModel userModel = (FirebaseUserModel) container.getObject();
+                    List<Contact> allContacts = new ArrayList<>();
+                    try {
+                        JSONArray blockedUsers = new JSONArray(userModel.getBlockedUsers());
+                        for (int i = 0 ; i < blockedUsers.length(); i++) {
+                            String username = blockedUsers.getString(i);
+                            if (db.isUserAlreadyInContacts(username)) {
+                                String [] userInfo = db.getProfileNameAndPic(username);
+                                allContacts.add(new Contact(createFirebaseUserModel(username, userInfo[0], userInfo[1])));
+                            } else {
+                                createSingleEvent(username, FirebaseHelper.CONDITION_3);
+                            }
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                    myContactsAdapter = new MyContactsAdapter(this, allContacts, this);
+                    myContactsRecycler.setAdapter(myContactsAdapter);
+                    toggleEmptyState();
+                    db.close();
+                    break;
+
+                case FirebaseHelper.CONDITION_3 :
+                    FirebaseUserModel uModel = (FirebaseUserModel) container.getObject();
+                    myContactsAdapter.addNewItem(uModel);
+                    toggleEmptyState();
+                    break;
+            }
+        } else if (tag.equals("updateBlockList")) {
+            switch (condition){
+                case FirebaseHelper.CONDITION_1 :
+                    Toast.makeText(this, "Successfully updated block list", Toast.LENGTH_SHORT).show();
+                    finish();
+                    break;
             }
         }
+
     }
 
     @Override

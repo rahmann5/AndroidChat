@@ -17,6 +17,9 @@ public class FirebaseUserModel {
     String status = "";
     String chatKeys = "";
     String groupKeys = "";
+    String blockedUsers = "";
+
+    Boolean online = false;
 
     public FirebaseUserModel() {
       /*Blank default constructor essential for Firebase*/
@@ -84,6 +87,22 @@ public class FirebaseUserModel {
 
     public void setProfilePic(String profilePic) {
         this.profilePic = profilePic;
+    }
+
+    public String getBlockedUsers() {
+        return blockedUsers;
+    }
+
+    public void setBlockedUsers(String blockedUsers) {
+        this.blockedUsers = blockedUsers;
+    }
+
+    public Boolean getOnline() {
+        return online;
+    }
+
+    public void setOnline(Boolean online) {
+        this.online = online;
     }
 
 }

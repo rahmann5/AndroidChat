@@ -27,6 +27,7 @@ import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.RequestParams;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
@@ -276,6 +277,22 @@ public class Network {
         }
         db.close();
         return newMembersList;
+    }
+
+    public static boolean isBlockListed (String username, String blockList) {
+        if (!blockList.equals("")) {
+            try {
+                JSONArray jsonArray = new JSONArray(blockList);
+                for (int i = 0; i < jsonArray.length(); i++) {
+                    if (jsonArray.getString(i).equals(username)) {
+                        return true;
+                    }
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+        return false;
     }
 
 }

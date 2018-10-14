@@ -36,6 +36,9 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -55,6 +58,7 @@ public class ChatDetailActivity extends AuthenticatedActivity implements Firebas
     private AllGroupsAdapter groupsAdapter;
     private List<String> groupKeys;
     private TextView emptyGroupsList;
+    private boolean isBlockListed = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -139,7 +143,7 @@ public class ChatDetailActivity extends AuthenticatedActivity implements Firebas
     }
 
     private void getGroupInfo (String key) {
-        ValueEventListener userListener = firebaseHelper.getValueEventListener(key, FirebaseHelper.CONDITION_3 , FirebaseHelper.CONDITION_4, FirebaseHelper.NON_CONDITION, FirebaseGroupModel.class);
+        ValueEventListener userListener = firebaseHelper.getValueEventListener(key, FirebaseHelper.CONDITION_3 , FirebaseHelper.CONDITION_2, FirebaseHelper.NON_CONDITION, FirebaseGroupModel.class);
         firebaseHelper.toggleListenerFor("groups", "groupKey" , key, userListener, true, true); //  single event
     }
 
@@ -190,14 +194,15 @@ public class ChatDetailActivity extends AuthenticatedActivity implements Firebas
             userBeingViewed.setStatus(getResources().getString(R.string.status_available));
             putUserData();
         } else if(notExistsInServer){
-            Toast.makeText(this, "This userBeingViewed may not exist anymore", Toast.LENGTH_SHORT);
+            Toast.makeText(this, "This user being viewed may not exist anymore", Toast.LENGTH_SHORT);
             finish();
         }
     }
 
     private void getUsersInformationOnline() {
         progressBar.toggleDialog(true);
-        firebaseHelper.getOnlineInfoForUser(userBeingViewed.getUsername());
+        ValueEventListener valueEventListener = firebaseHelper.getValueEventListener(userBeingViewed.getUsername(), FirebaseHelper.NON_CONDITION, FirebaseHelper.CONDITION_4, FirebaseHelper.CONDITION_3, FirebaseUserModel.class);
+        firebaseHelper.toggleListenerFor("users", "username", userBeingViewed.getUsername(), valueEventListener, true, true);
     }
 
     @Override
@@ -212,6 +217,7 @@ public class ChatDetailActivity extends AuthenticatedActivity implements Firebas
         TextView statusTv = (TextView) findViewById(R.id.status_tv);
         ImageView profilePicIv = (ImageView) findViewById(R.id.expandedImage);
         LinearLayout spamButton = (LinearLayout) findViewById(R.id.spam_button);
+        LinearLayout blockButton = (LinearLayout) findViewById(R.id.block_button);
         usernameTv.setText("Username: " + userBeingViewed.getUsername());
         profileTv.setText("Profile Name: " + userBeingViewed.getProfileName());
         statusTv.setText("Status: " + userBeingViewed.getStatus());
@@ -222,16 +228,27 @@ public class ChatDetailActivity extends AuthenticatedActivity implements Firebas
                 openEmailToReportSpam();
             }
         });
-
+        blockButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (!isBlockListed) {
+                    firebaseHelper.updateBlockList(new String[] {userBeingViewed.getUsername()}, true);
+                } else {
+                    Toast.makeText(ChatDetailActivity.this, getResources().getString(R.string.block_list_msg_block_them), Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
         mToolbar.setTitle(userBeingViewed.getProfileName());
         setSupportActionBar(mToolbar);
         getSupportActionBar().setDisplayShowTitleEnabled(true);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         invalidateOptionsMenu();
         Glide.with(ChatDetailActivity.this).load(userBeingViewed.getProfilePic()).apply(new RequestOptions().placeholder(R.drawable.placeholder).error(R.drawable.unknown)).into(profilePicIv);
+        progressBar.toggleDialog(false);
     }
 
     private void openEmailToReportSpam(){
+        controlOffline = false;
         Intent intent = new Intent(Intent.ACTION_VIEW);
         Uri data = Uri.parse("mailto:?subject=" + "Spam Report by"+ user.profileName +" ("+user.name+")" + "&body=" + userBeingViewed.getUsername()+" has been spamming me and would like you to take action immediately" + "&to=" +  "johnB1994@hotmail.co.uk");
         intent.setData(data);
@@ -265,11 +282,10 @@ public class ChatDetailActivity extends AuthenticatedActivity implements Firebas
             case "getOnlineInfoForUser":
                 switch(condition){
                     case FirebaseHelper.CONDITION_1:
-                        userBeingViewed = container.getUserModel();
-                        putUserData();
+
                         break;
                     case FirebaseHelper.CONDITION_2:
-                        getUsersInformationOffline(true);
+
                         break;
                 }
                 progressBar.toggleDialog(false);
@@ -277,13 +293,32 @@ public class ChatDetailActivity extends AuthenticatedActivity implements Firebas
 
             case "getValueEventListener":
                 switch (condition) {
-                    case FirebaseHelper.CONDITION_4 :
+                    case FirebaseHelper.CONDITION_2 :
                         int index = groupKeys.indexOf(container.getString());
                         if (index == groupKeys.size()-1) {
                             toggleEmptyState();
                         } else {
                             getGroupInfo(groupKeys.get(index + 1));
                         }
+                        break;
+                    case FirebaseHelper.CONDITION_3 :
+                        FirebaseUserModel userModel = (FirebaseUserModel) container.getObject();
+                        if (userModel.getUsername().equals(userBeingViewed.getUsername())) {
+                            userBeingViewed = userModel;
+                            putUserData();
+                        }
+                        break;
+                    case FirebaseHelper.CONDITION_4 :
+                        getUsersInformationOffline(true);
+                        break;
+                }
+                break;
+
+            case "updateBlockList" :
+                switch (condition) {
+                    case FirebaseHelper.CONDITION_1 :
+                        isBlockListed = true;
+                        Toast.makeText(this, "Successfully added " + userBeingViewed.getUsername() + " to block list", Toast.LENGTH_SHORT).show();
                         break;
                 }
                 break;
@@ -295,10 +330,10 @@ public class ChatDetailActivity extends AuthenticatedActivity implements Firebas
         switch (tag){
             case "getOnlineInfoForUser":
                 Toast.makeText(ChatDetailActivity.this, "Failed to retrieve latest information", Toast.LENGTH_SHORT).show();
-                Log.i(TAG, tag+": "+databaseError.getMessage());
                 progressBar.toggleDialog(false);
                 break;
         }
+        Log.i(TAG, tag+": "+databaseError.getMessage());
     }
 
     @Override
@@ -308,6 +343,7 @@ public class ChatDetailActivity extends AuthenticatedActivity implements Firebas
                 switch (condition) {
                     case FirebaseHelper.CONDITION_1 :
                         FirebaseUserModel currentUser = (FirebaseUserModel) container.getObject();
+                        isBlockListed = Network.isBlockListed(userBeingViewed.getUsername(), currentUser.getBlockedUsers());
                         String[] allKeys = currentUser.getGroupKeys().split(",");
                         for(String key: allKeys){
                             if(!key.equals(""))

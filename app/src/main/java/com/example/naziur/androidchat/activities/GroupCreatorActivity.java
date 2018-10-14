@@ -82,6 +82,7 @@ public class GroupCreatorActivity extends AuthenticatedActivity implements Fireb
     private CircleImageView groupImage;
     private ProgressDialog progressBar;
     private FirebaseHelper firebaseHelper;
+    private FirebaseGroupModel groupModel;
 
     @Override
     public void onCompleteTask(String tag, int condition, Container container) {
@@ -106,7 +107,7 @@ public class GroupCreatorActivity extends AuthenticatedActivity implements Fireb
                     case FirebaseHelper.CONDITION_1:
                         String title = container.getString().split(",")[0];
                         String uniqueID = container.getString().split(",")[1];
-                        firebaseHelper.getDeviceTokensFor(getAllMembersTogether(), title, uniqueID);
+                        sendAdminMsg(container.getJsonArray(), title, uniqueID);
                         break;
                 }
                 break;
@@ -123,9 +124,17 @@ public class GroupCreatorActivity extends AuthenticatedActivity implements Fireb
             case "getDeviceTokensFor":
                 switch(condition){
                     case FirebaseHelper.CONDITION_1:
-                        String title = container.getString().split(",")[0];
-                        String uniqueID = container.getString().split(",")[1];
-                        sendAdminMsg(container.getJsonArray(), title, uniqueID);
+                        List<String> addMembers = container.getStringList();
+                        if (addMembers.size() != (membersSelectedFromContacts.size() + newUsersNotInContacts.size())) {
+                            Toast.makeText(this, "Not all members could be added.", Toast.LENGTH_SHORT).show();
+                        }
+                        if (addMembers.size() > 0) {
+                            groupModel.setMembers(getAllMembersAsString(addMembers));
+                            firebaseHelper.createGroup(groupModel, container.getJsonArray());
+                        } else {
+                            progressBar.toggleDialog(false);
+                            Toast.makeText(this, "No members found.", Toast.LENGTH_LONG).show();
+                        }
                         break;
                 }
                 break;
@@ -250,6 +259,7 @@ public class GroupCreatorActivity extends AuthenticatedActivity implements Fireb
         groupImage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                controlOffline = false;
                 EasyImage.openChooserWithGallery(GroupCreatorActivity.this, getResources().getString(R.string.group_gallery_chooser), REQUEST_CODE_GALLERY_CAMERA);
             }
         });
@@ -281,7 +291,7 @@ public class GroupCreatorActivity extends AuthenticatedActivity implements Fireb
                 if(membersSelectedFromContacts.size() > 0 || newUsersNotInContacts.size() > 0){
                     progressBar.toggleDialog(true);
                     if(myImageFile == null){
-                        createGroupNode(title, "");
+                        groupModel = createGroupNode(title, "");
                     } else {
                         uploadImageThenCreateNode(title);
                     }
@@ -313,7 +323,7 @@ public class GroupCreatorActivity extends AuthenticatedActivity implements Fireb
                         @SuppressWarnings("VisibleForTests")
                         Uri downloadUrl = taskSnapshot.getDownloadUrl();
                         if(downloadUrl != null)
-                            createGroupNode(title, downloadUrl.toString());
+                            groupModel = createGroupNode(title, downloadUrl.toString());
                         else
                             progressBar.toggleDialog(false);
                     }
@@ -329,15 +339,17 @@ public class GroupCreatorActivity extends AuthenticatedActivity implements Fireb
     }
 
 
-    private void createGroupNode(final String title, String imgUrl){
+    private FirebaseGroupModel createGroupNode(final String title, String imgUrl){
         final String uniqueID = System.currentTimeMillis()+getRandomCharactersForKey();
         FirebaseGroupModel firebaseGroupModel = new FirebaseGroupModel();
         firebaseGroupModel.setTitle(title);
         firebaseGroupModel.setAdmin(user.name);
         firebaseGroupModel.setPic(imgUrl);
         firebaseGroupModel.setGroupKey(uniqueID);
-        firebaseGroupModel.setMembers(getAllMembersAsString());
-        firebaseHelper.createGroup(firebaseGroupModel);
+        firebaseGroupModel.setMembers(getAllMembersAsString(getAllMembersTogether()));
+        firebaseHelper.getDeviceTokensFor(getAllMembersTogether(), title, uniqueID, false);
+        return firebaseGroupModel;
+        //firebaseHelper.createGroup(firebaseGroupModel);
     }
 
     private void sendAdminMsg(JSONArray membersDeviceTokens, String title, final String uniqueId){
@@ -345,9 +357,8 @@ public class GroupCreatorActivity extends AuthenticatedActivity implements Fireb
         firebaseHelper.updateMessageNode(this, "group", uniqueId, inviteMessage, null, Constants.MESSAGE_TYPE_SYSTEM,membersDeviceTokens, title);
     }
 
-    private String getAllMembersAsString(){
+    private String getAllMembersAsString(List<String> allMembers){
         String members = "";
-        List<String> allMembers = getAllMembersTogether();
         int i = 0;
         for(String user : allMembers){
             members += user;

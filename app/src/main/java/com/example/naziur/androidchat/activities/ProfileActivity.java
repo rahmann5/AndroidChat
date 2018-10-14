@@ -128,7 +128,8 @@ public class ProfileActivity extends AuthenticatedActivity implements FirebaseHe
         updatePic.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                EasyImage.openChooserWithGallery(ProfileActivity.this, getResources().getString(R.string.gallery_chooser), REQUEST_CODE_GALLERY_CAMERA);
+            controlOffline = false;
+            EasyImage.openChooserWithGallery(ProfileActivity.this, getResources().getString(R.string.gallery_chooser), REQUEST_CODE_GALLERY_CAMERA);
             }
         });
 

@@ -15,18 +15,56 @@ import android.view.MenuItem;
 import android.widget.Toast;
 
 import com.example.naziur.androidchat.R;
+import com.example.naziur.androidchat.database.FirebaseHelper;
 import com.example.naziur.androidchat.models.User;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import java.util.List;
 
 public class SettingsActivity extends AppCompatPreferenceActivity {
-
+    public static final int UNBLOCK_REQUEST_CODE = 1;
+    protected DatabaseReference database;
+    protected FirebaseAuth mAuth;
+    private static boolean controlOffline = false;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        mAuth = FirebaseAuth.getInstance();
+        database= FirebaseHelper.setOnlineStatusListener(mAuth.getCurrentUser().getUid(), false);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (controlOffline)
+        database.child("online").setValue(false);
+
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        checkUserAuthenticated ();
+        controlOffline = true;
+    }
+
+
+    private void checkUserAuthenticated () {
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+        if (currentUser == null) {
+            startActivity(new Intent(this, LoginActivity.class).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK));
+            finish();
+        } else {
+            database.child("online").setValue(true);
+        }
     }
 
     /**
@@ -43,12 +81,6 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
             return true;
         }
     };
-
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        return super.onCreateOptionsMenu(menu);
-    }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -119,6 +151,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
                 || SettingsActivity.AboutPreferenceFragment.class.getName().equals(fragmentName);
     }
 
+
     /**
      * This fragment shows general preferences only. It is used when the
      * activity is showing a two-pane settings UI.
@@ -139,7 +172,9 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
             Preference blockListPref = findPreference(getString(R.string.key_block_list));
             blockListPref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
                 public boolean onPreferenceClick(Preference preference) {
-                    Toast.makeText(getActivity(), "Showing block list", Toast.LENGTH_SHORT).show();
+                    Intent intent = new Intent(getActivity(), MemberSelectorActivity.class);
+                    intent.putExtra("block_list", "true");
+                    startActivityForResult(intent, UNBLOCK_REQUEST_CODE);
                     return true;
                 }
             });
@@ -156,13 +191,14 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
             logoutPref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
                 public boolean onPreferenceClick(Preference preference) {
                     FirebaseAuth mAuth = FirebaseAuth.getInstance();
+                    FirebaseHelper.setOnlineStatusListener(mAuth.getCurrentUser().getUid(), true);
                     mAuth.signOut();
                     startActivity(new Intent(getActivity(), LoginActivity.class).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK));
-                    getActivity().finish();
                     return true;
                 }
             });
         }
+
 
     }
 
@@ -195,6 +231,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
             Preference reportIssue = findPreference(getString(R.string.key_report_issue));
             reportIssue.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
                 public boolean onPreferenceClick(Preference preference) {
+                    controlOffline = false;
                     User user = User.getInstance();
                     Intent intent = new Intent(Intent.ACTION_VIEW);
                     Uri data = Uri.parse("mailto:?subject=" + "Error Reporting by "+ user.profileName +" ("+user.name+")" + "&to=" +  "johnB1994@hotmail.co.uk");
@@ -230,6 +267,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
             sharePref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
                 @Override
                 public boolean onPreferenceClick(Preference preference) {
+                    controlOffline = false;
                     Intent sharingIntent = new Intent(android.content.Intent.ACTION_SEND);
                     sharingIntent.setType("text/plain");
                     String shareBodyText = "Check it out. Android Chat (Place URL Here)";
@@ -244,6 +282,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
             faqPref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
                 @Override
                 public boolean onPreferenceClick(Preference preference) {
+                    controlOffline = false;
                     Uri newsUri = Uri.parse("https://tutoriallibrary.000webhostapp.com/faqs");
                     Intent websiteIntent = new Intent(Intent.ACTION_VIEW, newsUri);
                     startActivity(websiteIntent);
@@ -254,6 +293,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
             tAndCPref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
                 @Override
                 public boolean onPreferenceClick(Preference preference) {
+                    controlOffline = false;
                     Uri newsUri = Uri.parse("https://tutoriallibrary.000webhostapp.com/legal/1");
                     Intent websiteIntent = new Intent(Intent.ACTION_VIEW, newsUri);
                     startActivity(websiteIntent);
@@ -264,6 +304,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
             privacyPref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
                 @Override
                 public boolean onPreferenceClick(Preference preference) {
+                    controlOffline = false;
                     Uri newsUri = Uri.parse("https://tutoriallibrary.000webhostapp.com/legal/0");
                     Intent websiteIntent = new Intent(Intent.ACTION_VIEW, newsUri);
                     startActivity(websiteIntent);

@@ -31,6 +31,7 @@ import com.loopj.android.http.RequestParams;
 import com.loopj.android.http.TextHttpResponseHandler;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -76,6 +77,33 @@ public class FirebaseHelper {
 
     public void setFirebaseHelperListener (FirebaseHelperListener fbListener) {
         listener = fbListener;
+    }
+
+    public static DatabaseReference setOnlineStatusListener (String uid, final boolean single) {
+        final DatabaseReference databaseRef = database.getReference().child("users").child(uid);
+        ValueEventListener v =new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if (dataSnapshot !=  null) {
+                    if (single) {
+                        databaseRef.child("online").setValue(false);
+                    } else {
+                        databaseRef.child("online").onDisconnect().setValue(false);
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        };
+        if (single) {
+            databaseRef.addListenerForSingleValueEvent(v);
+        } else {
+            databaseRef.addValueEventListener(v);
+        }
+        return databaseRef;
     }
 
     public void updateUserDeviceToken (final String strToken) {
@@ -286,52 +314,6 @@ public class FirebaseHelper {
         };
     }
 
-    // get users and contacts latest chat keys (needs to be optimised)
-    public void setUpSingleChat(String node, final String friendUsername, final String usersUsername) {
-        DatabaseReference usersRef = database.getReference(node);
-        usersRef.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(com.google.firebase.database.DataSnapshot dataSnapshot) {
-                FirebaseUserModel friend = null;
-                FirebaseUserModel me = null;
-                for (com.google.firebase.database.DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
-                    System.out.println("Child: " + postSnapshot);
-                    //Getting the data from snapshot
-                    FirebaseUserModel firebaseUserModel = postSnapshot.getValue(FirebaseUserModel.class);
-                    Container container = new Container();
-                    container.setUserModel(firebaseUserModel);
-                    if (firebaseUserModel.getUsername().equals(friendUsername)) {
-                        friend = firebaseUserModel;
-                        listener.onChange("setUpSingleChat", CONDITION_1, container);
-                    } else if (firebaseUserModel.getUsername().equals(usersUsername)) {
-                        me = firebaseUserModel;
-                        listener.onChange("setUpSingleChat", CONDITION_2, container);
-                    }
-
-                    if (me != null && friend != null) {
-                        break;
-                    }
-                }
-
-                listener.onCompleteTask("setUpSingleChat", CONDITION_1, null);
-                if (me != null && friend != null) {
-                    Container container = new Container();
-                    container.setUserModel(me);
-                    container.setContact(new Contact(friend));
-                    listener.onCompleteTask("setUpSingleChat", CONDITION_2, container);
-                } else {
-                    listener.onCompleteTask("setUpSingleChat", CONDITION_3, null);
-                }
-
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-                listener.onFailureTask("setUpSingleChat", databaseError);
-            }
-        });
-    }
-
     public void getNextNMessages (String child, String key, final String start, int amount) {
         Query query = FirebaseDatabase.getInstance().getReference("messages").child(child)
                 .child(key).orderByKey().endAt(start);
@@ -388,9 +370,11 @@ public class FirebaseHelper {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 boolean found = false;
+                Container container = new Container();
                 if(dataSnapshot.exists()){
                     for(DataSnapshot snapshot : dataSnapshot.getChildren()){
                         FirebaseUserModel firebaseUserModel = snapshot.getValue(FirebaseUserModel.class);
+                        container.setUserModel(firebaseUserModel);
                         List<String> list = Arrays.asList(firebaseUserModel.getChatKeys().split(","));
                         if (list.contains(msgId)) {
                             found = true;
@@ -401,7 +385,6 @@ public class FirebaseHelper {
                 }
 
                 if (!found) {
-                    Container container = new Container();
                     container.setString(msgId);
                     listener.onCompleteTask("checkKeyListKey", myCondition2, container);
                 }
@@ -968,34 +951,7 @@ public class FirebaseHelper {
         return newKeys;
     }
 
-    public void getOnlineInfoForUser(final String userBeingViewed){
-        DatabaseReference reference = database.getReference("users");
-        reference.orderByChild("username").equalTo(userBeingViewed).addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                if(dataSnapshot.exists()) {
-                    for (com.google.firebase.database.DataSnapshot userSnapshot : dataSnapshot.getChildren()) {
-                        FirebaseUserModel firebaseUserModel = userSnapshot.getValue(FirebaseUserModel.class);
-                        if (userBeingViewed.equals(userBeingViewed)) {
-                            Container container = new Container();
-                            container.setUserModel(firebaseUserModel);
-                            listener.onCompleteTask("getOnlineInfoForUser", CONDITION_1, container);
-                            break;
-                        }
-                    }
-                } else {
-                    listener.onCompleteTask("getOnlineInfoForUser", CONDITION_2, null);
-                }
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-                listener.onFailureTask("getOnlineInfoForUser", databaseError);
-            }
-        });
-    }
-
-    public void createGroup(final FirebaseGroupModel firebaseGroupModel){
+    public void createGroup(final FirebaseGroupModel firebaseGroupModel, final JSONArray allMembersDeviceToken){
         DatabaseReference newRef = database.getReference("groups").push();
         newRef.setValue(firebaseGroupModel, new DatabaseReference.CompletionListener() {
             @Override
@@ -1005,15 +961,18 @@ public class FirebaseHelper {
                 } else {
                     Container container = new Container();
                     container.setString(firebaseGroupModel.getTitle()+","+firebaseGroupModel.getGroupKey());
+                    container.setJsonArray(allMembersDeviceToken);
                     listener.onCompleteTask("createGroup", CONDITION_1, container);
                 }
             }
         });
     }
 
-    public void getDeviceTokensFor(final List<String> allMembers, final String title, final String uniqueId){
+    public void getDeviceTokensFor(final List<String> allMembers, final String title, final String uniqueId, final boolean noBlockList){
         Collections.sort(allMembers);
         DatabaseReference reference = database.getReference("users");
+        final List<String> addedMembers = new ArrayList<>();
+        final User user = User.getInstance();
         reference.orderByChild("username").startAt(allMembers.get(0)).endAt(allMembers.get(allMembers.size()-1)).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -1021,13 +980,18 @@ public class FirebaseHelper {
                     JSONArray membersDeviceTokens = new JSONArray();
                     for(DataSnapshot snapshot : dataSnapshot.getChildren()){
                         FirebaseUserModel firebaseUserModel = snapshot.getValue(FirebaseUserModel.class);
-                        if(allMembers.contains(firebaseUserModel.getUsername())){
-                            membersDeviceTokens.put(firebaseUserModel.getDeviceToken());
+                        // or condition if either true enter if statement (creator activity - false || ?), (chat activity - true - ?)
+                        if (noBlockList || !Network.isBlockListed(user.name, firebaseUserModel.getBlockedUsers())) {
+                            if(allMembers.contains(firebaseUserModel.getUsername())){
+                                membersDeviceTokens.put(firebaseUserModel.getDeviceToken());
+                                addedMembers.add(firebaseUserModel.getUsername());
+                            }
                         }
                     }
                     Container container = new Container();
                     container.setJsonArray(membersDeviceTokens);
                     container.setString(title+","+uniqueId);
+                    container.setStringList(addedMembers);
                     listener.onCompleteTask("getDeviceTokensFor", CONDITION_1, container);
 
                 }
@@ -1368,6 +1332,116 @@ public class FirebaseHelper {
                     listener.onCompleteTask("updateGroupMembers", CONDITION_1, container);
                 } else {
                     listener.onFailureTask("updateGroupMembers", databaseError);
+                }
+            }
+        });
+    }
+
+    public void allUnblockedMembers (final List<String> membersToAdd) {
+        final User user = User.getInstance();
+        Collections.sort(membersToAdd);
+        DatabaseReference userRef = database.getReference("users");
+        if (membersToAdd.size() > 1) {
+            userRef.orderByChild("username").startAt(membersToAdd.get(0)).endAt(membersToAdd.get(membersToAdd.size()-1)).getRef();
+        } else {
+            userRef.orderByChild("username").equalTo(membersToAdd.get(0)).getRef();
+        }
+        final List<String> addableMembers = new ArrayList<>();
+        userRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if (dataSnapshot.exists()) {
+                    for (DataSnapshot snapShot : dataSnapshot.getChildren()) {
+                        FirebaseUserModel model = snapShot.getValue(FirebaseUserModel.class);
+                        if (membersToAdd.contains(model.getUsername())) {
+                            if (!Network.isBlockListed(user.name, model.getBlockedUsers())) {
+                                addableMembers.add(model.getUsername());
+                            }
+                        }
+                    }
+                    Container container = new Container();
+                    container.setStringList(addableMembers);
+                    listener.onCompleteTask("allUnblockedMembers", CONDITION_1, container);
+                } else {
+                    listener.onCompleteTask("allUnblockedMembers", CONDITION_2, null);
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                listener.onFailureTask("allUnblockedMembers", databaseError);
+            }
+        });
+    }
+
+    public void updateBlockList (final String [] users, final boolean add) {
+        final User user = User.getInstance();
+        DatabaseReference userRef = database.getReference("users").orderByChild("username").equalTo(user.name).getRef();
+        userRef.runTransaction(new Transaction.Handler() {
+            @Override
+            public Transaction.Result doTransaction(MutableData mutableData) {
+                for (MutableData data : mutableData.getChildren()) {
+                    FirebaseUserModel fModel = data.getValue(FirebaseUserModel.class);
+
+                    if (fModel == null) return Transaction.success(mutableData);
+
+                    if (fModel.getUsername().equals(user.name)) {
+                        JSONArray jsonArray;
+                        try {
+                            if (!fModel.getBlockedUsers().trim().equals("")) {
+                                jsonArray = new JSONArray(fModel.getBlockedUsers());
+                                if (!add) {
+                                    JSONArray newBlockList = new JSONArray();
+                                    for (int i = 0; i < jsonArray.length(); i++) {
+                                        boolean found = false;
+                                        for (String user : users) {
+                                            if (jsonArray.getString(i).equals(user)) {
+                                                found = true;
+                                                break;
+                                            }
+                                        }
+                                        if (!found) {
+                                            newBlockList.put(jsonArray.getString(i));
+                                        }
+                                    }
+                                    jsonArray = newBlockList;
+                                }
+                            } else {
+                                jsonArray = new JSONArray();
+                            }
+
+                            if (add) {
+                                if (jsonArray.length() == 0) {
+                                    jsonArray.put(users[0]);
+                                } else {
+                                    boolean found = false;
+                                    for (int i = 0; i < jsonArray.length(); i++) {
+                                        if (jsonArray.getString(i).equals(users[0])) {
+                                            found = true;
+                                            break;
+                                        }
+                                    }
+                                    if (!found) jsonArray.put(users[0]);
+                                }
+                            }
+                            fModel.setBlockedUsers(jsonArray.toString());
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                        data.setValue(fModel);
+                        break;
+                    }
+                }
+
+                return Transaction.success(mutableData);
+            }
+
+            @Override
+            public void onComplete(DatabaseError databaseError, boolean b, DataSnapshot dataSnapshot) {
+                if (databaseError == null) {
+                    listener.onCompleteTask("updateBlockList", CONDITION_1, null);
+                } else {
+                    listener.onFailureTask("updateBlockList", databaseError);
                 }
             }
         });

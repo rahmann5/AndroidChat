@@ -31,6 +31,7 @@ import com.example.naziur.androidchat.models.FirebaseGroupModel;
 import com.example.naziur.androidchat.models.User;
 import com.example.naziur.androidchat.utils.Constants;
 import com.example.naziur.androidchat.utils.Container;
+import com.example.naziur.androidchat.utils.Network;
 import com.example.naziur.androidchat.utils.ProgressDialog;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -64,7 +65,6 @@ public class GroupDetailActivity extends AuthenticatedActivity implements Fireba
     private User user = User.getInstance();
     private StorageReference mStorageRef;
     private String pic = "";
-    private Menu menu;
     private ArrayAdapter membersAdapter;
     private ListView membersListView;
     @Override
@@ -93,6 +93,10 @@ public class GroupDetailActivity extends AuthenticatedActivity implements Fireba
     @Override
     protected void onResume() {
         super.onResume();
+        if (!Network.isInternetAvailable(this, true)) {
+            return;
+        }
+
         Bundle extra = getIntent().getExtras();
         if (extra != null) {
             progressBar.toggleDialog(true);
@@ -176,6 +180,7 @@ public class GroupDetailActivity extends AuthenticatedActivity implements Fireba
             fab.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
+                    controlOffline = false;
                     EasyImage.openChooserWithGallery(GroupDetailActivity.this, getResources().getString(R.string.group_gallery_chooser), REQUEST_CODE_GALLERY_CAMERA);
                 }
             });
@@ -213,7 +218,7 @@ public class GroupDetailActivity extends AuthenticatedActivity implements Fireba
                 if (data != null) {
                     List<String> members = data.getStringArrayListExtra("members");
                     if (members.size() > 0) {
-                        firebaseHelper.updateGroupMembers(members.get(0), members , groupModel.getGroupKey(), false);
+                        firebaseHelper.allUnblockedMembers(members);
                     }
                 }
             }
@@ -275,7 +280,6 @@ public class GroupDetailActivity extends AuthenticatedActivity implements Fireba
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        this.menu = menu;
         getMenuInflater().inflate(R.menu.chat_detail_menu, menu);
         if(groupModel != null && groupModel.getAdmin().equals(user.name)) {
             menu.findItem(R.id.save_change).setVisible(true);
@@ -431,7 +435,6 @@ public class GroupDetailActivity extends AuthenticatedActivity implements Fireba
                         if (groupModel.getMembers().equals("") && groupModel.getAdmin().equals("")) {
                             Toast.makeText(this, "This group has been deleted." , Toast.LENGTH_LONG).show();
                             progressBar.toggleDialog(false);
-                            //firebaseHelper.toggleListenerFor("groups", "groupKey", groupModel.getGroupKey(), groupListener, false, false);
                             finish();
                         }
                         break;
@@ -477,6 +480,23 @@ public class GroupDetailActivity extends AuthenticatedActivity implements Fireba
                         } else {
                             firebaseHelper.updateGroupKeyForMembers(allMembers, groupModel.getGroupKey(), FirebaseHelper.CONDITION_1);
                         }
+                        break;
+                }
+                break;
+
+            case "allUnblockedMembers" :
+                switch (condition) {
+                    case FirebaseHelper.CONDITION_1 :
+                        List<String> members = container.getStringList();
+                        if (members.size() > 0) {
+                            firebaseHelper.updateGroupMembers(members.get(0), members , groupModel.getGroupKey(), false);
+                        } else {
+                            Toast.makeText(this, getResources().getString(R.string.block_list_msg_blocked_by_them), Toast.LENGTH_SHORT).show();
+                        }
+                        break;
+
+                    case FirebaseHelper.CONDITION_2 :
+                        Toast.makeText(this, "Sorry the users selected does not exist", Toast.LENGTH_SHORT).show();
                         break;
                 }
                 break;

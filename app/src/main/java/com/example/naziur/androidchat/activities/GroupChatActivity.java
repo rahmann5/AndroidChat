@@ -86,6 +86,7 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
     private List<FirebaseMessageModel> tempMsg;
     private boolean isScrolling = false;
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -239,6 +240,11 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
     protected void onStop() {
         super.onStop();
         unregisterReceiver(mReceiver);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
         firebaseHelper.toggleMsgEventListeners("group", groupKey, msgValueEventListener,1, false, false);
         firebaseHelper.toggleListenerFor("groups", "groupKey", groupKey, groupListener, false, false);
     }
@@ -295,7 +301,6 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
         TextView textView = (TextView) actionBar.getCustomView().findViewById(R.id.group_members);
 
         textView.setText(getActionBarString());
-        actionBar.getCustomView().findViewById(R.id.group_members).setVisibility(View.VISIBLE);
     }
 
     private String getActionBarString(){
@@ -489,7 +494,7 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
                                 .into(((CircleImageView) actionBar.getCustomView().findViewById(R.id.profile_icon)));
                         List<String> members = Arrays.asList(getMembersThatNeedToReceiveMessage());
                         if(members.size() > 0)
-                            firebaseHelper.getDeviceTokensFor(members, groupModel.getTitle(), groupModel.getGroupKey());
+                            firebaseHelper.getDeviceTokensFor(members, groupModel.getTitle(), groupModel.getGroupKey(), true);
                         invalidateOptionsMenu();
                         break;
 

@@ -35,6 +35,7 @@ import com.example.naziur.androidchat.utils.Network;
 import com.example.naziur.androidchat.utils.ProgressDialog;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -64,6 +65,7 @@ public class MyContactsActivity extends AuthenticatedActivity implements AddCont
     private User user = User.getInstance();
     private ProgressDialog progressBar;
     FirebaseHelper firebaseHelper;
+    private Contact selectedContact;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -179,6 +181,7 @@ public class MyContactsActivity extends AuthenticatedActivity implements AddCont
         super.onDestroy();
     }
 
+
     private void toggleContactsEmptyState() {
         if (myContactsAdapter.getItemCount() == 0)
             emptyState.setVisibility(View.VISIBLE);
@@ -223,7 +226,9 @@ public class MyContactsActivity extends AuthenticatedActivity implements AddCont
                 if (Network.isInternetAvailable(MyContactsActivity.this, true) && c.isActive()) {
                     progressBar.toggleDialog(true);
                     // checking where exists if it exists at all
-                    firebaseHelper.setUpSingleChat("users", c.getContact().getUsername(), user.name);
+                    ValueEventListener contactSingleEven = firebaseHelper.getValueEventListener(c.getContact().getUsername(), FirebaseHelper.NON_CONDITION, FirebaseHelper.CONDITION_3, FirebaseHelper.CONDITION_1, FirebaseUserModel.class);
+                    firebaseHelper.toggleListenerFor("users", "username", c.getContact().getUsername(), contactSingleEven, true, true);
+                    //firebaseHelper.setUpSingleChat("users", c.getContact().getUsername(), user.name);
                 }
                 break;
             case 2 : // delete contact
@@ -267,7 +272,6 @@ public class MyContactsActivity extends AuthenticatedActivity implements AddCont
         firebaseHelper.updateChatKeyFromContact(contact, newChatKey , true, false);
 
     }
-
 
     private StringEntity generateEntity (Contact c) {
         JSONObject params = new JSONObject();
@@ -347,13 +351,21 @@ public class MyContactsActivity extends AuthenticatedActivity implements AddCont
                     break;
             }
             progressBar.toggleDialog(false);
-        } else if (tag.equals("setUpSingleChat")) {
+        } else if (tag.equals("getValueEventListener")) {
             switch (condition) {
+                case FirebaseHelper.CONDITION_1 :
+                    FirebaseUserModel friendModel  = (FirebaseUserModel) container.getObject();
+                    selectedContact = new Contact(friendModel);
+                    ValueEventListener contactSingleEven = firebaseHelper.getValueEventListener(user.name, FirebaseHelper.NON_CONDITION, FirebaseHelper.CONDITION_3, FirebaseHelper.CONDITION_2, FirebaseUserModel.class);
+                    firebaseHelper.toggleListenerFor("users", "username", user.name, contactSingleEven, true, true);
+                    break;
+
                 case FirebaseHelper.CONDITION_2 :
-                    Contact contact = container.getContact();
-                    FirebaseUserModel currentUser = container.getUserModel();
+                    Contact contact = selectedContact;
+                    FirebaseUserModel currentUser = (FirebaseUserModel) container.getObject();
                     String currentUserChatKey = findChatKey(currentUser, contact.getContact()); // check user contains chat key with chosen contact
                     String contactChatKey = findChatKey(contact.getContact(), currentUser); // check chosen contact contains chat key with user
+                    boolean isBlocked = Network.isBlockListed(user.name, contact.getContact().getBlockedUsers());
                     // both have same key
                     if (!contactChatKey.equals("") && !currentUserChatKey.equals("") && currentUserChatKey.equals(contactChatKey)) { // both have chat keys
                         progressBar.toggleDialog(false);
@@ -361,13 +373,18 @@ public class MyContactsActivity extends AuthenticatedActivity implements AddCont
                     } else if (!currentUserChatKey.equals("") && contactChatKey.equals("")) { // only user has key
                         progressBar.toggleDialog(false);
                         startChatActivity(currentUserChatKey);
-                    } else if (currentUserChatKey.equals("") && !contactChatKey.equals("")) { // only contact has key
+                    } else if (currentUserChatKey.equals("") && !contactChatKey.equals("") && !isBlocked) { // only contact has key
                         firebaseHelper.updateChatKeyFromContact(contact, contactChatKey , false, false);
                     } else { // neither has keys or maybe opposite of each others key
-                        if (contactChatKey.equals("") && currentUserChatKey.equals("")) {
-                            createKeyAndSendInvitation(contact);
+                        if (!isBlocked) {
+                            if (contactChatKey.equals("") && currentUserChatKey.equals("")) {
+                                createKeyAndSendInvitation(contact);
+                            } else {
+                                firebaseHelper.notificationNodeExists(contact.getContact().getUsername(), currentUserChatKey, null);
+                            }
                         } else {
-                            firebaseHelper.notificationNodeExists(contact.getContact().getUsername(), currentUserChatKey, null);
+                            Toast.makeText(this, getResources().getString(R.string.block_list_msg_blocked_by_them), Toast.LENGTH_SHORT).show();
+                            progressBar.toggleDialog(false);
                         }
                     }
                     break;
@@ -376,9 +393,8 @@ public class MyContactsActivity extends AuthenticatedActivity implements AddCont
                     Toast.makeText(MyContactsActivity.this, "Error finding user information", Toast.LENGTH_LONG).show();
                     progressBar.toggleDialog(false);
                     break;
-
             }
-        } else if (tag.equals("updateChatKeyFromContact")) {
+        }  else if (tag.equals("updateChatKeyFromContact")) {
             switch (condition) {
                 case FirebaseHelper.CONDITION_1 :
                     firebaseHelper.updateNotificationNode("chatKey", container.getContact().getContact(), container.getString());
@@ -427,7 +443,7 @@ public class MyContactsActivity extends AuthenticatedActivity implements AddCont
                 toggleContactsEmptyState();
                 break;
 
-            case "setUpSingleChat" :
+            case "getValueEventListener" :
                 Toast.makeText(MyContactsActivity.this, "Error has occurred creating chat", Toast.LENGTH_LONG).show();
                 break;
 

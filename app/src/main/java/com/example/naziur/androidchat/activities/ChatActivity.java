@@ -95,7 +95,7 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
     FloatingActionButton sendBottom;
     List<FirebaseMessageModel> messages = new ArrayList<FirebaseMessageModel>();
 
-    private ValueEventListener commentValueEventListener;
+    private ValueEventListener commentValueEventListener, friendValueEvent;
 
     private ProgressDialog progressBar;
 
@@ -220,6 +220,7 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
         btnMedia.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                controlOffline = false;
                 EasyImage.openChooserWithGallery(ChatActivity.this, getResources().getString(R.string.chat_gallery_chooser), REQUEST_CODE_GALLERY_CAMERA);
             }
         });
@@ -263,10 +264,17 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
         super.onResume();
         if (Network.isInternetAvailable(this, true)) {
             // improve for future search of users (need only the sender and receiver - currently looping through all users)
-            firebaseHelper.setUpSingleChat("users", friend.getUsername(), user.name);
+            friendValueEvent = firebaseHelper.getValueEventListener(friend.getUsername(), FirebaseHelper.NON_CONDITION, FirebaseHelper.NON_CONDITION, FirebaseHelper.CONDITION_1, FirebaseUserModel.class);
+            firebaseHelper.toggleListenerFor("users", "username" ,friend.getUsername(), friendValueEvent , true, false);
+            //firebaseHelper.setUpSingleChat("users", friend.getUsername(), user.name);
         } else {
             loadLocalData();
         }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
     }
 
     @Override
@@ -279,7 +287,13 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
     protected void onStop() {
         super.onStop();
         unregisterReceiver(mReceiver);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
         firebaseHelper.toggleMsgEventListeners("single", chatKey, commentValueEventListener,1 , false, false);
+        firebaseHelper.toggleListenerFor("users", "username" ,friend.getUsername(), friendValueEvent , false, false);
     }
 
     private void sendMessage(final String wishMessage){
@@ -490,6 +504,11 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
         return false;
     }
 
+    private void setOnlineStatus (FirebaseUserModel returnedFriend) {
+        int onlineRes = (returnedFriend.getOnline()) ? R.string.online_status_online : R.string.online_status_offline;
+        ((TextView) actionBar.getCustomView().findViewById(R.id.group_members)).setText(getResources().getString(onlineRes));
+    }
+
     @Override
     public void onCompleteTask(String tag, int condition, Container container) {
         if (tag.equals("createMessageEventListener")) {
@@ -502,41 +521,45 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
                     progressBar.toggleDialog(false);
                     break;
             }
-        } else if (tag.equals("setUpSingleChat")) {
+        } else if (tag.equals("getValueEventListener")) {
             switch (condition) {
-                case FirebaseHelper.CONDITION_1 :
-                    // account no longer exists
-                    if (friend.getDeviceToken().equals("")) {
-                        ((CircleImageView) actionBar.getCustomView().findViewById(R.id.profile_icon)).setVisibility(View.GONE);
-                        ((TextView) actionBar.getCustomView().findViewById(R.id.profile_name)).setText(friend.getUsername());
+                case FirebaseHelper.CONDITION_1:
+                    FirebaseUserModel returnedFriend = (FirebaseUserModel) container.getObject();
+                    if (friend.getDeviceId().equals("")) {
+                        friend = returnedFriend;
+                        ((TextView) actionBar.getCustomView().findViewById(R.id.profile_name)).setText(friend.getProfileName());
+                        Glide.with(getApplicationContext())
+                                .load(friend.getProfilePic())
+                                .apply(new RequestOptions().placeholder(R.drawable.placeholder).error(R.drawable.unknown))
+                                .into(((CircleImageView) actionBar.getCustomView().findViewById(R.id.profile_icon)));
+                        ValueEventListener singelEvent = firebaseHelper.getValueEventListener(user.name, FirebaseHelper.NON_CONDITION, FirebaseHelper.NON_CONDITION, FirebaseHelper.CONDITION_2, FirebaseUserModel.class);
+                        firebaseHelper.toggleListenerFor("users", "username" ,user.name, singelEvent, true, true);
                     }
-
+                    setOnlineStatus(returnedFriend);
                     break;
-
                 case FirebaseHelper.CONDITION_2:
-                    //String myKey = findChatKey(me, friend);
-                    firebaseHelper.toggleMsgEventListeners("single", chatKey, commentValueEventListener, 1, true, false);
-                    String friendKey = findChatKey(friend, me);
-                    btnInvite.setVisibility(View.GONE);
-                    btnSend.setVisibility(View.VISIBLE);
-                    btnMedia.setEnabled(true);
-                    if (friendKey.equals("") || !matchesMyKey(friendKey, me)) {
+                    me = (FirebaseUserModel) container.getObject();
+                    if (me != null) {
+                        firebaseHelper.toggleMsgEventListeners("single", chatKey, commentValueEventListener, 1, true, false);
+                        String friendKey = findChatKey(friend, me);
+                        btnInvite.setVisibility(View.GONE);
+                        btnSend.setVisibility(View.VISIBLE);
+                        btnMedia.setEnabled(true);
+                        if (friendKey.equals("") || !matchesMyKey(friendKey, me)) {
+                            // change send button to be able to send notification instead
+                            btnInvite.setVisibility(View.VISIBLE);
+                            btnMedia.setEnabled(false);
+                            btnSend.setVisibility(View.GONE);
+                        }
                         progressBar.toggleDialog(false);
-                        // change send button to be able to send notification instead
-                        btnInvite.setVisibility(View.VISIBLE);
-                        btnMedia.setEnabled(false);
-                        btnSend.setVisibility(View.GONE);
+                    } else {
+                        Log.i(TAG, "ME IS NULL");
+                        progressBar.toggleDialog(false);
+                        finish();
                     }
                     break;
-
-                case FirebaseHelper.CONDITION_3:
-                    Log.i(TAG, "ME IS NULL");
-                    progressBar.toggleDialog(false);
-                    finish();
-                    break;
-
             }
-        } else if (tag.equals("checkKeyListKey" )) {
+        }  else if (tag.equals("checkKeyListKey" )) {
             switch (condition) {
                 case FirebaseHelper.CONDITION_1 :
                     btnInvite.setVisibility(View.GONE);
@@ -545,7 +568,12 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
                     btnInvite.setEnabled(true);
                     break;
                 case FirebaseHelper.CONDITION_2:
-                    firebaseHelper.updateNotificationNode("chatKey", friend, chatKey);
+                    FirebaseUserModel model = container.getUserModel();
+                    if (model != null && !Network.isBlockListed(user.name, model.getBlockedUsers())) {
+                        firebaseHelper.updateNotificationNode("chatKey", friend, chatKey);
+                    } else {
+                        Toast.makeText(this, getResources().getString(R.string.block_list_msg_blocked_by_them), Toast.LENGTH_SHORT).show();
+                    }
                     break;
                 case FirebaseHelper.CONDITION_3:
                     String wishMessage = textComment.getText().toString().trim();
@@ -612,9 +640,16 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
                 progressBar.toggleDialog(false);
                 break;
 
-            case "setUpSingleChat" :
-                loadLocalData();
-                progressBar.toggleDialog(false);
+            case "getValueEventListener" :
+                if (!friend.getDeviceId().equals("")) {
+                    loadLocalData();
+                    ValueEventListener singelEvent = firebaseHelper.getValueEventListener(user.name, FirebaseHelper.NON_CONDITION, FirebaseHelper.NON_CONDITION, FirebaseHelper.CONDITION_2, FirebaseUserModel.class);
+                    firebaseHelper.toggleListenerFor("users", "username" ,user.name, singelEvent, true, true);
+                } else if (!friend.getDeviceId().equals("") && me == null) {
+                    Log.i(TAG, "ME IS NULL");
+                    progressBar.toggleDialog(false);
+                    finish();
+                }
                 break;
 
             case "checkKeyListKey" :
@@ -649,21 +684,6 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
                             firebaseHelper.getNextNMessages("single", chatKey, firebaseMessageModel.getId(), 5);
                         }
                     }
-                    break;
-            }
-        } else if (tag.equals("setUpSingleChat")) {
-            switch (condition) {
-                case FirebaseHelper.CONDITION_1 :
-                    friend = container.getUserModel();
-                    ((TextView) actionBar.getCustomView().findViewById(R.id.profile_name)).setText(friend.getProfileName());
-                    Glide.with(getApplicationContext())
-                            .load(friend.getProfilePic())
-                            .apply(new RequestOptions().placeholder(R.drawable.placeholder).error(R.drawable.unknown))
-                            .into(((CircleImageView) actionBar.getCustomView().findViewById(R.id.profile_icon)));
-                    break;
-
-                case FirebaseHelper.CONDITION_2 :
-                    me = container.getUserModel();
                     break;
             }
         }  else if (tag.equals("getNextFiveMessages")) {

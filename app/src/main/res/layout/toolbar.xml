@@ -63,10 +63,9 @@
                 android:marqueeRepeatLimit="marquee_forever"
                 android:maxLines="1"
                 android:scrollHorizontally="true"
-                android:text="Profile Name"
                 android:textColor="@color/white"
                 android:textSize="13sp"
-                android:visibility="gone" />
+                />
         </LinearLayout>
 
     </LinearLayout>

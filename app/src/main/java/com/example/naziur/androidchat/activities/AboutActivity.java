@@ -7,7 +7,7 @@ import android.view.MenuItem;
 
 import com.example.naziur.androidchat.R;
 
-public class AboutActivity extends AppCompatActivity {
+public class AboutActivity extends AuthenticatedActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

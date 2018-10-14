@@ -25,6 +25,7 @@ import com.example.naziur.androidchat.fragment.SingleSessionFragment;
 import com.example.naziur.androidchat.models.User;
 import com.example.naziur.androidchat.utils.Container;
 import com.example.naziur.androidchat.utils.NetworkChangeReceiver;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.ValueEventListener;
 
@@ -161,9 +162,8 @@ public class SessionActivity extends AuthenticatedActivity implements NetworkCha
 
     @Override
     protected void onStop() {
-        FirebaseHelper.removeNotificationListener(notificationListener);
         super.onStop();
-
+        FirebaseHelper.removeNotificationListener(notificationListener);
     }
 
     @Override
