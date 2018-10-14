@@ -197,7 +197,9 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
                             case 2 : // leave/delete Chat
                                 if (allGroupKeys.contains(chat.getChatKey())) {
                                     firebaseHelper.toggleListenerFor("groups", "groupKey" , chat.getChatKey(), grpValueEventListeners.get(chat.getChatKey()), false, false);
-                                    firebaseHelper.exitGroup(chat, user.name, chat.getAdmin().equals(user.name));
+                                    List<String> groupToLeave = new ArrayList<String>();
+                                    groupToLeave.add(chat.getChatKey());
+                                    firebaseHelper.exitGroup(chat, user.name, chat.getAdmin().equals(user.name),groupToLeave);
                                 } else {
                                     updateUserChatKeys(chat);
                                 }
@@ -369,7 +371,7 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
         } else if (tag.equals("collectAllImagesForDeletionThenDeleteRelatedMessages")) {
             switch (condition) {
                 case FirebaseHelper.CONDITION_1:
-                    Network.deleteUploadImages(firebaseHelper, container.getStringList(), container.getString(), "group");
+                    Network.deleteUploadImages(firebaseHelper, container.getStringList(), new String[]{container.getString()}, "group");
                     break;
             }
         } else if (tag.equals("cleanDeleteAllMessages")) {

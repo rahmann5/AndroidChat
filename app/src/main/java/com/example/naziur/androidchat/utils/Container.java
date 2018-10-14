@@ -29,9 +29,19 @@ public class Container {
     private List<Notification> notifications;
     private JSONArray jsonArray;
     private Object object;
+    private List<FirebaseGroupModel> groups;
+    private Container container;
 
     public Container () {
         // empty
+    }
+
+    public Container getContainer() {
+        return container;
+    }
+
+    public void setContainer(Container container) {
+        this.container = container;
     }
 
     public Contact getContact() {
@@ -128,5 +138,13 @@ public class Container {
 
     public void setGroupModel(FirebaseGroupModel groupModel) {
         this.groupModel = groupModel;
+    }
+
+    public List<FirebaseGroupModel> getGroups() {
+        return groups;
+    }
+
+    public void setGroups(List<FirebaseGroupModel> groups) {
+        this.groups = groups;
     }
 }
