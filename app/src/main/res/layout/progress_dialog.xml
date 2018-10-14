@@ -3,10 +3,20 @@
     android:orientation="vertical" android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <TextView
+        android:id="@+id/info"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="test"
+        android:layout_gravity="center_horizontal"
+        android:textSize="14sp"
+
+        android:layout_margin="3dp"/>
+
     <ProgressBar
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:id="@+id/progressBar2"
         style="?android:attr/progressBarStyleLarge"
-        />
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
 
 </LinearLayout>

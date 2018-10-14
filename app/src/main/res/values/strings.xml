@@ -65,7 +65,7 @@
     <!-- LOGIN -->
     <string name="forgot_username"><u>Forgot Username?</u></string>
     <string name="register">Create a account</string>
-    <string name="login">Already have an account</string>
+    <string name="login">Already have an account?</string>
 
     <!-- Notification Activity -->
     <string name="empty_text">Nothing Found...</string>
@@ -128,6 +128,10 @@
 
     <string name="key_email">user_auth</string>
     <string name="pref_title_auth">Account Email</string>
+
+    <string name="delete_dialog_msg">Once you delete your account it cannot be undone, are you ok with this?</string>
+    <string name="delete_dialog_op_1">Yes</string>
+    <string name="delete_dialog_op_2">No</string>
 
     <!-- About Settings Keys -->
     <string name="about_category_title">About</string>

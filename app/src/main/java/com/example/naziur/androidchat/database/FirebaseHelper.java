@@ -3,7 +3,6 @@ package com.example.naziur.androidchat.database;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.content.Context;
-import android.util.Log;
 import android.widget.Toast;
 
 import com.example.naziur.androidchat.models.Chat;
@@ -655,26 +654,67 @@ public class FirebaseHelper {
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
-                cleanDeleteAllMessages(node, firebaseGroupModel.getGroupKey());
+                cleanDeleteAllMessages(node, new String[]{firebaseGroupModel.getGroupKey()});
             }
         });
     }
 
-    public void cleanDeleteAllMessages(String node, String key){
-        DatabaseReference reference = database.getReference("messages").child(node).child(key);
-        reference.setValue(null).addOnSuccessListener(new OnSuccessListener<Void>() {
+    public void collectAllImagesForDeletionThenDeleteAllRelatedMessages(final String node, final List<String> keys, final List<String> picUrls){
+        final DatabaseReference reference = database.getReference("messages");
+        Query pendingQuery = reference.child(node).orderByKey().startAt(keys.get(0)).endAt(keys.get(keys.size()-1));
+
+        pendingQuery.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
-            public void onSuccess(Void aVoid) {
-            listener.onCompleteTask("cleanDeleteAllMessages", CONDITION_1, null);
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                final List<String> imageUri = new ArrayList<>();
+                for (DataSnapshot data : dataSnapshot.getChildren()) {
+                    for(DataSnapshot snapshot : data.getChildren()) {
+                        FirebaseMessageModel model = snapshot.getValue(FirebaseMessageModel.class);
+                        if(model.getMediaType().equals(Constants.MESSAGE_TYPE_PIC))
+                            imageUri.add(model.getText());
+                    }
+                }
+                if(picUrls != null) {
+                    for (String url : picUrls) {
+                        imageUri.add(url);
+                    }
+                }
+                Container c = new Container();
+                Container innerContainer = new Container();
+                innerContainer.setStringList(keys);
+                c.setStringList(imageUri);
+                c.setContainer(innerContainer);
+                c.setString(node);
+                listener.onCompleteTask("collectAllImagesForDeletionThenDeleteAllRelatedMessages", CONDITION_1, c);
             }
-        }).addOnFailureListener(new OnFailureListener() {
+
             @Override
-            public void onFailure(@NonNull Exception e) {
-            Container container = new Container();
-            container.setString(e.getMessage());
-            listener.onCompleteTask("cleanDeleteAllMessages", CONDITION_2, container);
+            public void onCancelled(DatabaseError databaseError) {
+                Container container = new Container();
+                container.setStringList(keys);
+                container.setString(databaseError.getMessage());
+                listener.onCompleteTask("collectAllImagesForDeletionThenDeleteAlleRelatedMessages", CONDITION_2, container);
             }
         });
+    }
+
+    public void cleanDeleteAllMessages(String node, String[] keys){
+        for(String key: keys){
+            DatabaseReference reference = database.getReference("messages").child(node).child(key);
+            reference.setValue(null).addOnSuccessListener(new OnSuccessListener<Void>() {
+                @Override
+                public void onSuccess(Void aVoid) {
+                listener.onCompleteTask("cleanDeleteAllMessages", CONDITION_1, null);
+                }
+            }).addOnFailureListener(new OnFailureListener() {
+                @Override
+                public void onFailure(@NonNull Exception e) {
+                Container container = new Container();
+                container.setString(e.getMessage());
+                listener.onCompleteTask("cleanDeleteAllMessages", CONDITION_2, container);
+                }
+            });
+        }
     }
 
 
@@ -1121,20 +1161,28 @@ public class FirebaseHelper {
         });
     }
 
-    public void exitGroup (final Chat chat, final String leavingUser, final boolean admin) {
+    public void exitGroup (final Chat chat, final String leavingUser, final boolean admin, final List<String> groupsToExit) {
         DatabaseReference reference = database.getReference("groups");
-        reference.orderByChild("groupKey").equalTo(chat.getChatKey()).getRef().runTransaction(new Transaction.Handler() {
+        Collections.sort(groupsToExit);
+        reference.orderByChild("groupKey").startAt(groupsToExit.get(0)).endAt(groupsToExit.get(groupsToExit.size()-1)).getRef().runTransaction(new Transaction.Handler() {
+            List<FirebaseGroupModel> groupsToDelete = new ArrayList<FirebaseGroupModel>();
             @Override
             public Transaction.Result doTransaction(MutableData mutableData) {
                 for (MutableData data : mutableData.getChildren()) {
                     FirebaseGroupModel groupModel = data.getValue(FirebaseGroupModel.class);
 
                     if (groupModel == null) return Transaction.success(mutableData);
-                    if (groupModel.getGroupKey().equals(chat.getChatKey())) {
+                    if (groupsToExit.contains(groupModel.getGroupKey())) {
                         String newMembers = groupModel.getMembers();
                         if (admin) {
                             groupModel.setAdmin("");
                         } else {
+                            if(chat == null){
+                                if(groupModel.getAdmin().equals(leavingUser))
+                                    groupModel.setAdmin("");
+                            }
+
+
                             String[] members = groupModel.getMembers().split(",");
                             newMembers = "";
                             for (String member : members) {
@@ -1145,6 +1193,8 @@ public class FirebaseHelper {
                         }
 
                         groupModel.setMembers(newMembers);
+                        if(groupModel.getMembers().isEmpty() && groupModel.getAdmin().isEmpty())
+                            groupsToDelete.add(groupModel);
                         data.setValue(groupModel);
                     }
 
@@ -1156,7 +1206,11 @@ public class FirebaseHelper {
             @Override
             public void onComplete(DatabaseError databaseError, boolean b, DataSnapshot dataSnapshot) {
                 Container container = new Container();
-                container.setChat(chat); // key to remove
+                if(chat != null)
+                    container.setChat(chat); // key to remove
+                else {
+                    container.setGroups(groupsToDelete);//groups to delete completely
+                }
                 if (databaseError == null) {
                     listener.onCompleteTask("exitGroup", CONDITION_1, container);
                 } else {
@@ -1211,7 +1265,6 @@ public class FirebaseHelper {
     }
 
     public void deleteGroup (final Chat chat) {
-        final User user = User.getInstance();
         DatabaseReference groupRef = database.getReference("groups").orderByChild("groupKey").equalTo(chat.getChatKey()).getRef();
         groupRef.runTransaction(new Transaction.Handler() {
             boolean isDeleted = false;
@@ -1258,6 +1311,110 @@ public class FirebaseHelper {
                 }
             }
         });
+    }
+
+    public void deleteGroups(final List<FirebaseGroupModel> groups){
+        if(groups.size() > 0) {
+            Collections.sort(groups, FirebaseGroupModel.groupKeyComparator);
+            DatabaseReference groupRef = database.getReference("groups").orderByChild("groupKey")
+                    .startAt(groups.get(0).getGroupKey())
+                    .endAt(groups.get(groups.size() - 1).getGroupKey()).getRef();
+            groupRef.runTransaction(new Transaction.Handler() {
+                @Override
+                public Transaction.Result doTransaction(MutableData mutableData) {
+                    for (MutableData data : mutableData.getChildren()) {
+                        FirebaseGroupModel groupModel = data.getValue(FirebaseGroupModel.class);
+
+                        if (groupModel == null) return Transaction.success(mutableData);
+                        int pos = containsGroup(groups, groupModel);
+                        if (pos >= 0) {
+                            //groups.remove(pos);
+
+                            groupModel = null;
+                            data.setValue(groupModel);
+                        }
+
+                        //if(groups.size() == 0)break;
+
+                    }
+
+                    return Transaction.success(mutableData);
+                }
+
+                @Override
+                public void onComplete(DatabaseError databaseError, boolean b, DataSnapshot dataSnapshot) {
+                    if (databaseError == null) {
+                        Container container = new Container();
+                        container.setGroups(groups);
+                        listener.onCompleteTask("deleteGroups", CONDITION_1, container);
+                    } else {
+                        listener.onFailureTask("deleteGroups", databaseError);
+                    }
+                }
+            });
+        } else {
+            listener.onCompleteTask("deleteGroups", CONDITION_2, null);
+        }
+    }
+
+    public void accumulateAllChatsForDeletion(final List<String> allUsersInChatWith, final String username){
+        if(allUsersInChatWith.size() > 0) {
+            Collections.sort(allUsersInChatWith);
+            Query query = database.getReference("users").orderByChild("username")
+                    .startAt(allUsersInChatWith.get(0))
+                    .endAt(allUsersInChatWith.get(allUsersInChatWith.size() - 1));
+            query.addListenerForSingleValueEvent(new ValueEventListener() {
+                List<String> chatsToDeleteWith = new ArrayList<String>();
+
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    if (dataSnapshot.exists()) {
+                        for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                            FirebaseUserModel user = snapshot.getValue(FirebaseUserModel.class);
+                            if(allUsersInChatWith.contains(user.getUsername())){
+                                if (!user.getChatKeys().isEmpty()) {
+                                    boolean keepChatWith = false;
+                                    for (String key : user.getChatKeys().split(",")) {
+                                        String p1 = key.split("-")[0];
+                                        String p2 = key.split("-")[1];
+                                        if(p1.equals(username) || p2.equals(username))
+                                            keepChatWith=true;
+                                    }
+                                    if(!keepChatWith && !chatsToDeleteWith.contains(user.getUsername())) {
+                                        System.out.println("Adding name final: "+user.getUsername());
+                                        chatsToDeleteWith.add(user.getUsername());
+                                    }
+                                } else {
+                                    System.out.println("Adding name final: "+user.getUsername());
+                                    chatsToDeleteWith.add(user.getUsername());
+                                }
+                            }
+                        }
+                        Container container = new Container();
+                        container.setStringList(chatsToDeleteWith);
+                        listener.onCompleteTask("accumulateAllChatsForDeletion", CONDITION_1, container);
+                    }
+                }
+
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
+                    listener.onFailureTask("accumulateAllChatsForDeletion", databaseError);
+                }
+            });
+        } else {
+            listener.onCompleteTask("accumulateAllChatsForDeletion", CONDITION_2, null);
+        }
+
+    }
+
+    private int containsGroup(List<FirebaseGroupModel> list, FirebaseGroupModel searchItem){
+        int i = 0;
+        for(FirebaseGroupModel item : list){
+            if(item.getGroupKey().equals(searchItem.getGroupKey()))
+                return i;
+            i++;
+        }
+        return -1;
     }
 
     public ValueEventListener getGroupInfo(final String groupKey){
@@ -1442,6 +1599,34 @@ public class FirebaseHelper {
                     listener.onCompleteTask("updateBlockList", CONDITION_1, null);
                 } else {
                     listener.onFailureTask("updateBlockList", databaseError);
+                }
+            }
+        });
+    }
+
+    public void deleteUserFromDatabase(final String username){
+        DatabaseReference databaseReference = database.getReference("users").orderByChild("username").equalTo(username).getRef();
+        databaseReference.runTransaction(new Transaction.Handler() {
+            @Override
+            public Transaction.Result doTransaction(MutableData mutableData) {
+                for (MutableData data : mutableData.getChildren()) {
+                   FirebaseUserModel firebaseUserModel = data.getValue(FirebaseUserModel.class);
+                   if(firebaseUserModel.getUsername().equals(username)) {
+                       firebaseUserModel = null;
+                       data.setValue(firebaseUserModel);
+                   }
+
+                }
+
+                return Transaction.success(mutableData);
+            }
+
+            @Override
+            public void onComplete(DatabaseError databaseError, boolean b, DataSnapshot dataSnapshot) {
+                if (databaseError == null) {
+                    listener.onCompleteTask("deleteUserFromDatabase", CONDITION_1, null);
+                } else {
+                    listener.onFailureTask("deleteUserFromDatabase", databaseError);
                 }
             }
         });

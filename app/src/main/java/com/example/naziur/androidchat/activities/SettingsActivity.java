@@ -1,7 +1,9 @@
 package com.example.naziur.androidchat.activities;
 
 import android.annotation.TargetApi;
+import android.app.Dialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.net.Uri;
@@ -10,14 +12,24 @@ import android.preference.Preference;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
 import android.os.Bundle;
+import android.support.v7.app.AlertDialog;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
 
 import com.example.naziur.androidchat.R;
 import com.example.naziur.androidchat.database.FirebaseHelper;
+import com.example.naziur.androidchat.models.FirebaseGroupModel;
+import com.example.naziur.androidchat.models.FirebaseUserModel;
+import com.example.naziur.androidchat.database.FirebaseHelper;
 import com.example.naziur.androidchat.models.User;
+import com.example.naziur.androidchat.utils.Container;
+import com.example.naziur.androidchat.utils.Network;
+import com.example.naziur.androidchat.utils.ProgressDialog;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -25,6 +37,9 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.sql.Array;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class SettingsActivity extends AppCompatPreferenceActivity {
@@ -157,12 +172,21 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
      * activity is showing a two-pane settings UI.
      */
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
-    public static class AccountPreferenceFragment extends PreferenceFragment {
+    public static class AccountPreferenceFragment extends PreferenceFragment implements FirebaseHelper.FirebaseHelperListener{
+        FirebaseHelper firebaseHelper;
+        FirebaseUserModel firebaseUserModel;
+        FirebaseAuth mAuth;
+        User user = User.getInstance();
+        private static final String TAG = "AccountPreference";
+        private ProgressDialog progressDialog;
         @Override
         public void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
+            firebaseHelper = FirebaseHelper.getInstance();
+            mAuth = FirebaseAuth.getInstance();
+            firebaseHelper.setFirebaseHelperListener(this);
             addPreferencesFromResource(R.xml.pref_account);
-
+            progressDialog = new ProgressDialog(getActivity(), R.layout.progress_dialog, false);
             // Bind the summaries of EditText/List/Dialog/Ringtone preferences
             // to their values. When their values change, their summaries are
             // updated to reflect the new value, per the Android Design
@@ -182,7 +206,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
             Preference deleteAccPref = findPreference(getString(R.string.key_delete_acc));
             deleteAccPref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
                 public boolean onPreferenceClick(Preference preference) {
-                    Toast.makeText(getActivity(), "Deleting Account", Toast.LENGTH_SHORT).show();
+                    getDialog().show();
                     return true;
                 }
             });
@@ -200,6 +224,184 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
         }
 
 
+        private Dialog getDialog(){
+            AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+            builder.setMessage(R.string.delete_dialog_msg)
+                    .setPositiveButton(R.string.delete_dialog_op_1, new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            toggleProgressDialog(true);
+                            progressDialog.setInfo("Retrieving user information");
+                            firebaseHelper.toggleListenerFor("users", "username", user.name,
+                            firebaseHelper.getValueEventListener("", FirebaseHelper.NON_CONDITION, FirebaseHelper.CONDITION_1, FirebaseHelper.CONDITION_2, FirebaseUserModel.class),
+                                    true, true);
+                        }
+                    })
+                    .setNegativeButton(R.string.delete_dialog_op_2, new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            dialog.dismiss();
+                        }
+                    });
+
+            return builder.create();
+        }
+
+        @Override
+        public void onCompleteTask(String tag, int condition, Container container) {
+            if(tag.equals("getValueEventListener")){ //STEP 1
+                if(condition == FirebaseHelper.CONDITION_1){
+                    Toast.makeText(getActivity(), "User doesn't exist", Toast.LENGTH_SHORT).show();
+                } else if (condition == FirebaseHelper.CONDITION_2){
+                    firebaseUserModel = (FirebaseUserModel) container.getObject();
+                    if(!firebaseUserModel.getGroupKeys().isEmpty()) { //Start at step 2
+                        progressDialog.setInfo("Exiting from associated groups");
+                        firebaseHelper.exitGroup(null, firebaseUserModel.getUsername(), false, Arrays.asList(firebaseUserModel.getGroupKeys().split(",")));
+                    }else if(!firebaseUserModel.getChatKeys().isEmpty()){ //Start at step 6
+                        progressDialog.setInfo("Exiting from associated one-to-one chats");
+                        firebaseHelper.accumulateAllChatsForDeletion(getAllUsersInChatWith(firebaseUserModel.getChatKeys().split(",")), user.name);
+                    } else {
+                        progressDialog.setInfo("Proceeding to delete user account");
+                        checkIfProfileHasPicToDelete();
+                    }
+                }
+            } else if (tag.equals("exitGroup")){ //STEP 2
+                if(condition == FirebaseHelper.CONDITION_1){
+                    progressDialog.setInfo("Deleting any redundant groups");
+                    firebaseUserModel.setGroupKeys("");
+                    firebaseHelper.deleteGroups(container.getGroups());
+                } else if(condition == FirebaseHelper.CONDITION_2) {
+                    toggleProgressDialog(false);
+                    Toast.makeText(getActivity(), "Failed to exit groups please try again", Toast.LENGTH_SHORT).show();
+                }
+            } else if (tag.equals("deleteGroups")){ //STEP 3
+                if(condition == FirebaseHelper.CONDITION_1){
+                    progressDialog.setInfo("Collecting any related images from groups for deletion");
+                    firebaseHelper.collectAllImagesForDeletionThenDeleteAllRelatedMessages("group", Arrays.asList(getChatKeysFor(container.getGroups())), picUrlsFor(container.getGroups()));
+                } else if(condition == FirebaseHelper.CONDITION_2) {
+                    progressDialog.setInfo("Deleting any associated one-to-one chats");
+                    firebaseHelper.accumulateAllChatsForDeletion(getAllUsersInChatWith(firebaseUserModel.getChatKeys().split(",")), user.name);
+                }
+            } else if(tag.equals("collectAllImagesForDeletionThenDeleteAllRelatedMessages")){ //STEP 4
+                String[] stockArr = new String[container.getContainer().getStringList().size()];
+                stockArr = container.getContainer().getStringList().toArray(stockArr);
+                if(condition == FirebaseHelper.CONDITION_1) {
+                    progressDialog.setInfo("Deleting all collected images");
+                    Network.deleteUploadImages(firebaseHelper, container.getStringList(), stockArr, container.getString());
+                }else if(condition == FirebaseHelper.CONDITION_2) { //GO TO STEP 5
+                    progressDialog.setInfo("Deleting all messages");
+                    firebaseHelper.cleanDeleteAllMessages(container.getString(), stockArr);
+                }
+            } else if (tag.equals("cleanDeleteAllMessages")){ //STEP 5
+                if(condition == FirebaseHelper.CONDITION_1){
+                    if(!firebaseUserModel.getChatKeys().isEmpty()){
+                        progressDialog.setInfo("Deleting any associated one-to-one chats");
+                        firebaseHelper.accumulateAllChatsForDeletion(getAllUsersInChatWith(firebaseUserModel.getChatKeys().split(",")), user.name);
+                    } else {
+                        checkIfProfileHasPicToDelete();
+                    }
+                }else if(condition == FirebaseHelper.CONDITION_2) {
+                    toggleProgressDialog(false);
+                    Toast.makeText(getActivity(), "Failed to deleted all images and messages, please try again.", Toast.LENGTH_SHORT).show();
+                }
+            } else if (tag.equals("accumulateAllChatsForDeletion")){//STEP 6
+                if(condition == FirebaseHelper.CONDITION_1) {
+                    List<String> list = getAllChatsWithUsers(container.getStringList());
+                    firebaseUserModel.setChatKeys("");
+                    firebaseHelper.collectAllImagesForDeletionThenDeleteAllRelatedMessages("single", list, null);
+                }else if(condition == FirebaseHelper.CONDITION_2){
+                    progressDialog.setInfo("Proceeding to delete user account");
+                    checkIfProfileHasPicToDelete();
+                }
+            } else if(tag.equals("deleteUserFromDatabase")){
+                progressDialog.setInfo("User account deleted");
+                toggleProgressDialog(false);
+                if(condition == FirebaseHelper.CONDITION_1) {
+                    FirebaseUser firebaseUser = mAuth.getCurrentUser();
+                    if(firebaseUser != null)
+                        firebaseUser.delete();
+                    Toast.makeText(getActivity(), "Your account has been deleted", Toast.LENGTH_SHORT).show();
+                    startActivity(new Intent(getActivity(), RegisterActivity.class));
+                    getActivity().finish();
+                }
+            }
+        }
+
+        private void toggleProgressDialog(boolean show){
+            progressDialog.toggleDialog(show);
+            progressDialog.toggleInfoDisplay(show);
+        }
+
+        private void checkIfProfileHasPicToDelete(){
+            toggleProgressDialog(false);
+            if(!firebaseUserModel.getProfilePic().isEmpty()) {
+                List<String> list = new ArrayList<String>();
+                list.add(firebaseUserModel.getProfilePic());
+                Network.deleteUploadImages(firebaseHelper, list, new String[]{firebaseUserModel.getUsername()}, "profile");
+            } else {
+                firebaseHelper.deleteUserFromDatabase(firebaseUserModel.getUsername());
+            }
+        }
+
+        private String[] getChatKeysFor(List<FirebaseGroupModel> groups){
+            String [] keys = new String[groups.size()];
+            for(int i = 0; i < groups.size(); i++)
+                keys[i] = groups.get(i).getGroupKey();
+            return keys;
+        }
+
+        private List<String> picUrlsFor(List<FirebaseGroupModel> groups){
+            List<String> picUrls = new ArrayList<>();
+            for(FirebaseGroupModel fbg: groups){
+                if(!fbg.getPic().isEmpty()){
+                    picUrls.add(fbg.getPic());
+                }
+            }
+            return picUrls;
+        }
+
+        private List<String> getAllUsersInChatWith(String [] chatKeys){
+            List<String> users = new ArrayList<>();
+            for(String key: chatKeys){
+                String p1 = key.split("-")[0];
+                String p2 = key.split("-")[1];
+                if(!user.name.equals(p1)) {
+                    System.out.println("Adding name: "+p1);
+                    users.add(p1);
+                } else if(!user.name.equals(p2)) {
+                    System.out.println("Adding name: "+p2);
+                    users.add(p2);
+                }
+            }
+            return users;
+        }
+
+        private List<String> getAllChatsWithUsers(List<String> users){
+            String [] chatKeys = firebaseUserModel.getChatKeys().split(",");
+            List<String> keys = new ArrayList<>();
+            for(String key: chatKeys){
+                String p1 = key.split("-")[0];
+                String p2 = key.split("-")[1];
+                if(users.contains(p1)){
+                    System.out.println("Adding key: "+key);
+                    keys.add(key);
+                } else if(users.contains(p2)){
+                    System.out.println("Adding key: "+key);
+                    keys.add(key);
+                }
+            }
+            return keys;
+        }
+
+        @Override
+        public void onFailureTask(String tag, DatabaseError databaseError) {
+            toggleProgressDialog(false);
+            Toast.makeText(getActivity(), "An error occurred, delete was aborted.", Toast.LENGTH_SHORT).show();
+            Log.i(TAG, tag+" "+databaseError.getMessage());
+        }
+
+        @Override
+        public void onChange(String tag, int condition, Container container) {
+
+        }
     }
 
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)

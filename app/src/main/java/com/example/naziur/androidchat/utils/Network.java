@@ -101,14 +101,14 @@ public class Network {
         return false;
     }
 
-    public static void deleteUploadImages (final FirebaseHelper firebaseHelper, final List<String> allUris, final String chatKey, final String loc) {
+    public static void deleteUploadImages (final FirebaseHelper firebaseHelper, final List<String> allUris, final String[] chatKeys, final String loc) {
         if (!allUris.isEmpty()) {
             String uri = allUris.remove(0);
             StorageReference photoRef = FirebaseStorage.getInstance().getReferenceFromUrl(uri);
             photoRef.delete().addOnSuccessListener(new OnSuccessListener<Void>() {
                 @Override
                 public void onSuccess(Void aVoid) {
-                    deleteUploadImages(firebaseHelper , allUris, chatKey, loc);
+                    deleteUploadImages(firebaseHelper , allUris, chatKeys, loc);
                     Log.i(LOG_TAG, "onSuccess: removed image from failed database update");
                 }
             }).addOnFailureListener(new OnFailureListener() {
@@ -120,8 +120,10 @@ public class Network {
                 }
             });
         } else {
-            System.out.println("Clean deleting all messages for" + chatKey);
-            firebaseHelper.cleanDeleteAllMessages(loc, chatKey);
+            if(!loc.equals("profile"))
+                firebaseHelper.cleanDeleteAllMessages(loc, chatKeys);
+            else
+                firebaseHelper.deleteUserFromDatabase(chatKeys[0]);
         }
 
     }

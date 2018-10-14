@@ -305,7 +305,7 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
             case "collectAllImagesForDeletionThenDeleteRelatedMessages":
                 switch (condition){
                     case FirebaseHelper.CONDITION_1:
-                        Network.deleteUploadImages(firebaseHelper, container.getStringList(), container.getString(), "single");
+                        Network.deleteUploadImages(firebaseHelper, container.getStringList(), new String[]{container.getString()}, "single");
                         break;
                 }
                 break;
