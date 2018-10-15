@@ -9,7 +9,6 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.AppCompatButton;
-import android.support.v7.widget.AppCompatEditText;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -17,6 +16,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ArrayAdapter;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.Spinner;
@@ -31,9 +31,11 @@ import com.example.naziur.androidchat.adapter.MyContactsAdapter;
 import com.example.naziur.androidchat.database.ContactDBHelper;
 import com.example.naziur.androidchat.database.FirebaseHelper;
 import com.example.naziur.androidchat.database.MyContactsContract;
+import com.example.naziur.androidchat.fragment.ImageViewDialogFragment;
 import com.example.naziur.androidchat.models.Contact;
 import com.example.naziur.androidchat.models.FirebaseGroupModel;
 import com.example.naziur.androidchat.models.FirebaseUserModel;
+import com.example.naziur.androidchat.utils.Constants;
 import com.example.naziur.androidchat.utils.Container;
 import com.example.naziur.androidchat.utils.FadingActionBarHelper;
 import com.example.naziur.androidchat.models.User;
@@ -55,7 +57,7 @@ import de.hdodenhof.circleimageview.CircleImageView;
 import pl.aprilapps.easyphotopicker.DefaultCallback;
 import pl.aprilapps.easyphotopicker.EasyImage;
 
-public class ProfileActivity extends AuthenticatedActivity implements FirebaseHelper.FirebaseHelperListener{
+public class ProfileActivity extends AuthenticatedActivity implements FirebaseHelper.FirebaseHelperListener, ImageViewDialogFragment.ImageViewDialogListener{
 
     private static final int REQUEST_CODE_GALLERY_CAMERA = 0;
     private static final String TAG = ProfileActivity.class.getSimpleName();
@@ -71,13 +73,14 @@ public class ProfileActivity extends AuthenticatedActivity implements FirebaseHe
     private AppCompatButton saveButton;
     private ImageView editToggle;
     private CircleImageView updatePic;
-    private AppCompatEditText profileName;
+    private EditText profileName;
     private Spinner profileStatus;
     private File myImageFile;
     private ProgressDialog progressBar;
     private boolean reset = false;
     private MyContactsAdapter contactsAdapter;
     private AllGroupsAdapter groupsAdapter;
+    private ImageViewDialogFragment imageViewDialog;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -128,8 +131,19 @@ public class ProfileActivity extends AuthenticatedActivity implements FirebaseHe
         updatePic.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-            controlOffline = false;
-            EasyImage.openChooserWithGallery(ProfileActivity.this, getResources().getString(R.string.gallery_chooser), REQUEST_CODE_GALLERY_CAMERA);
+                if (myImageFile != null) {
+                    imageViewDialog = ImageViewDialogFragment.newInstance(
+                            myImageFile,
+                            Constants.ACTION_SEND,
+                            android.R.drawable.ic_menu_send);
+                } else {
+                    imageViewDialog = ImageViewDialogFragment.newInstance(
+                            (!reset) ? user.profilePic : "",
+                            Constants.ACTION_SEND,
+                            android.R.drawable.ic_menu_send);
+                }
+                imageViewDialog.setCancelable(false);
+                imageViewDialog.show(getSupportFragmentManager(), "ImageViewDialogFragment");
             }
         });
 
@@ -137,7 +151,7 @@ public class ProfileActivity extends AuthenticatedActivity implements FirebaseHe
         if (!user.status.equals(""))
             profileStatus.setSelection(((ArrayAdapter<String>)profileStatus.getAdapter()).getPosition(user.status));
 
-        profileName = (AppCompatEditText) findViewById(R.id.edit_prof_name);
+        profileName = (EditText) findViewById(R.id.edit_prof_name);
         profileName.setText(user.profileName);
         editToggle = (ImageView) findViewById(R.id.edit_button_prof_name);
         myUsername = (TextView) findViewById(R.id.my_username);
@@ -435,5 +449,12 @@ public class ProfileActivity extends AuthenticatedActivity implements FirebaseHe
                     break;
             }
         }
+    }
+
+    @Override
+    public void onActionPressed() {
+            controlOffline = false;
+            imageViewDialog.getDialog().dismiss();
+            EasyImage.openChooserWithGallery(ProfileActivity.this, getResources().getString(R.string.gallery_chooser), REQUEST_CODE_GALLERY_CAMERA);
     }
 }

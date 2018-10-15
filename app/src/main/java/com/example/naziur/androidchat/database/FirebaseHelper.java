@@ -253,7 +253,6 @@ public class FirebaseHelper {
 
     public void updateAllLocalContactsFromFirebase (Context context, final ContactDBHelper db) {
         Cursor cursor = db.getAllMyContacts(MyContactsContract.MyContactsContractEntry.COLUMN_USERNAME);
-        final List<Contact> allContactsLocal = new ArrayList<>();
         final List<Contact> allContactsUpToDate = new ArrayList<>();
         final List<String> allContactsByUsername = new ArrayList<>();
         final Container container = new Container();
@@ -263,7 +262,6 @@ public class FirebaseHelper {
                 fbModel.setUsername(cursor.getString(cursor.getColumnIndex(MyContactsContract.MyContactsContractEntry.COLUMN_USERNAME)));
                 fbModel.setProfileName(cursor.getString(cursor.getColumnIndex(MyContactsContract.MyContactsContractEntry.COLUMN_PROFILE)));
                 fbModel.setProfilePic(cursor.getString(cursor.getColumnIndex(MyContactsContract.MyContactsContractEntry.COLUMN_PROFILE_PIC)));
-                allContactsLocal.add(new Contact(fbModel)); // only local info
                 allContactsUpToDate.add(new Contact(fbModel, false)); // updated with new info
                 allContactsByUsername.add(fbModel.getUsername()); // list of usernames
             }
@@ -297,13 +295,13 @@ public class FirebaseHelper {
 
                 @Override
                 public void onCancelled(DatabaseError databaseError) {
-                    container.setContacts(allContactsLocal);
+                    container.setContacts(allContactsUpToDate);
                     listener.onCompleteTask("updateAllLocalContactsFromFirebase", CONDITION_1, container);
                     listener.onFailureTask("updateAllLocalContactsFromFirebase", databaseError);
                 }
             });
         } else {
-            container.setContacts(allContactsLocal);
+            container.setContacts(allContactsUpToDate);
             listener.onCompleteTask("updateAllLocalContactsFromFirebase", CONDITION_1, container);
         }
 
