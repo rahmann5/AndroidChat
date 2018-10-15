@@ -176,6 +176,10 @@ public class MemberSelectorActivity extends AuthenticatedActivity implements Fir
 
     @Override
     public void onItemClick(Contact contact, int pos, View itemView) {
+        if (!blockListMode && !contact.isActive()) {
+            return;
+        }
+
         if (!selectedContacts.contains(contact.getContact().getUsername())) {
             selectedContacts.add(contact.getContact().getUsername());
             itemView.setBackgroundResource(R.color.green);
@@ -183,6 +187,7 @@ public class MemberSelectorActivity extends AuthenticatedActivity implements Fir
             itemView.setBackgroundColor(Color.TRANSPARENT);
             selectedContacts.remove(contact.getContact().getUsername());
         }
+
     }
 
     private boolean isAlreadyMember (String username) {

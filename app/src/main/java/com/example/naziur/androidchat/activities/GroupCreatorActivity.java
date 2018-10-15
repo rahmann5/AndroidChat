@@ -80,14 +80,16 @@ public class GroupCreatorActivity extends AuthenticatedActivity implements Fireb
                         myContactsAdapter = new MyContactsAdapter(this, container.getContacts(), new MyContactsAdapter.OnItemClickListener() {
                             @Override
                             public void onItemClick(Contact contact, int pos, View itemView) {
-                                if (membersSelectedFromContacts.contains(contact.getContact().getUsername())) {
-                                    membersSelectedFromContacts.remove(contact.getContact().getUsername());
-                                } else {
-                                    if(!allChosenMembersAdapter.isUserAlreadyInContacts(contact.getContact().getUsername())) {
-                                        membersSelectedFromContacts.add(contact.getContact().getUsername());
+                                if (contact.isActive()) {
+                                    if (membersSelectedFromContacts.contains(contact.getContact().getUsername())) {
+                                        membersSelectedFromContacts.remove(contact.getContact().getUsername());
+                                    } else {
+                                        if(!allChosenMembersAdapter.isUserAlreadyInContacts(contact.getContact().getUsername())) {
+                                            membersSelectedFromContacts.add(contact.getContact().getUsername());
+                                        }
                                     }
+                                    updateChosenList();
                                 }
-                                updateChosenList();
                             }
                         });
 

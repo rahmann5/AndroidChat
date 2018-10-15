@@ -160,22 +160,17 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
             @Override
             public void onClick(View view) {
 
-                if (!Network.isInternetAvailable(GroupChatActivity.this, true)) {
+                if (!Network.isInternetAvailable(GroupChatActivity.this, false) || !textComment.getText().toString().trim().isEmpty()) {
                     return;
-                }
-
-                if (!textComment.getText().toString().trim().isEmpty()) {
-
+                } else {
                     if(getMembersThatNeedToReceiveMessage().length > 0) {
                         hideKeyboard();
                         btnSend.setEnabled(false);
                         progressBar.toggleDialog(true);
                         firebaseHelper.checkGroupsKeys("users", FirebaseHelper.CONDITION_1, FirebaseHelper.CONDITION_2, groupKey, getMembersThatNeedToReceiveMessage());
                     }
-
-                } else {
-                    Toast.makeText(GroupChatActivity.this, "You must enter some text before sending a message", Toast.LENGTH_SHORT).show();
                 }
+
             }
         });
 

@@ -272,7 +272,7 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
                 hideKeyboard();
 
                 final String wishMessage = textComment.getText().toString().trim();
-                if (!Network.isInternetAvailable(ChatActivity.this, true) || wishMessage.isEmpty()) {
+                if (!Network.isInternetAvailable(ChatActivity.this, false) || wishMessage.isEmpty()) {
                     return;
                 } else {
                     btnSend.setEnabled(false);
