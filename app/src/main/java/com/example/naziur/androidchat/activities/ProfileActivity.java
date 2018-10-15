@@ -206,35 +206,9 @@ public class ProfileActivity extends AuthenticatedActivity implements FirebaseHe
     private void showContacts() {
         emptyContactsList = (TextView) findViewById(R.id.no_contacts);
         myContacts = (RecyclerView) findViewById(R.id.profile_contacts_list);
-        updateContacts ();
+        firebaseHelper.updateAllLocalContactsFromFirebase(this, db);
     }
 
-    private void updateContacts () {
-        contactsAdapter = new MyContactsAdapter(this, null);
-        final Cursor c = db.getAllMyContacts(null);
-        boolean hasInternet = Network.isInternetAvailable(this, true);
-        try {
-            while (c.moveToNext()) {
-                FirebaseUserModel fbModel = new FirebaseUserModel();
-                fbModel.setUsername(c.getString(c.getColumnIndex(MyContactsContract.MyContactsContractEntry.COLUMN_USERNAME)));
-                fbModel.setProfileName(c.getString(c.getColumnIndex(MyContactsContract.MyContactsContractEntry.COLUMN_PROFILE)));
-                fbModel.setProfilePic(c.getString(c.getColumnIndex(MyContactsContract.MyContactsContractEntry.COLUMN_PROFILE_PIC)));
-                if (hasInternet) {
-                    firebaseHelper.updateLocalContactsFromFirebase("users", fbModel, db);
-                } else {
-                    contactsAdapter.addNewItemContact(new Contact(fbModel, false));
-                    toggleEmptyState(emptyContactsList, contactsAdapter);
-                }
-            }
-
-        } finally {
-            if (!hasInternet) {
-                Toast.makeText(this, "Data maybe outdated", Toast.LENGTH_LONG).show();
-            }
-            toggleEmptyState(emptyContactsList, contactsAdapter);
-            c.close();
-        }
-    }
 
     private void toggleEmptyState (TextView emptystate, RecyclerView.Adapter<RecyclerView.ViewHolder> adapter) {
         if (adapter.getItemCount() == 0)
@@ -379,13 +353,10 @@ public class ProfileActivity extends AuthenticatedActivity implements FirebaseHe
 
     @Override
     public void onCompleteTask(String tag, int condition, Container container) {
-        if (tag.equals("updateLocalContactsFromFirebase")) {
+        if (tag.equals("updateAllLocalContactsFromFirebase")) {
             switch (condition) {
                 case FirebaseHelper.CONDITION_1 :
-                    contactsAdapter.addNewItemContact(container.getContact());
-                    break;
-
-                case FirebaseHelper.CONDITION_2 :
+                    contactsAdapter = new MyContactsAdapter(this, container.getContacts(), null);
                     LinearLayoutManager l = new LinearLayoutManager(ProfileActivity.this);
                     myContacts.setLayoutManager(l);
                     myContacts.setAdapter(contactsAdapter);
@@ -422,10 +393,6 @@ public class ProfileActivity extends AuthenticatedActivity implements FirebaseHe
     @Override
     public void onFailureTask(String tag, DatabaseError databaseError) {
         switch (tag) {
-            case "updateLocalContactsFromFirebase" :
-                toggleEmptyState(emptyContactsList, contactsAdapter);
-                break;
-
             case "getValueEventListener" :
                 toggleEmptyState(emptyContactsList, contactsAdapter);
                 toggleEmptyState(emptyGroupsList, groupsAdapter);
@@ -441,13 +408,7 @@ public class ProfileActivity extends AuthenticatedActivity implements FirebaseHe
 
     @Override
     public void onChange(String tag, int condition, Container container) {
-        if (tag.equals("updateLocalContactsFromFirebase")) {
-            switch (condition) {
-                case FirebaseHelper.CONDITION_1 :
-                    contactsAdapter.addNewItemContact(container.getContact());
-                    break;
-            }
-        } else if (tag.equals("getValueEventListener")) {
+        if (tag.equals("getValueEventListener")) {
             switch (condition) {
                 case FirebaseHelper.CONDITION_1 :
                     FirebaseUserModel currentUser = (FirebaseUserModel) container.getObject();

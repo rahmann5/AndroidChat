@@ -61,6 +61,7 @@ public class MyContactsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
 
     private void setAllMyContacts(List<Contact> contacts){
         allMyContacts = contacts;
+        notifyDataSetChanged();
     }
 
     @Override
@@ -73,14 +74,22 @@ public class MyContactsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
         return allMyContacts.size();
     }
 
-    public void updateState (int pos) {
-        allMyContacts.remove(pos);
-        notifyItemRemoved(pos);
+    public void updateState (int pos, Contact forReplace) {
+        if (forReplace == null) {
+            allMyContacts.remove(pos);
+            notifyItemRemoved(pos);
+        } else {
+            allMyContacts.remove(pos);
+            allMyContacts.add(pos, forReplace);
+            notifyDataSetChanged();
+        }
     }
 
     public void addNewItemContact(Contact fbModel){
-        allMyContacts.add(fbModel);
-        notifyDataSetChanged();
+        if (isExists(fbModel.getContact()) == -1) {
+            allMyContacts.add(fbModel);
+            notifyDataSetChanged();
+        }
     }
 
     public void addNewItem(FirebaseUserModel fbModel){

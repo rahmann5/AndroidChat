@@ -30,6 +30,7 @@ public class Container {
     private JSONArray jsonArray;
     private Object object;
     private List<FirebaseGroupModel> groups;
+    private List<Contact> contacts;
     private Container container;
 
     public Container () {
@@ -146,5 +147,13 @@ public class Container {
 
     public void setGroups(List<FirebaseGroupModel> groups) {
         this.groups = groups;
+    }
+
+    public List<Contact> getContacts() {
+        return contacts;
+    }
+
+    public void setContacts(List<Contact> contacts) {
+        this.contacts = contacts;
     }
 }

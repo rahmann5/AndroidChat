@@ -108,49 +108,11 @@ public class MyContactsActivity extends AuthenticatedActivity implements AddCont
         DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(this,
                 mLayoutManager.getOrientation());
         myContactsRecycler.addItemDecoration(dividerItemDecoration);
-
-        Cursor c = db.getAllMyContacts(null);
-
-        if (c != null && c.getCount() > 0) {
-            updateExistingContacts(c);
-        } else {
-            myContactsAdapter = new MyContactsAdapter(this, setUpListener());
-            myContactsRecycler.setAdapter(myContactsAdapter);
-            toggleContactsEmptyState();
-        }
-
-
-    }
-
-    private void updateExistingContacts (final Cursor c) {
         progressBar.toggleDialog(true);
-        myContactsAdapter = new MyContactsAdapter(this, setUpListener());
-        boolean hasInternet = Network.isInternetAvailable(this, true);
-        try{
-            while (c.moveToNext()) {
+        firebaseHelper.updateAllLocalContactsFromFirebase(this, db);
 
-                final FirebaseUserModel fbModel = new FirebaseUserModel();
-                fbModel.setUsername(c.getString(c.getColumnIndex(MyContactsContract.MyContactsContractEntry.COLUMN_USERNAME)));
-                fbModel.setProfileName(c.getString(c.getColumnIndex(MyContactsContract.MyContactsContractEntry.COLUMN_PROFILE)));
-
-                if (hasInternet) {
-                    firebaseHelper.updateLocalContactsFromFirebase("users", fbModel, db);
-                } else {
-                    fbModel.setProfilePic(c.getString(c.getColumnIndex(MyContactsContract.MyContactsContractEntry.COLUMN_PROFILE_PIC)));
-                    myContactsAdapter.addNewItem(fbModel);
-                }
-
-            }
-        } finally {
-            if (!hasInternet){
-                Toast.makeText(this, "Data maybe outdated", Toast.LENGTH_LONG).show();
-                myContactsRecycler.setAdapter(myContactsAdapter);
-                progressBar.toggleDialog(false);
-                toggleContactsEmptyState();
-            }
-            c.close();
-        }
     }
+
 
     private MyContactsAdapter.OnItemClickListener setUpListener () {
         return new MyContactsAdapter.OnItemClickListener() {
@@ -233,7 +195,7 @@ public class MyContactsActivity extends AuthenticatedActivity implements AddCont
                 break;
             case 2 : // delete contact
                 if (db.removeContact(c.getContact().getUsername()) > 0) {
-                    myContactsAdapter.updateState(itemLoc);
+                    myContactsAdapter.updateState(itemLoc, null);
                     toggleContactsEmptyState();
                 } else {
                     Log.i(TAG, "Failed to delete the user");
@@ -327,14 +289,11 @@ public class MyContactsActivity extends AuthenticatedActivity implements AddCont
 
     @Override
     public void onCompleteTask(String tag, int condition, Container container) {
-        if (tag.equals("updateLocalContactsFromFirebase")) {
+        if (tag.equals("updateAllLocalContactsFromFirebase")) {
             switch (condition) {
                 case FirebaseHelper.CONDITION_1 :
                     progressBar.toggleDialog(false);
-                    myContactsAdapter.addNewItem(container.getContact().getContact());
-                    break;
-                case FirebaseHelper.CONDITION_2 :
-                    progressBar.toggleDialog(false);
+                    myContactsAdapter = new MyContactsAdapter(this, container.getContacts(), setUpListener());
                     myContactsRecycler.setAdapter(myContactsAdapter);
                     toggleContactsEmptyState();
                     break;
@@ -439,10 +398,6 @@ public class MyContactsActivity extends AuthenticatedActivity implements AddCont
     public void onFailureTask(String tag, DatabaseError databaseError) {
 
         switch (tag) {
-            case "updateLocalContactsFromFirebase" :
-                toggleContactsEmptyState();
-                break;
-
             case "getValueEventListener" :
                 Toast.makeText(MyContactsActivity.this, "Error has occurred creating chat", Toast.LENGTH_LONG).show();
                 break;
@@ -458,12 +413,6 @@ public class MyContactsActivity extends AuthenticatedActivity implements AddCont
 
     @Override
     public void onChange(String tag, int condition, Container container) {
-       if (tag.equals("updateLocalContactsFromFirebase")) {
-           switch (condition) {
-               case FirebaseHelper.CONDITION_1 :
-                   myContactsAdapter.addNewItem(container.getContact().getContact());
-                   break;
-           }
-       }
+
     }
 }
