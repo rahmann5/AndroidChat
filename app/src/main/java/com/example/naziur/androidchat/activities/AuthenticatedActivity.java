@@ -21,7 +21,7 @@ import com.google.firebase.database.ValueEventListener;
 
 public abstract class AuthenticatedActivity extends AppCompatActivity {
     protected FirebaseAuth mAuth;
-    protected DatabaseReference database;
+    protected DatabaseReference  database;
     protected boolean controlOffline;
 
     @Override

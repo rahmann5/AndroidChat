@@ -57,6 +57,8 @@ import java.util.Collections;
 import java.util.List;
 
 import de.hdodenhof.circleimageview.CircleImageView;
+import hani.momanii.supernova_emoji_library.Actions.EmojIconActions;
+import hani.momanii.supernova_emoji_library.Helper.EmojiconEditText;
 import pl.aprilapps.easyphotopicker.DefaultCallback;
 import pl.aprilapps.easyphotopicker.EasyImage;
 
@@ -65,8 +67,8 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
     private static final int REQUEST_CODE_GALLERY_CAMERA = 0;
     User user = User.getInstance();
 
-    EditText textComment;
-    CircleImageView btnSend, btnMedia;
+    EmojiconEditText textComment;
+    CircleImageView btnSend, btnMedia, btnEmoji;
     FloatingActionButton sendBottom;
     FirebaseDatabase database;
     ListView listView;
@@ -76,6 +78,7 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
     private ActionBar actionBar;
     private ProgressDialog progressBar;
     private String groupKey = "";
+    private  EmojIconActions emojIcon;
     private ValueEventListener msgValueEventListener, groupListener;
     private LinearLayout chatControl, footerMsg;
     FirebaseHelper firebaseHelper;
@@ -100,9 +103,10 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
         db = new ContactDBHelper(this);
         mFilter.setPriority(IntentFilter.SYSTEM_HIGH_PRIORITY);
         listView = (ListView) findViewById(R.id.chattingList);
-        textComment = (EditText) findViewById(R.id.comment_text);
+        textComment = (EmojiconEditText) findViewById(R.id.comment_text);
         btnSend = (CircleImageView) findViewById(R.id.send_button);
         btnMedia = (CircleImageView) findViewById(R.id.media_button);
+        btnEmoji = (CircleImageView) findViewById(R.id.emoji_button);
         sendBottom = (FloatingActionButton) findViewById(R.id.action_send_bottom);
         chatControl = (LinearLayout) findViewById(R.id.chat_control);
         footerMsg = (LinearLayout) findViewById(R.id.footer_message);
@@ -111,6 +115,37 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
         progressBar = new ProgressDialog(this, R.layout.progress_dialog, true);
         firebaseHelper = FirebaseHelper.getInstance();
         firebaseHelper.setFirebaseHelperListener(this);
+
+        textComment.setUseSystemDefault(true);
+        emojIcon = new EmojIconActions(this, findViewById(R.id.root_view), textComment, btnEmoji);
+        emojIcon.setUseSystemEmoji(true);
+        emojIcon.ShowEmojIcon();
+        emojIcon.setKeyboardListener(new EmojIconActions.KeyboardListener() {
+            @Override
+            public void onKeyboardOpen() {
+                Log.e(TAG,"keyboard opened");
+            }
+            @Override
+            public void onKeyboardClose() {
+                Log.e(TAG,"Keyboard closed");
+            }
+        });
+
+        textComment.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                emojIcon.closeEmojIcon();
+            }
+        });
+
+        btnEmoji.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                emojIcon.ShowEmojIcon();
+            }
+        });
+
+
         registeredIds = new JSONArray();
         // assuming that user is guaranteed member of group
         if (!Network.isInternetAvailable(this, true)) {

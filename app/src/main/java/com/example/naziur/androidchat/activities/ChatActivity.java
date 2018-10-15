@@ -28,6 +28,7 @@ import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -78,6 +79,8 @@ import java.util.Map;
 import cz.msebera.android.httpclient.Header;
 import cz.msebera.android.httpclient.entity.StringEntity;
 import de.hdodenhof.circleimageview.CircleImageView;
+import hani.momanii.supernova_emoji_library.Actions.EmojIconActions;
+import hani.momanii.supernova_emoji_library.Helper.EmojiconEditText;
 import pl.aprilapps.easyphotopicker.DefaultCallback;
 import pl.aprilapps.easyphotopicker.EasyImage;
 
@@ -90,8 +93,8 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
 
     ListView listView;
 
-    EditText textComment;
-    CircleImageView btnSend, btnMedia, btnInvite;
+    EmojiconEditText textComment;
+    CircleImageView btnSend, btnMedia, btnInvite, btnEmoji;
     FloatingActionButton sendBottom;
     List<FirebaseMessageModel> messages = new ArrayList<FirebaseMessageModel>();
 
@@ -109,7 +112,7 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
     private FirebaseHelper firebaseHelper;
 
     private IntentFilter mFilter = new IntentFilter("my.custom.action");
-
+    private  EmojIconActions emojIcon;
     public int currentFirstVisibleItem, currentVisibleItemCount, totalItem, currentScrollState;
     private List<FirebaseMessageModel> tempMsg;
     private boolean isScrolling = false;
@@ -136,11 +139,41 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
 
         listView = (ListView) findViewById(R.id.chattingList);
 
-        textComment = (EditText) findViewById(R.id.comment_text);
+        textComment = (EmojiconEditText) findViewById(R.id.comment_text);
         btnSend = (CircleImageView) findViewById(R.id.send_button);
         btnMedia = (CircleImageView) findViewById(R.id.media_button);
+        btnEmoji = (CircleImageView) findViewById(R.id.emoji_button);
         btnInvite = (CircleImageView) findViewById(R.id.send_invite_button);
         sendBottom = (FloatingActionButton) findViewById(R.id.action_send_bottom);
+        textComment.setUseSystemDefault(true);
+
+        final RelativeLayout rootView = (RelativeLayout)findViewById(R.id.root_view);
+        emojIcon = new EmojIconActions(ChatActivity.this,rootView , textComment, btnEmoji);
+        emojIcon.setUseSystemEmoji(true);
+        emojIcon.setKeyboardListener(new EmojIconActions.KeyboardListener() {
+            @Override
+            public void onKeyboardOpen() {
+                Log.e(TAG,"keyboard opened");
+            }
+            @Override
+            public void onKeyboardClose() {
+                Log.e(TAG,"Keyboard closed");
+            }
+        });
+
+        textComment.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                emojIcon.closeEmojIcon();
+            }
+        });
+
+        btnEmoji.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                emojIcon.ShowEmojIcon();
+            }
+        });
 
         sendBottom.setOnClickListener(new View.OnClickListener() {
             @Override

@@ -23,6 +23,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
+import hani.momanii.supernova_emoji_library.Helper.EmojiconTextView;
+
 /**
  * Created by Hamidur on 27/08/2018.
  */
@@ -93,7 +95,8 @@ public class MessagesListAdapter extends ArrayAdapter<MessageCell> {
     }
 
     private void setTextMsg (int position, View convertView) {
-        TextView wish = (TextView) convertView.findViewById(R.id.wishMessage);
+        EmojiconTextView wish = (EmojiconTextView) convertView.findViewById(R.id.wishMessage);
+        wish.setUseSystemDefault(true);
         wish.setText(cellItem[position].getMessageText());
     }
 

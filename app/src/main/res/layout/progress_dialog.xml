@@ -10,7 +10,7 @@
         android:text="test"
         android:layout_gravity="center_horizontal"
         android:textSize="14sp"
-
+        android:visibility="gone"
         android:layout_margin="3dp"/>
 
     <ProgressBar
