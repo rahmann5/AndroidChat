@@ -83,12 +83,7 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
         recyclerView = rootView.findViewById(R.id.all_chats_list);
         progressBar = new ProgressDialog(getActivity(), R.layout.progress_dialog, true);
         db = new ContactDBHelper(getContext());
-        if (Network.isInternetAvailable(getActivity(), true)) {
-            Cursor c = db.getAllMyContacts(null);
-            if (c != null && c.getCount() > 0) {
-                updateExistingContacts (c);
-            }
-        }
+        firebaseHelper.updateAllLocalContactsFromFirebase(getActivity(), db);
         setUpRecyclerView();
         return rootView;
     }
@@ -106,20 +101,6 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
         firebaseHelper.toggleListenerFor("users", "username" , user.name, userListener, true, false);
     }
 
-    private void updateExistingContacts (Cursor c) {
-        try{
-            while (c.moveToNext()) {
-                final FirebaseUserModel fbModel = new FirebaseUserModel();
-                fbModel.setUsername(c.getString(c.getColumnIndex(MyContactsContract.MyContactsContractEntry.COLUMN_USERNAME)));
-                fbModel.setProfileName(c.getString(c.getColumnIndex(MyContactsContract.MyContactsContractEntry.COLUMN_PROFILE)));
-                // need one for profile picture
-                firebaseHelper.updateLocalContactsFromFirebase("users", fbModel, db);
-            }
-        } finally {
-            c.close();
-        }
-
-    }
 
     private void setUpMsgEventListeners(){
         valueEventListeners.clear();

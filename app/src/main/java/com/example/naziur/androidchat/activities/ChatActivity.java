@@ -621,7 +621,11 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
                     for (FirebaseMessageModel fbm : tempMsg) {
                         messages.add(0, fbm);
                     }
-                    updateListView(false);
+                    if (messages.size() <= 6) {
+                        updateListView(true);
+                    } else {
+                        updateListView(false);
+                    }
                     progressBar.toggleDialog(false);
                     tempMsg = new ArrayList<>();
                     isScrolling = false;

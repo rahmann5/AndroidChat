@@ -1,5 +1,6 @@
 package com.example.naziur.androidchat.database;
 
+import android.database.Cursor;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.content.Context;
@@ -250,39 +251,62 @@ public class FirebaseHelper {
         });
     }
 
-
-    public void updateLocalContactsFromFirebase (String node, final FirebaseUserModel fbModel, final ContactDBHelper db) {
-        DatabaseReference usersRef = database.getReference(node);
-        Query query = usersRef.orderByChild("username").equalTo(fbModel.getUsername());
-        query.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                if (dataSnapshot.exists()) {
-                    for (com.google.firebase.database.DataSnapshot userSnapshot : dataSnapshot.getChildren()) {
-                        FirebaseUserModel firebaseUserModel = userSnapshot.getValue(FirebaseUserModel.class);
-                        if (firebaseUserModel.getUsername().equals(fbModel.getUsername())) {
-                            db.updateProfile(firebaseUserModel.getUsername(), firebaseUserModel.getProfileName(), firebaseUserModel.getProfilePic());
-                            Container container = new Container();
-                            container.setContact(new Contact(firebaseUserModel));
-                            listener.onChange("updateLocalContactsFromFirebase", CONDITION_1, container);
-                            break;
+    public void updateAllLocalContactsFromFirebase (Context context, final ContactDBHelper db) {
+        Cursor cursor = db.getAllMyContacts(MyContactsContract.MyContactsContractEntry.COLUMN_USERNAME);
+        final List<Contact> allContactsLocal = new ArrayList<>();
+        final List<Contact> allContactsUpToDate = new ArrayList<>();
+        final List<String> allContactsByUsername = new ArrayList<>();
+        final Container container = new Container();
+        if (cursor != null && cursor.getCount() > 0) {
+            while (cursor.moveToNext()) {
+                final FirebaseUserModel fbModel = new FirebaseUserModel();
+                fbModel.setUsername(cursor.getString(cursor.getColumnIndex(MyContactsContract.MyContactsContractEntry.COLUMN_USERNAME)));
+                fbModel.setProfileName(cursor.getString(cursor.getColumnIndex(MyContactsContract.MyContactsContractEntry.COLUMN_PROFILE)));
+                fbModel.setProfilePic(cursor.getString(cursor.getColumnIndex(MyContactsContract.MyContactsContractEntry.COLUMN_PROFILE_PIC)));
+                allContactsLocal.add(new Contact(fbModel)); // only local info
+                allContactsUpToDate.add(new Contact(fbModel, false)); // updated with new info
+                allContactsByUsername.add(fbModel.getUsername()); // list of usernames
+            }
+            cursor.close();
+        }
+        if (Network.isInternetAvailable(context, false) && !allContactsByUsername.isEmpty()) {
+            DatabaseReference usersRef = database.getReference("users");
+            Query query = usersRef.orderByChild("username").equalTo(allContactsByUsername.get(0));
+            if (allContactsByUsername.size() > 1) {
+                query = usersRef.orderByChild("username").startAt(allContactsByUsername.get(0))
+                        .endAt(allContactsByUsername.get(allContactsByUsername.size()-1));
+            }
+            query.addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    if (dataSnapshot.exists()) {
+                        for (DataSnapshot userSnapshot : dataSnapshot.getChildren()) {
+                            FirebaseUserModel firebaseUserModel = userSnapshot.getValue(FirebaseUserModel.class);
+                            int indexOf = allContactsByUsername.indexOf(firebaseUserModel.getUsername());
+                            if (indexOf != -1) {
+                                db.updateProfile(firebaseUserModel.getUsername(), firebaseUserModel.getProfileName(), firebaseUserModel.getProfilePic());
+                                allContactsUpToDate.remove(indexOf);
+                                allContactsUpToDate.add(indexOf, new Contact(firebaseUserModel));
+                            }
                         }
+
                     }
-                } else {
-                    Container container = new Container();
-                    container.setContact(new Contact(fbModel, false));
-                    listener.onCompleteTask("updateLocalContactsFromFirebase", CONDITION_1, container);
+                    container.setContacts(allContactsUpToDate);
+                    listener.onCompleteTask("updateAllLocalContactsFromFirebase", CONDITION_1, container);
                 }
 
-                listener.onCompleteTask("updateLocalContactsFromFirebase", CONDITION_2, null);
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
+                    container.setContacts(allContactsLocal);
+                    listener.onCompleteTask("updateAllLocalContactsFromFirebase", CONDITION_1, container);
+                    listener.onFailureTask("updateAllLocalContactsFromFirebase", databaseError);
+                }
+            });
+        } else {
+            container.setContacts(allContactsLocal);
+            listener.onCompleteTask("updateAllLocalContactsFromFirebase", CONDITION_1, container);
+        }
 
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-                listener.onFailureTask("updateLocalContactsFromFirebase", databaseError);
-            }
-        });
     }
 
     public ValueEventListener createMessageEventListener () {

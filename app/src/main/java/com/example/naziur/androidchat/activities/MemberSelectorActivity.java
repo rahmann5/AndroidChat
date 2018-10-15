@@ -52,6 +52,8 @@ public class MemberSelectorActivity extends AuthenticatedActivity implements Fir
     private String [] currentMembers;
     private boolean blockListMode = false;
     private RecyclerView myContactsRecycler;
+    private ContactDBHelper db;
+    private ProgressDialog progressBar;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -68,6 +70,7 @@ public class MemberSelectorActivity extends AuthenticatedActivity implements Fir
                 finish();
             }
         }
+        progressBar = new ProgressDialog(this, R.layout.progress_dialog, true);
         firebaseHelper = FirebaseHelper.getInstance();
         firebaseHelper.setFirebaseHelperListener(this);
         selectedContacts = new ArrayList<>();
@@ -86,13 +89,16 @@ public class MemberSelectorActivity extends AuthenticatedActivity implements Fir
                 mLayoutManager.getOrientation());
         myContactsRecycler.addItemDecoration(dividerItemDecoration);
         if (blockListMode) {
+            progressBar.toggleDialog(true);
             floatingActionButton.setVisibility(View.GONE);
             if (!Network.isInternetAvailable(this, true)) {
                 return;
             }
             createSingleEvent(user.name, FirebaseHelper.CONDITION_2); // load block listed users
         } else {
-            loadContacts ();
+            progressBar.toggleDialog(true);
+            db = new ContactDBHelper(getApplicationContext());
+            firebaseHelper.updateAllLocalContactsFromFirebase(this, db);
         }
 
         createActionBar ();
@@ -104,31 +110,6 @@ public class MemberSelectorActivity extends AuthenticatedActivity implements Fir
         dialog.show(getSupportFragmentManager(), "AddContactDialogFragment");
     }
 
-    private void loadContacts () {
-        ContactDBHelper db = new ContactDBHelper(getApplicationContext());
-
-        Cursor c = db.getAllMyContacts(null);
-        List<Contact> allContacts = new ArrayList<>();
-        if (c != null && c.getCount() > 0) {
-           while (c.moveToNext()) {
-               String username = c.getString(c.getColumnIndex(MyContactsContract.MyContactsContractEntry.COLUMN_USERNAME));
-               if (!isAlreadyMember(username)) {
-                   FirebaseUserModel fbModel = new FirebaseUserModel();
-                   fbModel.setUsername(username);
-                   String profileName = c.getString(c.getColumnIndex(MyContactsContract.MyContactsContractEntry.COLUMN_PROFILE));
-                   String profilePic = c.getString(c.getColumnIndex(MyContactsContract.MyContactsContractEntry.COLUMN_PROFILE_PIC));
-                   allContacts.add(new Contact(createFirebaseUserModel(username, profileName, profilePic)));
-               }
-
-           }
-            myContactsAdapter = new MyContactsAdapter(this, allContacts, this);
-        } else {
-            myContactsAdapter = new MyContactsAdapter(this, this);
-        }
-        myContactsRecycler.setAdapter(myContactsAdapter);
-        toggleEmptyState();
-        db.close();
-    }
 
     private void toggleEmptyState () {
         if (myContactsAdapter.getItemCount() == 0) {
@@ -174,6 +155,7 @@ public class MemberSelectorActivity extends AuthenticatedActivity implements Fir
                         setResult(RESULT_OK,data);
                         finish();
                     } else {
+                        progressBar.toggleDialog(true);
                         firebaseHelper.updateBlockList(selectedContacts.toArray(new String[selectedContacts.size()]), false);
                     }
                 }
@@ -222,7 +204,6 @@ public class MemberSelectorActivity extends AuthenticatedActivity implements Fir
             return;
         }
 
-        ContactDBHelper db = new ContactDBHelper(getApplicationContext());
         if(!db.isUserAlreadyInContacts(username) && !username.equals(user.name) && !isAlreadyMember(username)){
             createSingleEvent(username, FirebaseHelper.CONDITION_1);
         } else {
@@ -237,13 +218,29 @@ public class MemberSelectorActivity extends AuthenticatedActivity implements Fir
     }
 
     @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (db != null)
+            db.close();
+    }
+
+    @Override
     public void onDialogNegativeClick(DialogFragment dialog) {
         dialog.dismiss();
     }
 
     @Override
     public void onCompleteTask(String tag, int condition, Container container) {
-        if (tag.equals("getValueEventListener")) {
+        if (tag.equals("updateAllLocalContactsFromFirebase")) {
+            switch (condition) {
+                case FirebaseHelper.CONDITION_1 :
+                    myContactsAdapter = new MyContactsAdapter(this, container.getContacts(), this);
+                    myContactsRecycler.setAdapter(myContactsAdapter);
+                    toggleEmptyState();
+                    progressBar.toggleDialog(false);
+                    break;
+            }
+        } else if (tag.equals("getValueEventListener")) {
             switch (condition) {
                 case FirebaseHelper.CONDITION_1 :
                     FirebaseUserModel fbModel = (FirebaseUserModel) container.getObject();
@@ -273,6 +270,7 @@ public class MemberSelectorActivity extends AuthenticatedActivity implements Fir
                     myContactsRecycler.setAdapter(myContactsAdapter);
                     toggleEmptyState();
                     db.close();
+                    progressBar.toggleDialog(false);
                     break;
 
                 case FirebaseHelper.CONDITION_3 :
@@ -284,6 +282,7 @@ public class MemberSelectorActivity extends AuthenticatedActivity implements Fir
         } else if (tag.equals("updateBlockList")) {
             switch (condition){
                 case FirebaseHelper.CONDITION_1 :
+                    progressBar.toggleDialog(false);
                     Toast.makeText(this, "Successfully updated block list", Toast.LENGTH_SHORT).show();
                     finish();
                     break;
@@ -294,6 +293,7 @@ public class MemberSelectorActivity extends AuthenticatedActivity implements Fir
 
     @Override
     public void onFailureTask(String tag, DatabaseError databaseError) {
+        progressBar.toggleDialog(false);
         Log.i(TAG, tag + ": " + databaseError.getMessage());
     }
 

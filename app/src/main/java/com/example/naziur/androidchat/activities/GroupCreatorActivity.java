@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.support.annotation.NonNull;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
@@ -38,33 +37,20 @@ import com.example.naziur.androidchat.utils.Network;
 import com.example.naziur.androidchat.utils.ProgressDialog;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.MutableData;
-import com.google.firebase.database.Transaction;
-import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
-import com.loopj.android.http.RequestParams;
-import com.loopj.android.http.TextHttpResponseHandler;
 
 import org.json.JSONArray;
-import org.json.JSONObject;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import de.hdodenhof.circleimageview.CircleImageView;
 import pl.aprilapps.easyphotopicker.DefaultCallback;
 import pl.aprilapps.easyphotopicker.EasyImage;
-
-import static android.R.attr.mode;
 
 public class GroupCreatorActivity extends AuthenticatedActivity implements FirebaseHelper.FirebaseHelperListener{
     private static final int REQUEST_CODE_GALLERY_CAMERA = 0;
@@ -83,10 +69,39 @@ public class GroupCreatorActivity extends AuthenticatedActivity implements Fireb
     private ProgressDialog progressBar;
     private FirebaseHelper firebaseHelper;
     private FirebaseGroupModel groupModel;
+    private TextView emptyViewTv;
 
     @Override
     public void onCompleteTask(String tag, int condition, Container container) {
         switch(tag){
+            case "updateAllLocalContactsFromFirebase" :
+                switch (condition) {
+                    case FirebaseHelper.CONDITION_1 :
+                        myContactsAdapter = new MyContactsAdapter(this, container.getContacts(), new MyContactsAdapter.OnItemClickListener() {
+                            @Override
+                            public void onItemClick(Contact contact, int pos, View itemView) {
+                                if (membersSelectedFromContacts.contains(contact.getContact().getUsername())) {
+                                    membersSelectedFromContacts.remove(contact.getContact().getUsername());
+                                } else {
+                                    if(!allChosenMembersAdapter.isUserAlreadyInContacts(contact.getContact().getUsername())) {
+                                        membersSelectedFromContacts.add(contact.getContact().getUsername());
+                                    }
+                                }
+                                updateChosenList();
+                            }
+                        });
+
+                        if (myContactsAdapter.getItemCount() > 0){
+                            emptyViewTv.setVisibility(View.GONE);
+                            contactsRecyclerView.setVisibility(View.VISIBLE);
+                        }
+                        LinearLayoutManager mLayoutManager = new LinearLayoutManager(this);
+                        contactsRecyclerView.setLayoutManager(mLayoutManager);
+                        contactsRecyclerView.setAdapter(myContactsAdapter);
+                        progressBar.toggleDialog(false);
+                        break;
+                }
+                break;
             case "addUserToContacts":
                 switch (condition){
                     case FirebaseHelper.CONDITION_1:
@@ -201,10 +216,11 @@ public class GroupCreatorActivity extends AuthenticatedActivity implements Fireb
         final EditText groupNameEt = (EditText) findViewById(R.id.group_name);
         final EditText searchedUsernameEt = (EditText) findViewById(R.id.user_not_in_contacts);
         progressBar = new ProgressDialog(GroupCreatorActivity.this, R.layout.progress_dialog, true);
+        progressBar.toggleDialog(true);
         ImageButton searchAddUserBtn = (ImageButton) findViewById(R.id.search_add_contact);
         Button createGroupBtn = (Button) findViewById(R.id.make_group_btn);
         ContactDBHelper contactDbHelper = new ContactDBHelper(this);
-        TextView emptyViewTv = (TextView) findViewById(R.id.no_groups);
+        emptyViewTv = (TextView) findViewById(R.id.no_groups);
         contactsRecyclerView = (RecyclerView) findViewById(R.id.chat_groups_list);
         choiceRecyclerView = (RecyclerView) findViewById(R.id.chosen_group_list);
 
@@ -226,19 +242,8 @@ public class GroupCreatorActivity extends AuthenticatedActivity implements Fireb
         DividerItemDecoration mDividerItemDecoration = new DividerItemDecoration(choiceRecyclerView.getContext(), layoutManager.getOrientation());
         choiceRecyclerView.addItemDecoration(mDividerItemDecoration);
         choiceRecyclerView.setAdapter(allChosenMembersAdapter);
-        myContactsAdapter = new MyContactsAdapter(this, readCursorData(contactDbHelper.getAllMyContacts(null)), new MyContactsAdapter.OnItemClickListener() {
-            @Override
-            public void onItemClick(Contact contact, int pos, View itemView) {
-                if (membersSelectedFromContacts.contains(contact.getContact().getUsername())) {
-                    membersSelectedFromContacts.remove(contact.getContact().getUsername());
-                } else {
-                    if(!allChosenMembersAdapter.isUserAlreadyInContacts(contact.getContact().getUsername())) {
-                        membersSelectedFromContacts.add(contact.getContact().getUsername());
-                    }
-                }
-                updateChosenList();
-            }
-        });
+
+        firebaseHelper.updateAllLocalContactsFromFirebase(this, contactDbHelper);
 
         searchAddUserBtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -301,13 +306,7 @@ public class GroupCreatorActivity extends AuthenticatedActivity implements Fireb
             }
         });
 
-        if (myContactsAdapter.getItemCount() > 0){
-            emptyViewTv.setVisibility(View.GONE);
-            contactsRecyclerView.setVisibility(View.VISIBLE);
-        }
-        LinearLayoutManager mLayoutManager = new LinearLayoutManager(this);
-        contactsRecyclerView.setLayoutManager(mLayoutManager);
-        contactsRecyclerView.setAdapter(myContactsAdapter);
+
 
     }
 
