@@ -22,6 +22,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.inputmethod.InputMethod;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
@@ -149,6 +150,7 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
 
         final RelativeLayout rootView = (RelativeLayout)findViewById(R.id.root_view);
         emojIcon = new EmojIconActions(ChatActivity.this,rootView , textComment, btnEmoji);
+        emojIcon.setIconsIds(hani.momanii.supernova_emoji_library.R.drawable.ic_action_keyboard, R.drawable.ic_emoji);
         emojIcon.setUseSystemEmoji(true);
         emojIcon.setKeyboardListener(new EmojIconActions.KeyboardListener() {
             @Override
@@ -171,7 +173,9 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
         btnEmoji.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                hideKeyboard();
                 emojIcon.ShowEmojIcon();
+                toggleKeyboard(InputMethodManager.SHOW_FORCED);
             }
         });
 
@@ -254,6 +258,9 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
             @Override
             public void onClick(View view) {
                 controlOffline = false;
+                emojIcon.closeEmojIcon();
+                toggleKeyboard(InputMethodManager.HIDE_IMPLICIT_ONLY);
+
                 EasyImage.openChooserWithGallery(ChatActivity.this, getResources().getString(R.string.chat_gallery_chooser), REQUEST_CODE_GALLERY_CAMERA);
             }
         });
@@ -459,6 +466,11 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
         } catch (Exception e) {
             Log.i(TAG, "Exception while hiding keyboard");
         }
+    }
+
+    public void toggleKeyboard(int code){
+        InputMethodManager imm = (InputMethodManager)   getSystemService(Context.INPUT_METHOD_SERVICE);
+        imm.toggleSoftInput(code, 0);
     }
 
     public void updateListView(boolean scrollToBottom) {

@@ -118,8 +118,8 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
 
         textComment.setUseSystemDefault(true);
         emojIcon = new EmojIconActions(this, findViewById(R.id.root_view), textComment, btnEmoji);
+        emojIcon.setIconsIds(hani.momanii.supernova_emoji_library.R.drawable.ic_action_keyboard, R.drawable.ic_emoji);
         emojIcon.setUseSystemEmoji(true);
-        emojIcon.ShowEmojIcon();
         emojIcon.setKeyboardListener(new EmojIconActions.KeyboardListener() {
             @Override
             public void onKeyboardOpen() {
@@ -141,7 +141,9 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
         btnEmoji.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                hideKeyboard();
                 emojIcon.ShowEmojIcon();
+                toggleKeyboard(InputMethodManager.SHOW_FORCED);
             }
         });
 
@@ -180,6 +182,7 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
         btnMedia.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                toggleKeyboard(InputMethodManager.HIDE_IMPLICIT_ONLY);
                 EasyImage.openChooserWithGallery(GroupChatActivity.this, getResources().getString(R.string.chat_gallery_chooser), REQUEST_CODE_GALLERY_CAMERA);
             }
         });
@@ -469,6 +472,12 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
             Log.i(TAG, "Exception while hiding keyboard");
         }
     }
+
+    public void toggleKeyboard(int code){
+        InputMethodManager imm = (InputMethodManager)   getSystemService(Context.INPUT_METHOD_SERVICE);
+        imm.toggleSoftInput(code, 0);
+    }
+
 
     private void sendMessage(String wishMessage) {
         firebaseHelper.updateMessageNode(this, "group", groupKey, wishMessage, null, Constants.MESSAGE_TYPE_TEXT,registeredIds, groupModel.getTitle());
