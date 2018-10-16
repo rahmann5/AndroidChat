@@ -515,9 +515,7 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
         switch(tag){
             case "createMessageEventListener":
                 switch(condition){
-                    case FirebaseHelper.CONDITION_1:
-                        break;
-                    case FirebaseHelper.CONDITION_2 :
+                    case FirebaseHelper.CONDITION_1 :
                         updateListView(true);
                         progressBar.toggleDialog(false);
                         break;
@@ -581,7 +579,7 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
                 String wishMessage = "New admin is " + container.getString();
                 firebaseHelper.updateMessageNode(this, "group", groupKey, wishMessage , null, Constants.MESSAGE_TYPE_SYSTEM, null, groupModel.getTitle());
                 break;
-            case "getNextFiveMessages" :
+            case "getNextNMessages" :
                 switch (condition) {
                     case FirebaseHelper.CONDITION_1 :
                         //lastKey = container.getString();
@@ -619,7 +617,7 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
             case "updateGroupMembers":
                 Toast.makeText(this, "Failed to become admin", Toast.LENGTH_SHORT).show();
                 break;
-            case "getNextFiveMessages" :
+            case "getNextNMessages" :
                 isScrolling = false;
                 progressBar.toggleDialog(false);
                 break;
@@ -654,7 +652,7 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
                         break;
                 }
                 break;
-            case "getNextFiveMessages" :
+            case "getNextNMessages" :
                 switch (condition) {
                     case FirebaseHelper.CONDITION_1 :
                         FirebaseMessageModel firebaseMessageModel = container.getMsgModel();
