@@ -12,11 +12,15 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
+import android.text.Html;
+import android.text.Spanned;
 import android.widget.Toast;
 
 import com.example.naziur.androidchat.R;
 import com.example.naziur.androidchat.activities.MainActivity;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.util.HashMap;
 
 /**

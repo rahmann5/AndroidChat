@@ -160,8 +160,8 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
         btnSend.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-
-                if (!Network.isInternetAvailable(GroupChatActivity.this, false) || !textComment.getText().toString().trim().isEmpty()) {
+                //System.out.println("Code found: " +Network.getUniCode(textComment.getText().toString().trim()));
+                if (!Network.isInternetAvailable(GroupChatActivity.this, false) || textComment.getText().toString().trim().isEmpty()) {
                     return;
                 } else {
                     if(getMembersThatNeedToReceiveMessage().length > 0) {
@@ -178,7 +178,7 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
         btnMedia.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                emojIcon.closeEmojIcon();
+
                 hideSoftKeyBoard(GroupChatActivity.this);
                 EasyImage.openChooserWithGallery(GroupChatActivity.this, getResources().getString(R.string.chat_gallery_chooser), REQUEST_CODE_GALLERY_CAMERA);
             }
