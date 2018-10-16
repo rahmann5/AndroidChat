@@ -309,32 +309,27 @@ public class FirebaseHelper {
 
     public ValueEventListener createMessageEventListener () {
         return new ValueEventListener() {
-
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-
-                listener.onCompleteTask("createMessageEventListener", CONDITION_1, null);
-
-                for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
-                    //System.out.println("Child: " + postSnapshot);
-                    //Getting the data from snapshot
-                    FirebaseMessageModel firebaseMessageModel = postSnapshot.getValue(FirebaseMessageModel.class);
-                    Container container = new Container();
-                    firebaseMessageModel.setId(postSnapshot.getKey());
-                    container.setMsgModel(firebaseMessageModel);
-                    listener.onChange("createMessageEventListener", CONDITION_1, container);
+                if (dataSnapshot.exists()) {
+                    for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
+                        FirebaseMessageModel firebaseMessageModel = postSnapshot.getValue(FirebaseMessageModel.class);
+                        Container container = new Container();
+                        firebaseMessageModel.setId(postSnapshot.getKey());
+                        container.setMsgModel(firebaseMessageModel);
+                        listener.onChange("createMessageEventListener", CONDITION_1, container);
+                    }
+                    listener.onCompleteTask("createMessageEventListener", CONDITION_1, null);
+                } else {
+                    listener.onCompleteTask("createMessageEventListener", CONDITION_2, null);
                 }
-
-                listener.onCompleteTask("createMessageEventListener", CONDITION_2, null);
             }
-
             @Override
             public void onCancelled(DatabaseError databaseError) {
                 listener.onFailureTask("createMessageEventListener", databaseError);
             }
         };
     }
-
 
     public void getNextNMessages (String child, String key, final String start, int amount) {
         Query query = FirebaseDatabase.getInstance().getReference("messages").child(child)
@@ -350,24 +345,23 @@ public class FirebaseHelper {
                             firebaseMessageModel.setId(child.getKey());
                             Container container = new Container();
                             container.setMsgModel(firebaseMessageModel);
-                            listener.onChange("getNextFiveMessages", CONDITION_1, container);
+                            listener.onChange("getNextNMessages", CONDITION_1, container);
                         } else {
                             break;
                         }
                     }
-                    listener.onCompleteTask("getNextFiveMessages", CONDITION_1, null);
+                    listener.onCompleteTask("getNextNMessages", CONDITION_1, null);
                 } else {
-                    listener.onCompleteTask("getNextFiveMessages", CONDITION_2, null);
+                    listener.onCompleteTask("getNextNMessages", CONDITION_2, null);
                 }
             }
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
-                listener.onFailureTask("getNextFiveMessages", databaseError);
+                listener.onFailureTask("getNextNMessages", databaseError);
             }
         });
     }
-
 
     public void toggleMsgEventListeners (String node, String chatKey, ValueEventListener commentValueEventListener, int amount ,boolean add, boolean single) {
         Query messagesRef = database.getReference("messages")

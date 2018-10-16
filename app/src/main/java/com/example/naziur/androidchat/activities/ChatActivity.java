@@ -228,7 +228,7 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
                 if (!isScrolling) {
                     if (currentVisibleItemCount > 0 && currentScrollState == SCROLL_STATE_IDLE) {
                         if (currentFirstVisibleItem == 0) {
-                            firebaseHelper.getNextNMessages("single", chatKey, messages.get(0).getId(), 4);
+                            //firebaseHelper.getNextNMessages("single", chatKey, messages.get(0).getId(), 4, FirebaseHelper.CONDITION_1, FirebaseHelper.CONDITION_1, FirebaseHelper.CONDITION_2);
                             isScrolling = true;
                         }
                     }
@@ -558,10 +558,12 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
         if (tag.equals("createMessageEventListener")) {
             switch (condition) {
                 case FirebaseHelper.CONDITION_1 :
+                    System.out.println("Updating message status");
+                    updateListView(true);
+                    progressBar.toggleDialog(false);
                     break;
 
                 case FirebaseHelper.CONDITION_2 :
-                    updateListView(true);
                     progressBar.toggleDialog(false);
                     break;
             }
@@ -657,7 +659,7 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
             progressBar.toggleDialog(false);
             textComment.setText("");
 
-        }  else if (tag.equals("getNextFiveMessages")) {
+        }  else if (tag.equals("getNextNMessages")) {
             switch (condition) {
                 case FirebaseHelper.CONDITION_1 :
                     //lastKey = container.getString();
@@ -707,7 +709,7 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
                 btnInvite.setEnabled(true);
                 Log.i(TAG, "Error checking notification table in firebase server");
                 break;
-            case "getNextFiveMessages" :
+            case "getNextNMessages" :
                 isScrolling = false;
                 progressBar.toggleDialog(false);
                 break;
@@ -734,7 +736,7 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
                     }
                     break;
             }
-        }  else if (tag.equals("getNextFiveMessages")) {
+        }  else if (tag.equals("getNextNMessages")) {
             switch (condition) {
                 case FirebaseHelper.CONDITION_1 :
                     FirebaseMessageModel firebaseMessageModel = container.getMsgModel();
@@ -743,5 +745,4 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
             }
         }
     }
-
 }
