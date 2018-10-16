@@ -135,12 +135,12 @@ public class ProfileActivity extends AuthenticatedActivity implements FirebaseHe
                     imageViewDialog = ImageViewDialogFragment.newInstance(
                             myImageFile,
                             Constants.ACTION_SEND,
-                            android.R.drawable.ic_menu_send);
+                            android.R.drawable.ic_menu_upload);
                 } else {
                     imageViewDialog = ImageViewDialogFragment.newInstance(
                             (!reset) ? user.profilePic : "",
                             Constants.ACTION_SEND,
-                            android.R.drawable.ic_menu_send);
+                            android.R.drawable.ic_menu_upload);
                 }
                 imageViewDialog.setCancelable(false);
                 imageViewDialog.show(getSupportFragmentManager(), "ImageViewDialogFragment");

@@ -335,6 +335,7 @@ public class FirebaseHelper {
         };
     }
 
+
     public void getNextNMessages (String child, String key, final String start, int amount) {
         Query query = FirebaseDatabase.getInstance().getReference("messages").child(child)
                 .child(key).orderByKey().endAt(start);

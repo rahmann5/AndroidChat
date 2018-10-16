@@ -685,7 +685,7 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
     public void onFailureTask(String tag, DatabaseError databaseError) {
         switch (tag) {
             case "createMessageEventListener" :
-                //updateListView(true);
+                updateListView(false);
                 progressBar.toggleDialog(false);
                 break;
 

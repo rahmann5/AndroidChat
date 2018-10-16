@@ -59,7 +59,8 @@
             android:label="@string/title_contacts" />
         <activity
             android:name=".activities.ProfileActivity"
-            android:theme="@style/AppTheme.Transparent" />
+            android:theme="@style/AppTheme.Transparent"
+            android:windowSoftInputMode="stateHidden"/>
         <activity
             android:name=".activities.ChatDetailActivity"
             android:theme="@style/AppTheme.NoActionBar" />
@@ -106,7 +107,8 @@
             android:theme="@style/AppTheme.Transparent" />
         <activity
             android:name=".activities.RegisterActivity"
-            android:theme="@style/AppTheme.NoActionBar" />
+            android:theme="@style/AppTheme.NoActionBar"
+            android:windowSoftInputMode="stateHidden"/>
     </application>
 
 </manifest>

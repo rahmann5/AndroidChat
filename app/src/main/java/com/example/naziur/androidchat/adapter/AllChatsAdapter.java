@@ -90,7 +90,7 @@ public class AllChatsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                 try {
                     Date d1 = formatter.parse(c1.getTimeOfMsg());
                     Date d2 = formatter.parse(c2.getTimeOfMsg());
-                    return d1.compareTo(d2);
+                    return d2.compareTo(d1);
                 } catch (ParseException pe) {
                     pe.printStackTrace();
                     return allMyChats.size()-1;
