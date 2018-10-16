@@ -1,5 +1,6 @@
 package com.example.naziur.androidchat.activities;
 
+import android.app.Activity;
 import android.app.Dialog;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
@@ -173,9 +174,9 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
         btnEmoji.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                hideKeyboard();
+                hideSoftKeyBoard(ChatActivity.this);
                 emojIcon.ShowEmojIcon();
-                toggleKeyboard(InputMethodManager.SHOW_FORCED);
+                showSoftKeyBoard();
             }
         });
 
@@ -259,8 +260,7 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
             public void onClick(View view) {
                 controlOffline = false;
                 emojIcon.closeEmojIcon();
-                toggleKeyboard(InputMethodManager.HIDE_IMPLICIT_ONLY);
-
+                hideSoftKeyBoard(ChatActivity.this);
                 EasyImage.openChooserWithGallery(ChatActivity.this, getResources().getString(R.string.chat_gallery_chooser), REQUEST_CODE_GALLERY_CAMERA);
             }
         });
@@ -269,7 +269,7 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
             @Override
             public void onClick(View v) {
 
-                hideKeyboard();
+                hideSoftKeyBoard(ChatActivity.this);
 
                 final String wishMessage = textComment.getText().toString().trim();
                 if (!Network.isInternetAvailable(ChatActivity.this, false) || wishMessage.isEmpty()) {
@@ -459,18 +459,17 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
         });
     }
 
-    public void hideKeyboard() {
-        try  {
-            InputMethodManager inputManager = (InputMethodManager) this.getSystemService(Context.INPUT_METHOD_SERVICE);
-            inputManager.hideSoftInputFromWindow(this.getCurrentFocus().getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
-        } catch (Exception e) {
-            Log.i(TAG, "Exception while hiding keyboard");
-        }
+    public void showSoftKeyBoard(){
+        InputMethodManager imm = (InputMethodManager)   getSystemService(Context.INPUT_METHOD_SERVICE);
+        imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
     }
 
-    public void toggleKeyboard(int code){
-        InputMethodManager imm = (InputMethodManager)   getSystemService(Context.INPUT_METHOD_SERVICE);
-        imm.toggleSoftInput(code, 0);
+    private void hideSoftKeyBoard(Activity activity){
+        InputMethodManager inputMethodManager =
+                (InputMethodManager) activity.getSystemService(
+                        Activity.INPUT_METHOD_SERVICE);
+        inputMethodManager.hideSoftInputFromWindow(
+                activity.getCurrentFocus().getWindowToken(), 0);
     }
 
     public void updateListView(boolean scrollToBottom) {

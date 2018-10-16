@@ -1,5 +1,6 @@
 package com.example.naziur.androidchat.activities;
 
+import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.ClipData;
 import android.content.ClipboardManager;
@@ -141,9 +142,9 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
         btnEmoji.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                hideKeyboard();
+                hideSoftKeyBoard(GroupChatActivity.this);
                 emojIcon.ShowEmojIcon();
-                toggleKeyboard(InputMethodManager.SHOW_FORCED);
+                showSoftKeyBoard();
             }
         });
 
@@ -164,7 +165,7 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
                     return;
                 } else {
                     if(getMembersThatNeedToReceiveMessage().length > 0) {
-                        hideKeyboard();
+                        hideSoftKeyBoard(GroupChatActivity.this);
                         btnSend.setEnabled(false);
                         progressBar.toggleDialog(true);
                         firebaseHelper.checkGroupsKeys("users", FirebaseHelper.CONDITION_1, FirebaseHelper.CONDITION_2, groupKey, getMembersThatNeedToReceiveMessage());
@@ -177,7 +178,8 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
         btnMedia.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                toggleKeyboard(InputMethodManager.HIDE_IMPLICIT_ONLY);
+                emojIcon.closeEmojIcon();
+                hideSoftKeyBoard(GroupChatActivity.this);
                 EasyImage.openChooserWithGallery(GroupChatActivity.this, getResources().getString(R.string.chat_gallery_chooser), REQUEST_CODE_GALLERY_CAMERA);
             }
         });
@@ -459,19 +461,19 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
         listView.requestFocus();
     }
 
-    public void hideKeyboard() {
-        try  {
-            InputMethodManager inputManager = (InputMethodManager) this.getSystemService(Context.INPUT_METHOD_SERVICE);
-            inputManager.hideSoftInputFromWindow(this.getCurrentFocus().getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
-        } catch (Exception e) {
-            Log.i(TAG, "Exception while hiding keyboard");
-        }
+    public void showSoftKeyBoard(){
+        InputMethodManager imm = (InputMethodManager)   getSystemService(Context.INPUT_METHOD_SERVICE);
+        imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
     }
 
-    public void toggleKeyboard(int code){
-        InputMethodManager imm = (InputMethodManager)   getSystemService(Context.INPUT_METHOD_SERVICE);
-        imm.toggleSoftInput(code, 0);
+    private void hideSoftKeyBoard(Activity activity){
+        InputMethodManager inputMethodManager =
+                (InputMethodManager) activity.getSystemService(
+                        Activity.INPUT_METHOD_SERVICE);
+        inputMethodManager.hideSoftInputFromWindow(
+                activity.getCurrentFocus().getWindowToken(), 0);
     }
+
 
 
     private void sendMessage(String wishMessage) {
