@@ -28,14 +28,14 @@ public abstract class AuthenticatedActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mAuth = FirebaseAuth.getInstance();
-        database= FirebaseHelper.setOnlineStatusListener(mAuth.getCurrentUser().getUid(), false);
+        //database= FirebaseHelper.setOnlineStatusListener(mAuth.getCurrentUser().getUid(), false);
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        if (controlOffline)
-         database.child("online").setValue(false);
+        //if (controlOffline)
+         //database.child("online").setValue(false);
     }
 
     @Override
@@ -52,7 +52,7 @@ public abstract class AuthenticatedActivity extends AppCompatActivity {
             startActivity(new Intent(this, LoginActivity.class).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK));
             finish();
         } else {
-            database.child("online").setValue(true);
+            //database.child("online").setValue(true);
         }
     }
 }

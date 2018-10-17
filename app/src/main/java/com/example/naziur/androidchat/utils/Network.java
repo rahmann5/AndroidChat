@@ -316,32 +316,6 @@ public class Network {
             }
             Log.i("Unicode Block", builder.toString());
         } catch (Exception e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-        return builder.toString();
-    }
-
-    public static String getUniCode(String st){
-        StringBuilder builder = new StringBuilder();
-        try {
-            for (int i = 0; i < st.length(); i++) {
-                char c = st.charAt(i);
-                if(!Character.isLetterOrDigit(c) && !Character.isSpaceChar(c)&& !Character.isWhitespace(c) ){
-                    String unicode = String.valueOf(c);
-                    int code = (int)c;
-                    if(!(code >= 0 && code <= 255)){
-                        unicode =  Character.toString((char)code);
-                    }
-                    builder.append(unicode);
-                }
-                else{
-                    builder.append(c);
-                }
-            }
-            Log.i("Unicode Block", builder.toString());
-        } catch (Exception e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
         return builder.toString();
