@@ -66,6 +66,7 @@ import pl.aprilapps.easyphotopicker.EasyImage;
 public class GroupChatActivity extends AuthenticatedActivity implements ImageViewDialogFragment.ImageViewDialogListener, FirebaseHelper.FirebaseHelperListener{
     private static final String TAG = "GroupChatActivity";
     private static final int REQUEST_CODE_GALLERY_CAMERA = 0;
+    private static final int LOAD_AMOUNT = 4;
     User user = User.getInstance();
 
     EmojiconEditText textComment;
@@ -231,6 +232,7 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
                 if (!isScrolling) {
                     if (currentVisibleItemCount > 0 && currentScrollState == SCROLL_STATE_IDLE) {
                         if (currentFirstVisibleItem == 0) {
+                            tempMsg = new ArrayList<>();
                             firebaseHelper.getNextNMessages("group", groupKey, messages.get(0).getId(), 4);
                             isScrolling = true;
                         }
@@ -516,8 +518,19 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
             case "createMessageEventListener":
                 switch(condition){
                     case FirebaseHelper.CONDITION_1 :
+                        if (!messages.isEmpty() && messages.size() < LOAD_AMOUNT) {
+                            tempMsg = new ArrayList<>();
+                            firebaseHelper.getNextNMessages("group", groupKey, messages.get(0).getId(), LOAD_AMOUNT-messages.size());
+                        }
                         updateListView(true);
                         progressBar.toggleDialog(false);
+                        break;
+
+                    case FirebaseHelper.CONDITION_2 :
+                        if (messages.isEmpty()) {
+                            tempMsg = new ArrayList<>();
+                            firebaseHelper.getNextNMessages("group", groupKey, "", LOAD_AMOUNT);
+                        }
                         break;
                 }
                 break;
@@ -587,7 +600,7 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
                         for (FirebaseMessageModel fbm : tempMsg) {
                             messages.add(0, fbm);
                         }
-                        if (messages.size() <= 6) {
+                        if (messages.size() <= LOAD_AMOUNT+1) {
                             updateListView(true);
                         } else {
                             updateListView(false);
@@ -625,6 +638,15 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
         Log.i(TAG, tag+" "+databaseError.getMessage());
     }
 
+    private boolean isContainedIn (FirebaseMessageModel firebaseMessageModel) {
+        for (int i = messages.size()-1; i > -1; i--) {
+            if (messages.get(i).getId().equals(firebaseMessageModel.getId())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     @Override
     public void onChange(String tag, int condition, Container container) {
         switch(tag){
@@ -632,16 +654,8 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
                 switch(condition){
                     case FirebaseHelper.CONDITION_1:
                         FirebaseMessageModel firebaseMessageModel = container.getMsgModel();
-                        if (firebaseMessageModel != null) {
-                            if (!messages.isEmpty()) {
-                                if ((!messages.get(messages.size()-1).getId().equals(firebaseMessageModel.getId())))
-                                    messages.add(firebaseMessageModel);
-                            } else {
-                                messages.add(firebaseMessageModel);
-                                tempMsg = new ArrayList<>();
-                                firebaseHelper.getNextNMessages("group", groupKey, firebaseMessageModel.getId(), 5);
-                            }
-                        }
+                        if (!isContainedIn(firebaseMessageModel))
+                            messages.add(firebaseMessageModel);
                         break;
                 }
                 break;

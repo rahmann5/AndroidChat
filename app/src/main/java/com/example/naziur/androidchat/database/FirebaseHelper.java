@@ -332,8 +332,14 @@ public class FirebaseHelper {
     }
 
     public void getNextNMessages (String child, String key, final String start, int amount) {
-        Query query = FirebaseDatabase.getInstance().getReference("messages").child(child)
-                .child(key).orderByKey().endAt(start);
+        Query query;
+        if (!start.equals("")) {
+            query = FirebaseDatabase.getInstance().getReference("messages").child(child)
+                    .child(key).orderByKey().endAt(start);;
+        } else {
+            query = FirebaseDatabase.getInstance().getReference("messages").child(child)
+                    .child(key).orderByKey();
+        }
 
         query.limitToLast(amount).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
@@ -346,8 +352,6 @@ public class FirebaseHelper {
                             Container container = new Container();
                             container.setMsgModel(firebaseMessageModel);
                             listener.onChange("getNextNMessages", CONDITION_1, container);
-                        } else {
-                            break;
                         }
                     }
                     listener.onCompleteTask("getNextNMessages", CONDITION_1, null);
@@ -367,8 +371,8 @@ public class FirebaseHelper {
         Query messagesRef = database.getReference("messages")
                 .child(node)
                 .child(chatKey)
-                .orderByKey()
-                .limitToLast(amount);
+                .orderByChild("isReceived")
+                .equalTo(Constants.MESSAGE_SENT);
 
         if (!single) {
             if (add) {
@@ -859,16 +863,15 @@ public class FirebaseHelper {
         };
     }
 
-    public void updateFirebaseMessageStatus (final String node, final String chatKey, final Map<Long, Map<String, Object>> messages) {
-        final DatabaseReference messagesRef = database.getReference("messages").child(node).child(chatKey);
-        messagesRef.limitToLast(messages.size()).addListenerForSingleValueEvent(new ValueEventListener() {
+    public void updateFirebaseMessageStatus (final String chatKey, final List<String> messages) {
+        final Query messagesRef = database.getReference("messages").child("single").child(chatKey).orderByKey().startAt(messages.get(0)).endAt(messages.get(messages.size()-1));
+        messagesRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if (dataSnapshot.exists()) {
                     for (com.google.firebase.database.DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                        FirebaseMessageModel firebaseMessageModel = snapshot.getValue(FirebaseMessageModel.class);
-                        if (messages.get(firebaseMessageModel.getCreatedDateLong()) != null)
-                            messagesRef.child(snapshot.getKey()).updateChildren(messages.get(firebaseMessageModel.getCreatedDateLong()));
+                        if (messages.contains(snapshot.getKey()))
+                            database.getReference("messages").child("single").child(chatKey).child(snapshot.getKey()).child("isReceived").setValue(Constants.MESSAGE_RECEIVED);
                     }
                 }
             }

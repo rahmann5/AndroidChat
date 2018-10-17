@@ -77,6 +77,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import cz.msebera.android.httpclient.Header;
 import cz.msebera.android.httpclient.entity.StringEntity;
@@ -91,6 +92,7 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
         FirebaseHelper.FirebaseHelperListener{
     private static final String TAG = "ChatActivity";
     private static final int REQUEST_CODE_GALLERY_CAMERA = 0;
+    private static final int LOAD_AMOUNT = 4 ;
     User user = User.getInstance();
 
     ListView listView;
@@ -228,7 +230,7 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
                 if (!isScrolling) {
                     if (currentVisibleItemCount > 0 && currentScrollState == SCROLL_STATE_IDLE) {
                         if (currentFirstVisibleItem == 0) {
-                            //firebaseHelper.getNextNMessages("single", chatKey, messages.get(0).getId(), 4, FirebaseHelper.CONDITION_1, FirebaseHelper.CONDITION_1, FirebaseHelper.CONDITION_2);
+                            firebaseHelper.getNextNMessages("single", chatKey, messages.get(0).getId(), LOAD_AMOUNT);
                             isScrolling = true;
                         }
                     }
@@ -482,13 +484,13 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
         MessageCell[] messageCells;
         messageCells = new MessageCell[totalWishes];
 
-        Map<Long, Map<String, Object>> messegesThatNeedUpdating = new HashMap<>();
-
+        List<String> messegesThatNeedUpdating = new ArrayList<>();
         for (int counter = 0; counter < totalWishes; counter++) {
             final FirebaseMessageModel firebaseMessageModel = messages.get(counter);
             if(!firebaseMessageModel.getSenderName().equals(me.getUsername()) && firebaseMessageModel.getIsReceived() == Constants.MESSAGE_SENT) {
+                System.out.println(firebaseMessageModel.getId());
                 firebaseMessageModel.setIsReceived(Constants.MESSAGE_RECEIVED);
-                messegesThatNeedUpdating.put(firebaseMessageModel.getCreatedDateLong(), firebaseMessageModel.toMap());
+                messegesThatNeedUpdating.add(firebaseMessageModel.getId());
             }
             MessageCell messageCell = new MessageCell(firebaseMessageModel.getSenderName() , firebaseMessageModel.getText(),
                     getDate(firebaseMessageModel.getCreatedDateLong()), firebaseMessageModel.getSenderDeviceId().equals(user.deviceId),
@@ -499,7 +501,7 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
 
         MessagesListAdapter adapter = new MessagesListAdapter(this, messageCells);
         if(messegesThatNeedUpdating.size() > 0 && Network.isForeground(getApplicationContext()))
-            firebaseHelper.updateFirebaseMessageStatus("single", chatKey, messegesThatNeedUpdating);
+            firebaseHelper.updateFirebaseMessageStatus(chatKey, messegesThatNeedUpdating);
         // Assign adapter to ListView
         listView.setAdapter(adapter);
 
@@ -558,13 +560,19 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
         if (tag.equals("createMessageEventListener")) {
             switch (condition) {
                 case FirebaseHelper.CONDITION_1 :
-                    System.out.println("Updating message status");
+                    if (!messages.isEmpty() && messages.size() < LOAD_AMOUNT) {
+                        tempMsg = new ArrayList<>();
+                        firebaseHelper.getNextNMessages("single", chatKey, messages.get(0).getId(), LOAD_AMOUNT-messages.size());
+                    }
                     updateListView(true);
                     progressBar.toggleDialog(false);
                     break;
 
                 case FirebaseHelper.CONDITION_2 :
-                    progressBar.toggleDialog(false);
+                    if (messages.isEmpty()) {
+                        tempMsg = new ArrayList<>();
+                        firebaseHelper.getNextNMessages("single", chatKey, "", LOAD_AMOUNT);
+                    }
                     break;
             }
         } else if (tag.equals("getValueEventListener")) {
@@ -667,7 +675,7 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
                     for (FirebaseMessageModel fbm : tempMsg) {
                         messages.add(0, fbm);
                     }
-                    if (messages.size() <= 6) {
+                    if (messages.size() <= LOAD_AMOUNT+1) {
                         updateListView(true);
                     } else {
                         updateListView(false);
@@ -718,22 +726,23 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
         Log.i(TAG, tag + " " +databaseError.getMessage());
     }
 
+    private boolean isContainedIn (FirebaseMessageModel firebaseMessageModel) {
+        for (int i = messages.size()-1; i > -1; i--) {
+            if (messages.get(i).getId().equals(firebaseMessageModel.getId())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     @Override
     public void onChange(String tag, int condition, Container container) {
         if (tag.equals("createMessageEventListener")) {
             switch (condition) {
                 case FirebaseHelper.CONDITION_1 :
                     FirebaseMessageModel firebaseMessageModel = container.getMsgModel();
-                    if (firebaseMessageModel != null) {
-                        if (!messages.isEmpty()) {
-                            if ((!messages.get(messages.size()-1).getId().equals(firebaseMessageModel.getId())))
-                                messages.add(firebaseMessageModel);
-                        } else {
-                            messages.add(firebaseMessageModel);
-                            tempMsg = new ArrayList<>();
-                            firebaseHelper.getNextNMessages("single", chatKey, firebaseMessageModel.getId(), 5);
-                        }
-                    }
+                    if (!isContainedIn(firebaseMessageModel))
+                        messages.add(firebaseMessageModel);
                     break;
             }
         }  else if (tag.equals("getNextNMessages")) {
