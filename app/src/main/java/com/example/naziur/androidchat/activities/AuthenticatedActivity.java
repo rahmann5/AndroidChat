@@ -41,7 +41,7 @@ public abstract class AuthenticatedActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        checkUserAuthenticated ();
+        //checkUserAuthenticated ();
         controlOffline = true;
     }
 
