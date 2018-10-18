@@ -488,7 +488,6 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
         for (int counter = 0; counter < totalWishes; counter++) {
             final FirebaseMessageModel firebaseMessageModel = messages.get(counter);
             if(!firebaseMessageModel.getSenderName().equals(me.getUsername()) && firebaseMessageModel.getIsReceived() == Constants.MESSAGE_SENT) {
-                System.out.println(firebaseMessageModel.getId());
                 firebaseMessageModel.setIsReceived(Constants.MESSAGE_RECEIVED);
                 messegesThatNeedUpdating.add(firebaseMessageModel.getId());
             }
@@ -555,6 +554,26 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
         ((TextView) actionBar.getCustomView().findViewById(R.id.group_members)).setText(getResources().getString(onlineRes));
     }
 
+    private boolean isContainedIn (FirebaseMessageModel firebaseMessageModel) {
+        for (int i = messages.size()-1; i > -1; i--) {
+            if (messages.get(i).getId().equals(firebaseMessageModel.getId())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void updateListViewOnChange () {
+        boolean changed = false;
+        for (int i = messages.size()-1; i > -1; i--) {
+            if (messages.get(i).getIsReceived() == Constants.MESSAGE_SENT) {
+                messages.get(i).setIsReceived(Constants.MESSAGE_RECEIVED);
+                changed = true;
+            }
+        }
+        if (changed) updateListView(true);
+    }
+
     @Override
     public void onCompleteTask(String tag, int condition, Container container) {
         if (tag.equals("createMessageEventListener")) {
@@ -564,7 +583,9 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
                         tempMsg = new ArrayList<>();
                         firebaseHelper.getNextNMessages("single", chatKey, messages.get(0).getId(), LOAD_AMOUNT-messages.size());
                     }
+
                     updateListView(true);
+
                     progressBar.toggleDialog(false);
                     break;
 
@@ -572,6 +593,8 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
                     if (messages.isEmpty()) {
                         tempMsg = new ArrayList<>();
                         firebaseHelper.getNextNMessages("single", chatKey, "", LOAD_AMOUNT);
+                    } else {
+                        updateListViewOnChange ();
                     }
                     break;
             }
@@ -662,6 +685,10 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
                     break;
             }
         } else if (tag.equals("updateMessageNode")) {
+            if (friendValueEvent == null) {
+                friendValueEvent = firebaseHelper.getValueEventListener(friend.getUsername(), FirebaseHelper.NON_CONDITION, FirebaseHelper.NON_CONDITION, FirebaseHelper.CONDITION_1, FirebaseUserModel.class);
+                firebaseHelper.toggleListenerFor("users", "username" ,friend.getUsername(), friendValueEvent , true, false);
+            }
             Log.i(TAG, container.getString());
             btnSend.setEnabled(true);
             progressBar.toggleDialog(false);
@@ -687,8 +714,6 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
             }
         }
     }
-
-
 
     @Override
     public void onFailureTask(String tag, DatabaseError databaseError) {
@@ -726,23 +751,16 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
         Log.i(TAG, tag + " " +databaseError.getMessage());
     }
 
-    private boolean isContainedIn (FirebaseMessageModel firebaseMessageModel) {
-        for (int i = messages.size()-1; i > -1; i--) {
-            if (messages.get(i).getId().equals(firebaseMessageModel.getId())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     @Override
     public void onChange(String tag, int condition, Container container) {
         if (tag.equals("createMessageEventListener")) {
             switch (condition) {
                 case FirebaseHelper.CONDITION_1 :
                     FirebaseMessageModel firebaseMessageModel = container.getMsgModel();
-                    if (!isContainedIn(firebaseMessageModel))
-                        messages.add(firebaseMessageModel);
+                    if (friendValueEvent != null) {
+                        if (!isContainedIn(firebaseMessageModel))
+                            messages.add(firebaseMessageModel);
+                    }
                     break;
             }
         }  else if (tag.equals("getNextNMessages")) {
