@@ -66,6 +66,7 @@ import pl.aprilapps.easyphotopicker.EasyImage;
 public class GroupChatActivity extends AuthenticatedActivity implements ImageViewDialogFragment.ImageViewDialogListener, FirebaseHelper.FirebaseHelperListener{
     private static final String TAG = "GroupChatActivity";
     private static final int REQUEST_CODE_GALLERY_CAMERA = 0;
+    private static final int LOAD_AMOUNT = 4;
     User user = User.getInstance();
 
     EmojiconEditText textComment;
@@ -89,7 +90,6 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
     public int currentFirstVisibleItem, currentVisibleItemCount, totalItem, currentScrollState;
     private List<FirebaseMessageModel> tempMsg;
     private boolean isScrolling = false;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -151,16 +151,12 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
 
         registeredIds = new JSONArray();
         // assuming that user is guaranteed member of group
-        if (!Network.isInternetAvailable(this, true)) {
-            finish();
-        }
 
-        msgValueEventListener = firebaseHelper.createMessageEventListener();
+        msgValueEventListener = firebaseHelper.createGroupMessageEventListener(messages, LOAD_AMOUNT);
 
         btnSend.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                //System.out.println("Code found: " +Network.getUniCode(textComment.getText().toString().trim()));
                 if (!Network.isInternetAvailable(GroupChatActivity.this, false) || textComment.getText().toString().trim().isEmpty()) {
                     return;
                 } else {
@@ -231,6 +227,7 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
                 if (!isScrolling) {
                     if (currentVisibleItemCount > 0 && currentScrollState == SCROLL_STATE_IDLE) {
                         if (currentFirstVisibleItem == 0) {
+                            tempMsg = new ArrayList<>();
                             firebaseHelper.getNextNMessages("group", groupKey, messages.get(0).getId(), 4);
                             isScrolling = true;
                         }
@@ -263,12 +260,11 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
         super.onResume();
         if (Network.isInternetAvailable(this, true)) {
             progressBar.toggleDialog(true);
-            groupListener = firebaseHelper.getGroupInfo(groupKey);
-            firebaseHelper.toggleListenerFor("groups", "groupKey", groupKey, groupListener, true, false);
-            firebaseHelper.toggleMsgEventListeners("group", groupKey, msgValueEventListener, 1, true, false);
-        } else {
-            Toast.makeText(this,"You need internet to view or send messages", Toast.LENGTH_SHORT).show();
         }
+
+        groupListener = firebaseHelper.getGroupInfo(groupKey);
+        firebaseHelper.toggleListenerFor("groups", "groupKey", groupKey, groupListener, true, false);
+        firebaseHelper.toggleGrpMsgEventListeners("group", groupKey, msgValueEventListener,true, false);
     }
 
     @Override
@@ -474,8 +470,6 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
                 activity.getCurrentFocus().getWindowToken(), 0);
     }
 
-
-
     private void sendMessage(String wishMessage) {
         firebaseHelper.updateMessageNode(this, "group", groupKey, wishMessage, null, Constants.MESSAGE_TYPE_TEXT,registeredIds, groupModel.getTitle());
     }
@@ -513,11 +507,30 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
     @Override
     public void onCompleteTask(String tag, int condition, Container container) {
         switch(tag){
-            case "createMessageEventListener":
+            case "createGroupMessageEventListener":
                 switch(condition){
                     case FirebaseHelper.CONDITION_1 :
+                        List<FirebaseMessageModel> tempMessage = container.getMessages();
+                        if(!tempMessage.isEmpty()){
+                            for(FirebaseMessageModel fb: tempMessage){
+                                if(!isContainedIn(fb))
+                                 messages.add(fb);
+                            }
+                        }
+
+                        if (!messages.isEmpty() && messages.size() < LOAD_AMOUNT) {
+                            tempMsg = new ArrayList<>();
+                            firebaseHelper.getNextNMessages("group", groupKey, messages.get(0).getId(), LOAD_AMOUNT-messages.size());
+                        }
                         updateListView(true);
                         progressBar.toggleDialog(false);
+                        break;
+
+                    case FirebaseHelper.CONDITION_2 :
+                        if (messages.isEmpty()) {
+                            tempMsg = new ArrayList<>();
+                            firebaseHelper.getNextNMessages("group", groupKey, "", LOAD_AMOUNT);
+                        }
                         break;
                 }
                 break;
@@ -587,7 +600,7 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
                         for (FirebaseMessageModel fbm : tempMsg) {
                             messages.add(0, fbm);
                         }
-                        if (messages.size() <= 6) {
+                        if (messages.size() <= LOAD_AMOUNT+1) {
                             updateListView(true);
                         } else {
                             updateListView(false);
@@ -610,7 +623,7 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
                 btnSend.setEnabled(true);
                 progressBar.toggleDialog(false);
                 break;
-            case "createMessageEventListener":
+            case "createGroupMessageEventListener":
                 //updateListView(true);
                 progressBar.toggleDialog(false);
                 break;
@@ -622,29 +635,22 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
                 progressBar.toggleDialog(false);
                 break;
         }
+        progressBar.toggleDialog(false);
         Log.i(TAG, tag+" "+databaseError.getMessage());
+    }
+
+    private boolean isContainedIn (FirebaseMessageModel firebaseMessageModel) {
+        for (int i = messages.size()-1; i > -1; i--) {
+            if (messages.get(i).getId().equals(firebaseMessageModel.getId())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
     public void onChange(String tag, int condition, Container container) {
         switch(tag){
-            case "createMessageEventListener":
-                switch(condition){
-                    case FirebaseHelper.CONDITION_1:
-                        FirebaseMessageModel firebaseMessageModel = container.getMsgModel();
-                        if (firebaseMessageModel != null) {
-                            if (!messages.isEmpty()) {
-                                if ((!messages.get(messages.size()-1).getId().equals(firebaseMessageModel.getId())))
-                                    messages.add(firebaseMessageModel);
-                            } else {
-                                messages.add(firebaseMessageModel);
-                                tempMsg = new ArrayList<>();
-                                firebaseHelper.getNextNMessages("group", groupKey, firebaseMessageModel.getId(), 5);
-                            }
-                        }
-                        break;
-                }
-                break;
             case "checkGroupsKeys":
                 switch (condition){
                     case FirebaseHelper.CONDITION_1:

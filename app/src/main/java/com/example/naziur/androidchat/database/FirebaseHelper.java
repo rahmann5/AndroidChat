@@ -37,6 +37,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -307,6 +308,50 @@ public class FirebaseHelper {
 
     }
 
+    public ValueEventListener createGroupMessageEventListener (final List<FirebaseMessageModel> currentMessages, final int loadAmount) {
+        return new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if (dataSnapshot.exists()) {
+                    Container container = new Container();
+                    List<FirebaseMessageModel> tempMessages = new ArrayList<>();
+                    List<FirebaseMessageModel> dataInReverse = new ArrayList<>();
+                    //ITERATING ALL DATA BECAUSE GOOGLE WAS TOO LAZY TO ALLOW US TO GET DATA IN REVERSE
+                    for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
+                        FirebaseMessageModel firebaseMessageModel = postSnapshot.getValue(FirebaseMessageModel.class);
+                        firebaseMessageModel.setId(postSnapshot.getKey());
+                        dataInReverse.add(firebaseMessageModel);
+                    }
+                    Collections.reverse(dataInReverse);
+
+                    for(FirebaseMessageModel fb : dataInReverse) {
+
+                        if (currentMessages.size() == 0) {
+                            if (tempMessages.size() < loadAmount)
+                                tempMessages.add(0,fb);
+                        } else {
+                            FirebaseMessageModel lastLocalMessage = currentMessages.get(currentMessages.size() - 1);
+                            if (!lastLocalMessage.getId().equals(fb)) {
+                                tempMessages.add(0,fb);
+                            } else {
+                                break;
+                            }
+                        }
+                    }
+
+                    container.setMessages(tempMessages);
+                    listener.onCompleteTask("createGroupMessageEventListener", CONDITION_1, container);
+                } else {
+                    listener.onCompleteTask("createGroupMessageEventListener", CONDITION_2, null);
+                }
+            }
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                listener.onFailureTask("createGroupMessageEventListener", databaseError);
+            }
+        };
+    }
+
     public ValueEventListener createMessageEventListener () {
         return new ValueEventListener() {
             @Override
@@ -332,8 +377,14 @@ public class FirebaseHelper {
     }
 
     public void getNextNMessages (String child, String key, final String start, int amount) {
-        Query query = FirebaseDatabase.getInstance().getReference("messages").child(child)
-                .child(key).orderByKey().endAt(start);
+        Query query;
+        if (!start.equals("")) {
+            query = FirebaseDatabase.getInstance().getReference("messages").child(child)
+                    .child(key).orderByKey().endAt(start);;
+        } else {
+            query = FirebaseDatabase.getInstance().getReference("messages").child(child)
+                    .child(key).orderByKey();
+        }
 
         query.limitToLast(amount).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
@@ -346,8 +397,6 @@ public class FirebaseHelper {
                             Container container = new Container();
                             container.setMsgModel(firebaseMessageModel);
                             listener.onChange("getNextNMessages", CONDITION_1, container);
-                        } else {
-                            break;
                         }
                     }
                     listener.onCompleteTask("getNextNMessages", CONDITION_1, null);
@@ -363,12 +412,29 @@ public class FirebaseHelper {
         });
     }
 
+    public void toggleGrpMsgEventListeners(String node, String chatKey, ValueEventListener commentValueEventListener, boolean add, boolean single){
+        Query messagesRef = database.getReference("messages")
+                .child(node)
+                .child(chatKey);
+
+        if (!single) {
+            if (add) {
+                messagesRef.addValueEventListener(commentValueEventListener);
+            } else {
+                messagesRef.removeEventListener(commentValueEventListener);
+            }
+        } else {
+            messagesRef.addListenerForSingleValueEvent(commentValueEventListener);
+        }
+
+    }
+
     public void toggleMsgEventListeners (String node, String chatKey, ValueEventListener commentValueEventListener, int amount ,boolean add, boolean single) {
         Query messagesRef = database.getReference("messages")
                 .child(node)
                 .child(chatKey)
-                .orderByKey()
-                .limitToLast(amount);
+                .orderByChild("isReceived")
+                .equalTo(Constants.MESSAGE_SENT);
 
         if (!single) {
             if (add) {
@@ -859,16 +925,15 @@ public class FirebaseHelper {
         };
     }
 
-    public void updateFirebaseMessageStatus (final String node, final String chatKey, final Map<Long, Map<String, Object>> messages) {
-        final DatabaseReference messagesRef = database.getReference("messages").child(node).child(chatKey);
-        messagesRef.limitToLast(messages.size()).addListenerForSingleValueEvent(new ValueEventListener() {
+    public void updateFirebaseMessageStatus (final String chatKey, final List<String> messages) {
+        final Query messagesRef = database.getReference("messages").child("single").child(chatKey).orderByKey().startAt(messages.get(0)).endAt(messages.get(messages.size()-1));
+        messagesRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if (dataSnapshot.exists()) {
                     for (com.google.firebase.database.DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                        FirebaseMessageModel firebaseMessageModel = snapshot.getValue(FirebaseMessageModel.class);
-                        if (messages.get(firebaseMessageModel.getCreatedDateLong()) != null)
-                            messagesRef.child(snapshot.getKey()).updateChildren(messages.get(firebaseMessageModel.getCreatedDateLong()));
+                        if (messages.contains(snapshot.getKey()))
+                            database.getReference("messages").child("single").child(chatKey).child(snapshot.getKey()).child("isReceived").setValue(Constants.MESSAGE_RECEIVED);
                     }
                 }
             }

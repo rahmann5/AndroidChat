@@ -56,7 +56,6 @@ public class LoginActivity extends AppCompatActivity implements FirebaseHelper.F
         firebaseHelper = FirebaseHelper.getInstance();
         firebaseHelper.setFirebaseHelperListener(this);
         currentDeviceId = Settings.Secure.getString(getApplicationContext().getContentResolver(), Settings.Secure.ANDROID_ID);
-
         mAuth = FirebaseAuth.getInstance();
 
         editTextUsername = (EditText) findViewById(R.id.editTextUsername);

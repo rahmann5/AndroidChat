@@ -30,11 +30,20 @@ public class Container {
     private JSONArray jsonArray;
     private Object object;
     private List<FirebaseGroupModel> groups;
+    private List<FirebaseMessageModel> messages;
     private List<Contact> contacts;
     private Container container;
 
     public Container () {
         // empty
+    }
+
+    public List<FirebaseMessageModel> getMessages() {
+        return messages;
+    }
+
+    public void setMessages(List<FirebaseMessageModel> messages) {
+        this.messages = messages;
     }
 
     public Container getContainer() {
