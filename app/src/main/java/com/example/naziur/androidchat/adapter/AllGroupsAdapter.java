@@ -75,7 +75,7 @@ public class AllGroupsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
             } else {
                 activeTv.setText("");
             }
-            Glide.with(context).load(group.getPic()).apply(new RequestOptions().placeholder(R.drawable.placeholder).error(R.drawable.unknown)).into(groupPicIv);
+            Glide.with(context).load(group.getPic()).apply(new RequestOptions().placeholder(R.drawable.placeholder).error(R.drawable.ic_group_unknown)).into(groupPicIv);
         }
 
 

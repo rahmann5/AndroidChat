@@ -1568,6 +1568,7 @@ public class FirebaseHelper {
                     Container container = new Container();
                     container.setStringList(usernames);
                     container.setString(singleUser);
+                    container.setBoolean(admin);
                     listener.onCompleteTask("updateGroupMembers", CONDITION_1, container);
                 } else {
                     listener.onFailureTask("updateGroupMembers", databaseError);

@@ -549,12 +549,6 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
                             firebaseHelper.getDeviceTokensFor(members, groupModel.getTitle(), groupModel.getGroupKey(), true);
                         invalidateOptionsMenu();
                         break;
-
-                    case FirebaseHelper.CONDITION_2:
-                        progressBar.toggleDialog(false);
-                        Toast.makeText(this, "This group has been deleted." , Toast.LENGTH_LONG).show();
-                        finish();
-                        break;
                 }
                 break;
             case "getDeviceTokensFor":
