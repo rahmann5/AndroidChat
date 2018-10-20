@@ -76,6 +76,7 @@
     <string name="long_text">MAC Address - The physical address of the WAN port, as seen from the Internet. IP Address - The current WAN (Internet) IP Address. This field will be blank or 0.0.0.0 if the IP Address is assigned dynamically and there is no connection to Internet.</string>
 
     <!-- GroupDetail Activity -->
+    <string name="be_admin">Become Admin</string>
     <string name="no_admin">No Admin Found</string>
     <string name="dialog_group_details">Options:</string>
     <string name="dialog_op_1">Remove from group</string>

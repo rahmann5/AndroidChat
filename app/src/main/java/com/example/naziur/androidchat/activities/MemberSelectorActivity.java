@@ -234,12 +234,23 @@ public class MemberSelectorActivity extends AuthenticatedActivity implements Fir
         dialog.dismiss();
     }
 
+    private List<Contact> getAllNonMemberContacts (List<Contact> allContacts) {
+        List<Contact> nonMemberContacts = new ArrayList<>();
+        List<String> allMembers = Arrays.asList(currentMembers);
+        for (Contact c : allContacts) {
+            if (!allMembers.contains(c.getContact().getUsername())) {
+                nonMemberContacts.add(c);
+            }
+        }
+        return nonMemberContacts;
+    }
+
     @Override
     public void onCompleteTask(String tag, int condition, Container container) {
         if (tag.equals("updateAllLocalContactsFromFirebase")) {
             switch (condition) {
                 case FirebaseHelper.CONDITION_1 :
-                    myContactsAdapter = new MyContactsAdapter(this, container.getContacts(), this);
+                    myContactsAdapter = new MyContactsAdapter(this, getAllNonMemberContacts(container.getContacts()), this);
                     myContactsRecycler.setAdapter(myContactsAdapter);
                     toggleEmptyState();
                     progressBar.toggleDialog(false);

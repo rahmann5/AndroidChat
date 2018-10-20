@@ -56,7 +56,7 @@ import hani.momanii.supernova_emoji_library.Helper.EmojiconEditText;
 import pl.aprilapps.easyphotopicker.DefaultCallback;
 import pl.aprilapps.easyphotopicker.EasyImage;
 
-public class GroupChatActivity extends AuthenticatedActivity implements ImageViewDialogFragment.ImageViewDialogListener, FirebaseHelper.FirebaseHelperListener{
+public class GroupChatActivity extends AuthenticatedActivity implements ImageViewDialogFragment.ImageViewDialogListener, FirebaseHelper.FirebaseHelperListener {
     private static final String TAG = "GroupChatActivity";
     private static final int REQUEST_CODE_GALLERY_CAMERA = 0;
     private static final int LOAD_AMOUNT = 4;
@@ -73,7 +73,7 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
     private ActionBar actionBar;
     private ProgressDialog progressBar;
     private String groupKey = "";
-    private  EmojIconActions emojIcon;
+    private EmojIconActions emojIcon;
     private ValueEventListener msgValueEventListener, groupListener;
     private LinearLayout chatControl, footerMsg;
     FirebaseHelper firebaseHelper;
@@ -119,11 +119,12 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
         emojIcon.setKeyboardListener(new EmojIconActions.KeyboardListener() {
             @Override
             public void onKeyboardOpen() {
-                Log.e(TAG,"keyboard opened");
+                Log.e(TAG, "keyboard opened");
             }
+
             @Override
             public void onKeyboardClose() {
-                Log.e(TAG,"Keyboard closed");
+                Log.e(TAG, "Keyboard closed");
             }
         });
 
@@ -155,7 +156,7 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
                 if (!Network.isInternetAvailable(GroupChatActivity.this, false) || textComment.getText().toString().trim().isEmpty()) {
                     return;
                 } else {
-                    if(getMembersThatNeedToReceiveMessage().length > 0) {
+                    if (getMembersThatNeedToReceiveMessage().length > 0) {
                         hideSoftKeyBoard(GroupChatActivity.this);
                         btnSend.setEnabled(false);
                         progressBar.toggleDialog(true);
@@ -177,7 +178,7 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
         sendBottom.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                listView.setSelection(listView.getCount()-1);
+                listView.setSelection(listView.getCount() - 1);
                 sendBottom.setVisibility(View.GONE);
             }
         });
@@ -204,15 +205,16 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
             }
         });
 
-        listView.setOnScrollListener(new AbsListView.OnScrollListener(){
+        listView.setOnScrollListener(new AbsListView.OnScrollListener() {
             public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
                 currentFirstVisibleItem = firstVisibleItem;
                 currentVisibleItemCount = visibleItemCount;
                 totalItem = totalItemCount;
             }
+
             public void onScrollStateChanged(AbsListView view, int scrollState) {
 
-                if(listView.getCount() != listView.getLastVisiblePosition() + 1) {
+                if (listView.getCount() != listView.getLastVisiblePosition() + 1) {
                     sendBottom.setVisibility(View.VISIBLE);
                 } else {
                     sendBottom.setVisibility(View.GONE);
@@ -236,7 +238,7 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
         public void onReceive(Context context, Intent intent) {
             Bundle extra = intent.getExtras();
             if (extra != null) {
-                if(groupKey.equals(extra.getString("tag"))) {
+                if (groupKey.equals(extra.getString("tag"))) {
                     abortBroadcast();
                 }
             }
@@ -252,7 +254,7 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
     @Override
     protected void onResume() {
         super.onResume();
-        if(!isPaused) {
+        if (!isPaused) {
             firebaseHelper.toggleListenerFor("groups", "groupKey", groupKey, groupListener, true, false);
             msgValueEventListener = firebaseHelper.createGroupMessageEventListener(messages, LOAD_AMOUNT);
             firebaseHelper.toggleGrpMsgEventListeners("group", groupKey, msgValueEventListener, true, false);
@@ -273,7 +275,7 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
         firebaseHelper.toggleListenerFor("groups", "groupKey", groupKey, groupListener, false, false);
     }
 
-    private boolean isAMember () {
+    private boolean isAMember() {
         List<String> members = Arrays.asList(groupModel.getMembers().split(","));
         return members.contains(user.name);
     }
@@ -282,7 +284,7 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.group_chat_menu, menu);
         if (groupModel != null) {
-            if (groupModel.getAdmin().equals("") && isAMember ()) {
+            if (groupModel.getAdmin().equals("") && isAMember()) {
                 menu.findItem(R.id.admin).setVisible(true);
             } else {
                 menu.findItem(R.id.admin).setVisible(false);
@@ -298,13 +300,13 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
             case android.R.id.home:
                 finish();
                 break;
-            case R.id.view_details :
+            case R.id.view_details:
                 Intent intent = new Intent(GroupChatActivity.this, GroupDetailActivity.class);
                 intent.putExtra("g_uid", groupKey);
                 intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                 startActivity(intent);
                 break;
-            case R.id.admin :
+            case R.id.admin:
                 firebaseHelper.updateGroupMembers(user.name, null, groupKey, true);
                 break;
 
@@ -313,12 +315,12 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
         return super.onOptionsItemSelected(item);
     }
 
-    public void showSoftKeyBoard(){
-        InputMethodManager imm = (InputMethodManager)   getSystemService(Context.INPUT_METHOD_SERVICE);
+    public void showSoftKeyBoard() {
+        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
         imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
     }
 
-    private void hideSoftKeyBoard(Activity activity){
+    private void hideSoftKeyBoard(Activity activity) {
         InputMethodManager inputMethodManager =
                 (InputMethodManager) activity.getSystemService(
                         Activity.INPUT_METHOD_SERVICE);
@@ -326,9 +328,9 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
                 activity.getCurrentFocus().getWindowToken(), 0);
     }
 
-    private String[] getMembersThatNeedToReceiveMessage(){
+    private String[] getMembersThatNeedToReceiveMessage() {
         List<String> members = new ArrayList<>();
-        if(groupModel != null) {
+        if (groupModel != null) {
             String[] membersIngroup = groupModel.getMembers().split(",");
             if (groupModel.getAdmin().equals(user.name)) {
                 if (!groupModel.getMembers().isEmpty())
@@ -354,7 +356,7 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
         return new String[0];
     }
 
-    private void createCustomActionBar () {
+    private void createCustomActionBar() {
         actionBar = getSupportActionBar();
         actionBar.setDisplayOptions(ActionBar.DISPLAY_SHOW_CUSTOM);
         actionBar.setCustomView(R.layout.toolbar);
@@ -370,15 +372,15 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
         textView.setText(getActionBarString());
     }
 
-    private String getActionBarString(){
+    private String getActionBarString() {
         boolean isStillInGroup = false;
         String members = "";
-        if(!groupModel.getMembers().isEmpty()){
-            String [] membersArr = groupModel.getMembers().split(",");
+        if (!groupModel.getMembers().isEmpty()) {
+            String[] membersArr = groupModel.getMembers().split(",");
 
-            if(!membersArr[0].isEmpty()) {
+            if (!membersArr[0].isEmpty()) {
                 ArrayList<String> test = new ArrayList<String>(Arrays.asList(membersArr));
-                if(test.contains(user.name)){
+                if (test.contains(user.name)) {
                     isStillInGroup = true;
                     test.remove(user.name);
                 }
@@ -393,18 +395,18 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
             }
         }
 
-        if(groupModel.getAdmin().equals(user.name))
+        if (groupModel.getAdmin().equals(user.name))
             isStillInGroup = true;
 
-        if(!groupModel.getAdmin().isEmpty() && !groupModel.getAdmin().equals(user.name)) {
-            if(!members.isEmpty())
+        if (!groupModel.getAdmin().isEmpty() && !groupModel.getAdmin().equals(user.name)) {
+            if (!members.isEmpty())
                 members = members + ", " + db.getProfileInfoIfExists(groupModel.getAdmin())[0];
             else
                 members = db.getProfileInfoIfExists(groupModel.getAdmin())[0];
         }
 
-        if(isStillInGroup) {
-            if(!members.isEmpty())
+        if (isStillInGroup) {
+            if (!members.isEmpty())
                 members = "You, " + members;
             else
                 members = "You";
@@ -415,18 +417,18 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
         return members;
     }
 
-    private void toggleFooterSection(boolean show){
-        if(show) {
+    private void toggleFooterSection(boolean show) {
+        if (show) {
             chatControl.setVisibility(View.VISIBLE);
             footerMsg.setVisibility(View.GONE);
-        }else {
+        } else {
             chatControl.setVisibility(View.GONE);
             footerMsg.setVisibility(View.VISIBLE);
         }
     }
 
-    private boolean isContainedIn (FirebaseMessageModel firebaseMessageModel) {
-        for (int i = messages.size()-1; i >= 0; i--) {
+    private boolean isContainedIn(FirebaseMessageModel firebaseMessageModel) {
+        for (int i = messages.size() - 1; i >= 0; i--) {
             if (messages.get(i).getId().equals(firebaseMessageModel.getId())) {
                 return true;
             }
@@ -435,7 +437,7 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
     }
 
     private void sendMessage(String wishMessage) {
-        firebaseHelper.updateMessageNode(this, "group", groupKey, wishMessage, null, Constants.MESSAGE_TYPE_TEXT,registeredIds, groupModel.getTitle());
+        firebaseHelper.updateMessageNode(this, "group", groupKey, wishMessage, null, Constants.MESSAGE_TYPE_TEXT, registeredIds, groupModel.getTitle());
     }
 
     @Override
@@ -461,7 +463,7 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
 
             @Override
             public void onImagesPicked(@NonNull List<File> imageFiles, EasyImage.ImageSource source, int type) {
-                switch (type){
+                switch (type) {
                     case REQUEST_CODE_GALLERY_CAMERA:
                         imageViewDialog = ImageViewDialogFragment.newInstance(
                                 imageFiles.get(0),
@@ -488,10 +490,10 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
 
         for (int counter = 0; counter < totalWishes; counter++) {
             final FirebaseMessageModel firebaseMessageModel = messages.get(counter);
-            MessageCell messageCell = new MessageCell(firebaseMessageModel.getSenderName() , firebaseMessageModel.getText(),
+            MessageCell messageCell = new MessageCell(firebaseMessageModel.getSenderName(), firebaseMessageModel.getText(),
                     ChatActivity.getDate(firebaseMessageModel.getCreatedDateLong()), firebaseMessageModel.getSenderDeviceId().equals(user.deviceId),
                     firebaseMessageModel.getIsReceived(), firebaseMessageModel.getMediaType());
-            messageCell.setDateOnly( ChatActivity.getDateOnly(firebaseMessageModel.getCreatedDateLong()));
+            messageCell.setDateOnly(ChatActivity.getDateOnly(firebaseMessageModel.getCreatedDateLong()));
             messageCells[counter] = messageCell;
         }
 
@@ -506,12 +508,12 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
 
     @Override
     public void onCompleteTask(String tag, int condition, Container container) {
-        switch(tag){
+        switch (tag) {
             case "getGroupInfo":
-                switch (condition){
+                switch (condition) {
                     case FirebaseHelper.CONDITION_1:
                         groupModel = container.getGroupModel();
-                        createCustomActionBar ();
+                        createCustomActionBar();
                         ((TextView) actionBar.getCustomView().findViewById(R.id.profile_name)).setText(groupModel.getTitle());
                         Glide.with(getApplicationContext())
                                 .load(groupModel.getPic())
@@ -519,30 +521,24 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
                                 .into(((CircleImageView) actionBar.getCustomView().findViewById(R.id.profile_icon)));
                         invalidateOptionsMenu();
                         break;
-
-                    case FirebaseHelper.CONDITION_2:
-                        progressBar.toggleDialog(false);
-                        Toast.makeText(this, "This group has been deleted." , Toast.LENGTH_LONG).show();
-                        finish();
-                        break;
                 }
                 break;
             case "createGroupMessageEventListener":
-                switch(condition){
+                switch (condition) {
                     case FirebaseHelper.CONDITION_1:
                         List<FirebaseMessageModel> tempMessage = container.getMessages();
-                        if(!tempMessage.isEmpty()){
-                            for(FirebaseMessageModel fb: tempMessage){
-                                if(!isContainedIn(fb))
+                        if (!tempMessage.isEmpty()) {
+                            for (FirebaseMessageModel fb : tempMessage) {
+                                if (!isContainedIn(fb))
                                     messages.add(fb);
                             }
                         }
 
                         if (!messages.isEmpty() && messages.size() < LOAD_AMOUNT) {
                             tempMsg = new ArrayList<>();
-                            firebaseHelper.getNextNMessages("group", groupKey, messages.get(0).getId(), LOAD_AMOUNT-messages.size());
-                        }else {
-                            if(container.getInt() == messages.size())
+                            firebaseHelper.getNextNMessages("group", groupKey, messages.get(0).getId(), LOAD_AMOUNT - messages.size());
+                        } else {
+                            if (container.getInt() == messages.size())
                                 isTop = true;
                             updateListView(true);
                         }
@@ -554,9 +550,9 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
                 }
                 break;
             case "getNextNMessages":
-                switch (condition){
+                switch (condition) {
                     case FirebaseHelper.CONDITION_1:
-                        if(tempMsg.size() > 0) {
+                        if (tempMsg.size() > 0) {
                             Collections.reverse(tempMsg);
                             for (FirebaseMessageModel fbm : tempMsg) {
                                 messages.add(0, fbm);
@@ -567,7 +563,7 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
                                 updateListView(false);
                             }
                             tempMsg = new ArrayList<>();
-                        } else if (messages.size() <= LOAD_AMOUNT){
+                        } else if (messages.size() <= LOAD_AMOUNT) {
                             updateListView(true);
                             isTop = true;
                         } else {
@@ -583,7 +579,7 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
                 }
                 break;
             case "checkGroupsKeys":
-                switch (condition){
+                switch (condition) {
                     case FirebaseHelper.CONDITION_1:
                         registeredIds = new JSONArray();
                         break;
@@ -597,7 +593,7 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
                 }
                 break;
             case "updateMessageNode":
-                switch(condition){
+                switch (condition) {
                     case FirebaseHelper.CONDITION_1:
                     case FirebaseHelper.CONDITION_2:
                         progressBar.toggleDialog(false);
@@ -606,12 +602,12 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
                         break;
                 }
                 break;
-            case "updateGroupMembers" :
-                switch(condition) {
+            case "updateGroupMembers":
+                switch (condition) {
                     case FirebaseHelper.CONDITION_1:
-                    String wishMessage = "New admin is " + container.getString();
-                    firebaseHelper.updateMessageNode(this, "group", groupKey, wishMessage, null, Constants.MESSAGE_TYPE_SYSTEM, null, groupModel.getTitle());
-                    break;
+                        String wishMessage = "New admin is " + container.getString();
+                        firebaseHelper.updateMessageNode(this, "group", groupKey, wishMessage, null, Constants.MESSAGE_TYPE_SYSTEM, null, groupModel.getTitle());
+                        break;
                 }
                 break;
         }
@@ -619,8 +615,8 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
 
     @Override
     public void onFailureTask(String tag, DatabaseError databaseError) {
-        switch(tag){
-            case "getNextNMessages" :
+        switch (tag) {
+            case "getNextNMessages":
                 tempMsg = new ArrayList<>();
                 isScrolling = false;
                 break;
@@ -633,21 +629,21 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
         }
 
         progressBar.toggleDialog(false);
-        Log.i(TAG, tag+" "+databaseError.getMessage());
+        Log.i(TAG, tag + " " + databaseError.getMessage());
     }
 
     @Override
     public void onChange(String tag, int condition, Container container) {
-        switch(tag){
+        switch (tag) {
             case "getNextNMessages":
-                switch (condition){
+                switch (condition) {
                     case FirebaseHelper.CONDITION_1:
                         tempMsg.add(container.getMsgModel());
                         break;
                 }
                 break;
             case "checkGroupsKeys":
-                switch (condition){
+                switch (condition) {
                     case FirebaseHelper.CONDITION_1:
                         registeredIds.put(container.getString());
                         break;
@@ -658,7 +654,7 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
 
     @Override
     public void onActionPressed() {
-        if(getMembersThatNeedToReceiveMessage().length > 0)
-            firebaseHelper.checkGroupsKeys("users", FirebaseHelper.CONDITION_1, FirebaseHelper.CONDITION_3 ,groupKey, getMembersThatNeedToReceiveMessage());
+        if (getMembersThatNeedToReceiveMessage().length > 0)
+            firebaseHelper.checkGroupsKeys("users", FirebaseHelper.CONDITION_1, FirebaseHelper.CONDITION_3, groupKey, getMembersThatNeedToReceiveMessage());
     }
 }

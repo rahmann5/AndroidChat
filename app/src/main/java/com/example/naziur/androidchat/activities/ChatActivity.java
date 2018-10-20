@@ -92,7 +92,7 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
         FirebaseHelper.FirebaseHelperListener{
     private static final String TAG = "ChatActivity";
     private static final int REQUEST_CODE_GALLERY_CAMERA = 0;
-    private static final int LOAD_AMOUNT = 4 ;
+    private static final int LOAD_AMOUNT = 6 ;
     User user = User.getInstance();
 
     ListView listView;
@@ -120,6 +120,7 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
     public int currentFirstVisibleItem, currentVisibleItemCount, totalItem, currentScrollState;
     private List<FirebaseMessageModel> tempMsg;
     private boolean isScrolling = false;
+    private boolean isTop = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -229,7 +230,7 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
                 currentScrollState = scrollState;
                 if (!isScrolling) {
                     if (currentVisibleItemCount > 0 && currentScrollState == SCROLL_STATE_IDLE) {
-                        if (currentFirstVisibleItem == 0) {
+                        if (currentFirstVisibleItem == 0 && !isTop) {
                             firebaseHelper.getNextNMessages("single", chatKey, messages.get(0).getId(), LOAD_AMOUNT);
                             isScrolling = true;
                         }
@@ -239,7 +240,6 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
         });
 
         progressBar = new ProgressDialog(this, R.layout.progress_dialog, true);
-        progressBar.toggleDialog(true);
 
         commentValueEventListener = firebaseHelper.createMessageEventListener();
 
@@ -304,14 +304,13 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
     @Override
     protected void onResume() {
         super.onResume();
-        if (Network.isInternetAvailable(this, true)) {
-            // improve for future search of users (need only the sender and receiver - currently looping through all users)
-            friendValueEvent = firebaseHelper.getValueEventListener(friend.getUsername(), FirebaseHelper.NON_CONDITION, FirebaseHelper.NON_CONDITION, FirebaseHelper.CONDITION_1, FirebaseUserModel.class);
-            firebaseHelper.toggleListenerFor("users", "username" ,friend.getUsername(), friendValueEvent , true, false);
-            //firebaseHelper.setUpSingleChat("users", friend.getUsername(), user.name);
+        if (Network.isInternetAvailable(this, false)) {
+            progressBar.toggleDialog(true);
         } else {
             loadLocalData();
         }
+        friendValueEvent = firebaseHelper.getValueEventListener(friend.getUsername(), FirebaseHelper.NON_CONDITION, FirebaseHelper.NON_CONDITION, FirebaseHelper.CONDITION_1, FirebaseUserModel.class);
+        firebaseHelper.toggleListenerFor("users", "username" ,friend.getUsername(), friendValueEvent , true, false);
     }
 
     @Override
@@ -336,12 +335,6 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
         super.onDestroy();
         firebaseHelper.toggleMsgEventListeners("single", chatKey, commentValueEventListener,1 , false, false);
         firebaseHelper.toggleListenerFor("users", "username" ,friend.getUsername(), friendValueEvent , false, false);
-    }
-
-    private void sendMessage(final String wishMessage){
-        firebaseHelper.updateMessageNode(this, "single", chatKey, wishMessage, friend, Constants.MESSAGE_TYPE_TEXT,null, "");
-        //messagesRef.removeEventListener(commentValueEventListener);
-        // messagesRef.addValueEventListener(commentValueEventListener);
     }
 
     private String findChatKey (FirebaseUserModel userModel, FirebaseUserModel withUser) {
@@ -578,23 +571,24 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
     public void onCompleteTask(String tag, int condition, Container container) {
         if (tag.equals("createMessageEventListener")) {
             switch (condition) {
-                case FirebaseHelper.CONDITION_1 :
+                case FirebaseHelper.CONDITION_1 : //WHEN UNREAD MESSAGES ARE FOUND
                     if (!messages.isEmpty() && messages.size() < LOAD_AMOUNT) {
                         tempMsg = new ArrayList<>();
                         firebaseHelper.getNextNMessages("single", chatKey, messages.get(0).getId(), LOAD_AMOUNT-messages.size());
+                    } else {
+                        updateListView(true);
                     }
-
-                    updateListView(true);
 
                     progressBar.toggleDialog(false);
                     break;
 
-                case FirebaseHelper.CONDITION_2 :
+                case FirebaseHelper.CONDITION_2 : //WHEN NO UNREAD MESSAGES ARE FOUND
                     if (messages.isEmpty()) {
                         tempMsg = new ArrayList<>();
                         firebaseHelper.getNextNMessages("single", chatKey, "", LOAD_AMOUNT);
                     } else {
                         updateListViewOnChange ();
+                        progressBar.toggleDialog(false);
                     }
                     break;
             }
@@ -611,6 +605,8 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
                                 .into(((CircleImageView) actionBar.getCustomView().findViewById(R.id.profile_icon)));
                         ValueEventListener singelEvent = firebaseHelper.getValueEventListener(user.name, FirebaseHelper.NON_CONDITION, FirebaseHelper.NON_CONDITION, FirebaseHelper.CONDITION_2, FirebaseUserModel.class);
                         firebaseHelper.toggleListenerFor("users", "username" ,user.name, singelEvent, true, true);
+                    } else {
+                        progressBar.toggleDialog(false);
                     }
                     setOnlineStatus(returnedFriend);
                     break;
@@ -627,8 +623,9 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
                             btnInvite.setVisibility(View.VISIBLE);
                             btnMedia.setEnabled(false);
                             btnSend.setVisibility(View.GONE);
+                        } else{
+                            progressBar.toggleDialog(false);
                         }
-                        progressBar.toggleDialog(false);
                     } else {
                         Log.i(TAG, "ME IS NULL");
                         progressBar.toggleDialog(false);
@@ -639,6 +636,7 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
         }  else if (tag.equals("checkKeyListKey" )) {
             switch (condition) {
                 case FirebaseHelper.CONDITION_1 :
+                    progressBar.toggleDialog(false);
                     btnInvite.setVisibility(View.GONE);
                     btnSend.setVisibility(View.VISIBLE);
                     btnMedia.setEnabled(true);
@@ -654,7 +652,8 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
                     break;
                 case FirebaseHelper.CONDITION_3:
                     String wishMessage = textComment.getText().toString().trim();
-                    sendMessage(wishMessage);
+                    // send message
+                    firebaseHelper.updateMessageNode(this, "single", chatKey, wishMessage, friend, Constants.MESSAGE_TYPE_TEXT,null, "");
                     break;
                 case FirebaseHelper.CONDITION_4:
                     imageViewDialog.sendImageAndMessage(chatKey, friend, ChatActivity.this, null, null);
@@ -680,35 +679,38 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
                     finish();
                     break;
                 case FirebaseHelper.CONDITION_2 :
+                    progressBar.toggleDialog(false);
                     btnInvite.setEnabled(true);
                     Log.i(TAG, "Failed to add notification to server one may already exist");
                     break;
             }
         } else if (tag.equals("updateMessageNode")) {
-            if (friendValueEvent == null) {
-                friendValueEvent = firebaseHelper.getValueEventListener(friend.getUsername(), FirebaseHelper.NON_CONDITION, FirebaseHelper.NON_CONDITION, FirebaseHelper.CONDITION_1, FirebaseUserModel.class);
-                firebaseHelper.toggleListenerFor("users", "username" ,friend.getUsername(), friendValueEvent , true, false);
-            }
             Log.i(TAG, container.getString());
             btnSend.setEnabled(true);
             progressBar.toggleDialog(false);
             textComment.setText("");
-
         }  else if (tag.equals("getNextNMessages")) {
             switch (condition) {
                 case FirebaseHelper.CONDITION_1 :
                     //lastKey = container.getString();
-                    Collections.reverse(tempMsg);
-                    for (FirebaseMessageModel fbm : tempMsg) {
-                        messages.add(0, fbm);
-                    }
-                    if (messages.size() <= LOAD_AMOUNT+1) {
+                    if (tempMsg.size() > 0) {
+                        Collections.reverse(tempMsg);
+                        for (FirebaseMessageModel fbm : tempMsg) {
+                            messages.add(0, fbm);
+                        }
+                        if (messages.size() <= LOAD_AMOUNT + 1) {
+                            updateListView(true);
+                        } else {
+                            updateListView(false);
+                        }
+                        tempMsg = new ArrayList<>();
+                    } else if (messages.size() <= LOAD_AMOUNT) {
                         updateListView(true);
+                        isTop = true;
                     } else {
-                        updateListView(false);
+                        isTop = true;
                     }
                     progressBar.toggleDialog(false);
-                    tempMsg = new ArrayList<>();
                     isScrolling = false;
                     break;
             }
@@ -720,7 +722,6 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
         switch (tag) {
             case "createMessageEventListener" :
                 updateListView(false);
-                progressBar.toggleDialog(false);
                 break;
 
             case "getValueEventListener" :
@@ -730,7 +731,6 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
                     firebaseHelper.toggleListenerFor("users", "username" ,user.name, singelEvent, true, true);
                 } else if (!friend.getDeviceId().equals("") && me == null) {
                     Log.i(TAG, "ME IS NULL");
-                    progressBar.toggleDialog(false);
                     finish();
                 }
                 break;
@@ -744,10 +744,10 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
                 break;
             case "getNextNMessages" :
                 isScrolling = false;
-                progressBar.toggleDialog(false);
                 break;
 
         }
+        progressBar.toggleDialog(false);
         Log.i(TAG, tag + " " +databaseError.getMessage());
     }
 
