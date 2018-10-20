@@ -322,17 +322,19 @@ public class FirebaseHelper {
                         firebaseMessageModel.setId(postSnapshot.getKey());
                         dataInReverse.add(firebaseMessageModel);
                     }
-                    Collections.reverse(dataInReverse);
 
-                    for(FirebaseMessageModel fb : dataInReverse) {
+                    for(int i = dataInReverse.size()-1; i >= 0; i--) {
 
                         if (currentMessages.size() == 0) {
                             if (tempMessages.size() < loadAmount)
-                                tempMessages.add(0,fb);
+                                tempMessages.add(0,dataInReverse.get(i));
+                            else if(tempMessages.size() == loadAmount)
+                                break;
                         } else {
+
                             FirebaseMessageModel lastLocalMessage = currentMessages.get(currentMessages.size() - 1);
-                            if (!lastLocalMessage.getId().equals(fb)) {
-                                tempMessages.add(0,fb);
+                            if (!lastLocalMessage.getId().equals(dataInReverse.get(i).getId())) {
+                                tempMessages.add(0,dataInReverse.get(i));
                             } else {
                                 break;
                             }
@@ -340,6 +342,7 @@ public class FirebaseHelper {
                     }
 
                     container.setMessages(tempMessages);
+                    container.setInt(dataInReverse.size());
                     listener.onCompleteTask("createGroupMessageEventListener", CONDITION_1, container);
                 } else {
                     listener.onCompleteTask("createGroupMessageEventListener", CONDITION_2, null);

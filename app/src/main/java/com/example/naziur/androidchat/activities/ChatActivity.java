@@ -120,6 +120,7 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
     public int currentFirstVisibleItem, currentVisibleItemCount, totalItem, currentScrollState;
     private List<FirebaseMessageModel> tempMsg;
     private boolean isScrolling = false;
+    private boolean isTop = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -229,7 +230,7 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
                 currentScrollState = scrollState;
                 if (!isScrolling) {
                     if (currentVisibleItemCount > 0 && currentScrollState == SCROLL_STATE_IDLE) {
-                        if (currentFirstVisibleItem == 0) {
+                        if (currentFirstVisibleItem == 0 && !isTop) {
                             firebaseHelper.getNextNMessages("single", chatKey, messages.get(0).getId(), LOAD_AMOUNT);
                             isScrolling = true;
                         }
@@ -570,7 +571,7 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
     public void onCompleteTask(String tag, int condition, Container container) {
         if (tag.equals("createMessageEventListener")) {
             switch (condition) {
-                case FirebaseHelper.CONDITION_1 :
+                case FirebaseHelper.CONDITION_1 : //WHEN UNREAD MESSAGES ARE FOUND
                     if (!messages.isEmpty() && messages.size() < LOAD_AMOUNT) {
                         tempMsg = new ArrayList<>();
                         firebaseHelper.getNextNMessages("single", chatKey, messages.get(0).getId(), LOAD_AMOUNT-messages.size());
@@ -581,7 +582,7 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
                     progressBar.toggleDialog(false);
                     break;
 
-                case FirebaseHelper.CONDITION_2 :
+                case FirebaseHelper.CONDITION_2 : //WHEN NO UNREAD MESSAGES ARE FOUND
                     if (messages.isEmpty()) {
                         tempMsg = new ArrayList<>();
                         firebaseHelper.getNextNMessages("single", chatKey, "", LOAD_AMOUNT);
@@ -692,17 +693,24 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
             switch (condition) {
                 case FirebaseHelper.CONDITION_1 :
                     //lastKey = container.getString();
-                    Collections.reverse(tempMsg);
-                    for (FirebaseMessageModel fbm : tempMsg) {
-                        messages.add(0, fbm);
-                    }
-                    if (messages.size() <= LOAD_AMOUNT+1) {
+                    if (tempMsg.size() > 0) {
+                        Collections.reverse(tempMsg);
+                        for (FirebaseMessageModel fbm : tempMsg) {
+                            messages.add(0, fbm);
+                        }
+                        if (messages.size() <= LOAD_AMOUNT + 1) {
+                            updateListView(true);
+                        } else {
+                            updateListView(false);
+                        }
+                        tempMsg = new ArrayList<>();
+                    } else if (messages.size() <= LOAD_AMOUNT) {
                         updateListView(true);
+                        isTop = true;
                     } else {
-                        updateListView(false);
+                        isTop = true;
                     }
                     progressBar.toggleDialog(false);
-                    tempMsg = new ArrayList<>();
                     isScrolling = false;
                     break;
             }
