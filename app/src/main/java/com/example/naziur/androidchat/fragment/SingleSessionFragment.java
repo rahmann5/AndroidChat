@@ -17,6 +17,8 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -54,7 +56,7 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
     private ValueEventListener userListener;
     private AllChatsAdapter myChatsdapter;
     private RecyclerView recyclerView;
-    private TextView emptyChats;
+    private LinearLayout emptyChats;
     private User user = User.getInstance();
     private List<String> allChatKeys;
     private ContactDBHelper db;
@@ -62,6 +64,7 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
     private List<ValueEventListener> valueEventListeners;
     FirebaseHelper firebaseHelper;
     private SimpleDateFormat formatter;
+    private ProgressBar chatProgress;
     public SingleSessionFragment() {
         // Required empty public constructor
     }
@@ -79,7 +82,8 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
         valueEventListeners = new ArrayList<>();
         allChatKeys = new ArrayList<>();
         formatter = new SimpleDateFormat(getString(R.string.simple_date));
-        emptyChats = (TextView) rootView.findViewById(R.id.no_chats);
+        emptyChats = (LinearLayout) rootView.findViewById(R.id.no_chats);
+        chatProgress = (ProgressBar) rootView.findViewById(R.id.chat_progress);
         recyclerView = rootView.findViewById(R.id.all_chats_list);
         progressBar = new ProgressDialog(getActivity(), R.layout.progress_dialog, true);
         db = new ContactDBHelper(getContext());
@@ -92,11 +96,12 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
     public void onResume() {
         super.onResume();
         if (myChatsdapter.getItemCount() == 0) {
-            emptyChats.setVisibility(View.VISIBLE);
+            toggleEmptyView(false, false);
             if (!Network.isInternetAvailable(getActivity(), true)) {
                 return;
             }
         }
+        toggleEmptyView(false, true);
         userListener = firebaseHelper.getValueEventListener(user.name, FirebaseHelper.CONDITION_1, FirebaseHelper.CONDITION_2 , FirebaseHelper.CONDITION_3, FirebaseUserModel.class);
         firebaseHelper.toggleListenerFor("users", "username" , user.name, userListener, true, false);
     }
@@ -112,8 +117,20 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
                 firebaseHelper.attachOrRemoveMessageEventListener("single", allChatKeys.get(i), valueEventListeners.get(i), true);
             }
         progressBar.toggleDialog(false);
+        toggleEmptyView(false, false);
+    }
+
+    private void toggleEmptyView(boolean sort, boolean showProgress){
+        if (showProgress) {
+            chatProgress.setVisibility(View.VISIBLE);
+        } else {
+            chatProgress.setVisibility(View.GONE);
+        }
         if (myChatsdapter.getItemCount() == 0) {
             emptyChats.setVisibility(View.VISIBLE);
+        } else {
+            if (sort) myChatsdapter.sortAllChatsByDate(false, formatter);
+            emptyChats.setVisibility(View.GONE);
         }
     }
 
@@ -234,12 +251,8 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
             case "getMessageEventListener":
                 switch (condition){
                     case FirebaseHelper.CONDITION_2:
-                        if (myChatsdapter.getItemCount() == 0) {
-                            emptyChats.setVisibility(View.VISIBLE);
-                        } else {
-                            myChatsdapter.sortAllChatsByDate(true, formatter);
-                            emptyChats.setVisibility(View.GONE);
-                        }
+                        chatProgress.setVisibility(View.GONE);
+                        toggleEmptyView(true, false);
                         break;
                 }
                 break;
@@ -258,7 +271,7 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
                 switch (condition) {
                     case FirebaseHelper.CONDITION_2:
                         //Toast.makeText(getContext(), "No chats found for this user, as the account may no longer exist", Toast.LENGTH_SHORT).show();
-                        emptyChats.setVisibility(View.VISIBLE);
+                        toggleEmptyView(false, false);
                         break;
                     case FirebaseHelper.CONDITION_3:
                         setUpMsgEventListeners();

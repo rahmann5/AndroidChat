@@ -12,6 +12,8 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -50,12 +52,13 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
     private ValueEventListener userListener;
     private AllChatsAdapter myChatsdapter;
     private RecyclerView recyclerView;
-    private TextView emptyChats;
+    private LinearLayout emptyChats;
     private User user = User.getInstance();
     private List<String> allGroupKeys;
     private List<FirebaseGroupModel> allGroups;
     private ContactDBHelper db;
     private ProgressDialog progressBar;
+    private ProgressBar chatProgress;
     private Map<String, ValueEventListener> grpValueEventListeners;
     private Map<String, ValueEventListener> grpMsgValueEventListeners;
     private SimpleDateFormat formatter;
@@ -77,7 +80,8 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
         grpValueEventListeners = new HashMap<>();
         grpMsgValueEventListeners = new HashMap<>();
         allGroupKeys = new ArrayList<>();
-        emptyChats = (TextView) rootView.findViewById(R.id.no_chats);
+        emptyChats = (LinearLayout) rootView.findViewById(R.id.no_chats);
+        chatProgress = (ProgressBar) rootView.findViewById(R.id.chat_progress);
         recyclerView = rootView.findViewById(R.id.all_chats_list);
         formatter = new SimpleDateFormat(getString(R.string.simple_date));
         progressBar = new ProgressDialog(getActivity(), R.layout.progress_dialog, true);
@@ -90,11 +94,12 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
     public void onResume() {
         super.onResume();
         if (myChatsdapter.getItemCount() == 0) {
-            emptyChats.setVisibility(View.VISIBLE);
+            toggleEmptyView(false, false);
             if (!Network.isInternetAvailable(getActivity(), true)) {
                 return;
             }
         }
+        toggleEmptyView(false, true);
         userListener = firebaseHelper.getValueEventListener(user.name, FirebaseHelper.CONDITION_1, FirebaseHelper.CONDITION_2, FirebaseHelper.CONDITION_3 ,FirebaseUserModel.class);
         firebaseHelper.toggleListenerFor("users", "username" , user.name, userListener, true, false);
     }
@@ -253,7 +258,12 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
         }
     }
 
-    private void toggleEmptyView(){
+    private void toggleEmptyView(boolean sort, boolean showProgress){
+        if (showProgress) {
+            chatProgress.setVisibility(View.VISIBLE);
+        } else {
+            chatProgress.setVisibility(View.GONE);
+        }
         if (myChatsdapter.getItemCount() == 0) {
             emptyChats.setVisibility(View.VISIBLE);
         } else {
@@ -268,7 +278,7 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
         if (tag.equals("getMessageEventListener")) {
             switch (condition) {
                 case FirebaseHelper.CONDITION_2:
-                    toggleEmptyView();
+                    toggleEmptyView(true, false);
                     break;
             }
         } else if (tag.equals("getValueEventListener")) {
@@ -310,14 +320,13 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
                         if (allGroups.size() != allGroupKeys.size()) {
                             setUpGrpEventListeners(allGroups.size(), true, FirebaseHelper.CONDITION_4, FirebaseHelper.CONDITION_7 ,FirebaseHelper.CONDITION_5);
                         } else {
-                            System.out.println("Showing only group");
                             if(!allGroups.isEmpty()) {
                                 for (int i = 0; i < allGroups.size(); i++) {
                                     setUpGrpEventListeners(i, false, FirebaseHelper.CONDITION_6, FirebaseHelper.NON_CONDITION, FirebaseHelper.NON_CONDITION);
                                 }
                             } else {
                                 myChatsdapter.notifyDataSetChanged();
-                                toggleEmptyView();
+                                toggleEmptyView(true, false);
                             }
                         }
                     }
@@ -347,9 +356,11 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
                     }
                     myChatsdapter.addOrRemoveChat(chat, false);
                     myChatsdapter.notifyDataSetChanged();
-                    toggleEmptyView();
                     if (!chat.isEmptyChat()) {
+                        toggleEmptyView(true, true);
                         firebaseHelper.deleteGroup(chat);
+                    } else {
+                        toggleEmptyView(true, false);
                     }
                     break;
             }

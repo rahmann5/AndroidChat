@@ -61,7 +61,7 @@ public class MemberSelectorActivity extends AuthenticatedActivity implements Fir
         Bundle extra = getIntent().getExtras();
         if (extra != null) {
             if (extra.getString("current_members") != null){
-                if (extra.getString("current_members").equals("")) {
+                if (!extra.getString("current_members").equals("")) {
                     currentMembers = extra.getString("current_members").split(",");
                 }
             } else if (extra.getString("block_list") != null ) {
@@ -236,11 +236,15 @@ public class MemberSelectorActivity extends AuthenticatedActivity implements Fir
 
     private List<Contact> getAllNonMemberContacts (List<Contact> allContacts) {
         List<Contact> nonMemberContacts = new ArrayList<>();
-        List<String> allMembers = Arrays.asList(currentMembers);
-        for (Contact c : allContacts) {
-            if (!allMembers.contains(c.getContact().getUsername())) {
-                nonMemberContacts.add(c);
+        if (currentMembers != null) {
+            List<String> allMembers = Arrays.asList(currentMembers);
+            for (Contact c : allContacts) {
+                if (!allMembers.contains(c.getContact().getUsername())) {
+                    nonMemberContacts.add(c);
+                }
             }
+        } else {
+            nonMemberContacts = allContacts;
         }
         return nonMemberContacts;
     }

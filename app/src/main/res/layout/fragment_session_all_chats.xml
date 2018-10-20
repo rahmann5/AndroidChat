@@ -15,16 +15,32 @@
             android:layout_height="match_parent"
             />
 
-        <TextView
-            android:id="@+id/no_chats"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="No chats"
-            android:layout_centerHorizontal="true"
-            android:layout_centerVertical="true"
-            android:textSize="25sp"
-            android:visibility="gone"/>
+       <LinearLayout
+           android:id="@+id/no_chats"
+           android:layout_width="wrap_content"
+           android:layout_height="wrap_content"
+           android:orientation="vertical"
+           android:layout_centerHorizontal="true"
+           android:layout_centerVertical="true"
+           android:visibility="gone">
 
+           <ProgressBar
+               android:id="@+id/chat_progress"
+               android:layout_width="wrap_content"
+               android:layout_height="wrap_content"
+               android:layout_gravity="center"
+               android:visibility="gone"
+               />
+
+           <TextView
+               android:layout_width="wrap_content"
+               android:layout_height="wrap_content"
+               android:text="No chats"
+               android:textSize="25sp"
+               android:layout_gravity="center"
+               />
+
+       </LinearLayout>
     </RelativeLayout>
 
 </android.support.design.widget.CoordinatorLayout>
