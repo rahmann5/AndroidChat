@@ -112,6 +112,9 @@ public class NotificationActivity extends AuthenticatedActivity implements Notif
 
     @Override
     public void onButtonClicked(Notification notification, int pos, boolean accept) {
+        if (!Network.isInternetAvailable(this, true)) {
+            return;
+        }
         if (accept) {
             FirebaseUserModel temp = new FirebaseUserModel();
             temp.setUsername(notification.getSender());

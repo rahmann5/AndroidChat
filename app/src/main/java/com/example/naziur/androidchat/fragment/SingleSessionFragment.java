@@ -216,16 +216,6 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
 
     }
 
-    private String getChatKeysAsString(){
-        String keys = "";
-        for(int i = 0; i < allChatKeys.size(); i++){
-            keys += allChatKeys.get(i);
-            if(i < allChatKeys.size()-1)
-                keys += ",";
-        }
-        return keys;
-    }
-
     @Override
     public void onStop() {
 
@@ -249,12 +239,7 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
     public void onCompleteTask(String tag, int condition, Container container) {
         switch(tag){
             case "getMessageEventListener":
-                switch (condition){
-                    case FirebaseHelper.CONDITION_2:
-                        chatProgress.setVisibility(View.GONE);
-                        toggleEmptyView(true, false);
-                        break;
-                }
+                toggleEmptyView(true, false);
                 break;
             case "checkKeyListKey":
                 switch(condition){
@@ -333,6 +318,7 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
                 Toast.makeText(getActivity(), "Failed to add contact.", Toast.LENGTH_LONG).show();
                 break;
         }
+        toggleEmptyView(false, false);
         Log.i(TAG, tag + " "+ databaseError.getMessage());
     }
 

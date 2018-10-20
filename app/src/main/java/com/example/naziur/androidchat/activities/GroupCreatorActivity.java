@@ -307,9 +307,6 @@ public class GroupCreatorActivity extends AuthenticatedActivity implements Fireb
                 }
             }
         });
-
-
-
     }
 
     private void uploadImageThenCreateNode(final String title) {
@@ -433,22 +430,6 @@ public class GroupCreatorActivity extends AuthenticatedActivity implements Fireb
 
     }
 
-    private List<Contact> readCursorData (Cursor c) {
-        List<Contact> myContacts = new ArrayList<>();
-        try{
-            while (c.moveToNext()) {
-                FirebaseUserModel fbModel = new FirebaseUserModel();
-                fbModel.setUsername(c.getString(c.getColumnIndex(MyContactsContract.MyContactsContractEntry.COLUMN_USERNAME)));
-                fbModel.setProfileName(c.getString(c.getColumnIndex(MyContactsContract.MyContactsContractEntry.COLUMN_PROFILE)));
-                fbModel.setProfilePic(c.getString(c.getColumnIndex(MyContactsContract.MyContactsContractEntry.COLUMN_PROFILE_PIC)));
-                myContacts.add(new Contact(fbModel));
-            }
-        } finally {
-            c.close();
-        }
-
-        return myContacts;
-    }
 
     private String getRandomCharactersForKey(){
         Random rand = new Random();

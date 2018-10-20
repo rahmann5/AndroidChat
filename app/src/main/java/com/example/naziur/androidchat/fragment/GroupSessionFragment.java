@@ -238,16 +238,6 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
         firebaseHelper.updateChatKeys(user, chatToRemove.getChatKey(), chatToRemove, true);
     }
 
-    private String getChatKeysAsString(){
-        String keys = "";
-        for(int i = 0; i < allGroupKeys.size(); i++){
-            keys += allGroupKeys.get(i);
-            if(i < allGroupKeys.size()-1)
-                keys += ",";
-        }
-        return keys;
-    }
-
     private void updateGroupModel(FirebaseGroupModel grpModel) {
         for (int i = 0; i < allGroups.size(); i++) {
             if (allGroups.get(i).getGroupKey().equals(grpModel.getGroupKey())) {
@@ -267,7 +257,7 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
         if (myChatsdapter.getItemCount() == 0) {
             emptyChats.setVisibility(View.VISIBLE);
         } else {
-            myChatsdapter.sortAllChatsByDate(false, formatter);
+            if (sort) myChatsdapter.sortAllChatsByDate(false, formatter);
             emptyChats.setVisibility(View.GONE);
         }
     }
@@ -285,6 +275,7 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
             switch (condition) {
 
                 case FirebaseHelper.CONDITION_2 :
+                    toggleEmptyView(true, false);
                     Log.i(TAG, container.getString() + " does not exist");
                     break;
 
@@ -292,6 +283,8 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
                     if (!allGroupKeys.isEmpty()) {
                         myChatsdapter.clearAllChats();
                         setUpGrpEventListeners(0, true, FirebaseHelper.CONDITION_4, FirebaseHelper.CONDITION_7 , FirebaseHelper.CONDITION_5);
+                    } else {
+                        toggleEmptyView(true, false);
                     }
                     break;
 
@@ -401,6 +394,7 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
 
     @Override
     public void onFailureTask(String tag, DatabaseError databaseError) {
+        toggleEmptyView(false, false);
         Log.i(TAG, tag + ": " + databaseError.getMessage());
     }
 

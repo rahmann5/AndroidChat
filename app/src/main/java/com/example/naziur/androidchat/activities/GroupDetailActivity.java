@@ -27,6 +27,7 @@ import android.widget.Toast;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
 import com.example.naziur.androidchat.R;
+import com.example.naziur.androidchat.database.ContactDBHelper;
 import com.example.naziur.androidchat.database.FirebaseHelper;
 import com.example.naziur.androidchat.models.FirebaseGroupModel;
 import com.example.naziur.androidchat.models.User;
@@ -67,6 +68,7 @@ public class GroupDetailActivity extends AuthenticatedActivity implements Fireba
     private String pic = "";
     private ArrayAdapter membersAdapter;
     private ListView membersListView;
+    private ContactDBHelper db;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -76,9 +78,9 @@ public class GroupDetailActivity extends AuthenticatedActivity implements Fireba
         firebaseHelper.setFirebaseHelperListener(this);
         progressBar = new ProgressDialog(this, R.layout.progress_dialog, true);
         toolbar = (Toolbar) findViewById(R.id.toolbar);
-
+        db = new ContactDBHelper(this);
         membersListView = (ListView) findViewById(R.id.members_list_view);
-        membersAdapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, getEveryMember()){
+        membersAdapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, getEveryMember(true)){
             @Override
             public View getView(int position, View convertView, ViewGroup parent) {
                 TextView textView = (TextView) super.getView(position, convertView, parent);
@@ -132,10 +134,13 @@ public class GroupDetailActivity extends AuthenticatedActivity implements Fireba
         if(pic.isEmpty() || pic.equals(groupModel.getPic()))
             pic = groupModel.getPic();
 
-        if(!groupModel.getAdmin().isEmpty())
-            adminTv.setText(groupModel.getAdmin());
-        else
+        if(!groupModel.getAdmin().isEmpty()){
+            String name = (!groupModel.getAdmin().equals(user.name)) ? db.getProfileInfoIfExists(groupModel.getAdmin())[0] : user.profileName;
+            adminTv.setText(name);
+        } else {
             adminTv.setText(getResources().getString(R.string.no_admin));
+        }
+
 
         beAdmin.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -149,7 +154,7 @@ public class GroupDetailActivity extends AuthenticatedActivity implements Fireba
             titleTv.setVisibility(View.VISIBLE);
             titleTv.setText(groupModel.getTitle());
 
-            List<String> allMembers = getEveryMember();
+            List<String> allMembers = getEveryMember(false);
             if (allMembers.contains(user.name) && groupModel.getAdmin().equals("")) {
                 beAdmin.setVisibility(View.VISIBLE);
                 adminTv.setVisibility(View.GONE);
@@ -218,17 +223,21 @@ public class GroupDetailActivity extends AuthenticatedActivity implements Fireba
 
     private void updateGroupListAdapter() {
         membersAdapter.clear();
-        membersAdapter.addAll(getEveryMember());
+        membersAdapter.addAll(getEveryMember(true));
         membersAdapter.notifyDataSetChanged();
     }
 
-    private List<String> getEveryMember(){
+    private List<String> getEveryMember(boolean useProfile){
         List<String> members = new ArrayList<>();
         if(groupModel != null) {
             if (!groupModel.getMembers().isEmpty()) {
                 String [] membersIngroup = groupModel.getMembers().split(",");
                 for (int i = 0; i < membersIngroup.length; i++) {
-                    members.add(membersIngroup[i]);
+                    String name =  membersIngroup[i];
+                    if (useProfile) {
+                        name = (!membersIngroup[i].equals(user.name)) ? db.getProfileInfoIfExists(membersIngroup[i])[0] : user.profileName;
+                    }
+                    members.add(name);
                 }
             }
         }
@@ -445,7 +454,10 @@ public class GroupDetailActivity extends AuthenticatedActivity implements Fireba
         super.onStop();
         if (groupModel != null)
             firebaseHelper.toggleListenerFor("groups", "groupKey", groupModel.getGroupKey(), groupListener, false, false);
+
+        if (db != null)  db.close();
     }
+
 
     @Override
     public void onCompleteTask(String tag, int condition, Container container) {
