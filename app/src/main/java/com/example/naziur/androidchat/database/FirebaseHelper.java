@@ -308,51 +308,73 @@ public class FirebaseHelper {
 
     }
 
-    public ValueEventListener createGroupMessageEventListener (final List<FirebaseMessageModel> currentMessages, final int loadAmount) {
+    public ValueEventListener createGroupMessageEventListener(final List<FirebaseMessageModel> currentMessages, final int loadAmount, final int currentKnownMessageCount) {
         return new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if (dataSnapshot.exists()) {
                     Container container = new Container();
-                    List<FirebaseMessageModel> tempMessages = new ArrayList<>();
                     List<FirebaseMessageModel> dataInReverse = new ArrayList<>();
-                    //ITERATING ALL DATA BECAUSE GOOGLE WAS TOO LAZY TO ALLOW US TO GET DATA IN REVERSE
-                    for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
-                        FirebaseMessageModel firebaseMessageModel = postSnapshot.getValue(FirebaseMessageModel.class);
-                        firebaseMessageModel.setId(postSnapshot.getKey());
-                        dataInReverse.add(firebaseMessageModel);
-                    }
-
-                    for(int i = dataInReverse.size()-1; i >= 0; i--) {
-
-                        if (currentMessages.size() == 0) {
-                            if (tempMessages.size() < loadAmount)
-                                tempMessages.add(0,dataInReverse.get(i));
-                            else if(tempMessages.size() == loadAmount)
-                                break;
-                        } else {
-
-                            FirebaseMessageModel lastLocalMessage = currentMessages.get(currentMessages.size() - 1);
-                            if (!lastLocalMessage.getId().equals(dataInReverse.get(i).getId())) {
-                                tempMessages.add(0,dataInReverse.get(i));
-                            } else {
-                                break;
-                            }
+                    if (currentMessages.size() == 0) {
+                        List<FirebaseMessageModel> tempMessages = new ArrayList<>();
+                        //ITERATING ALL DATA BECAUSE GOOGLE WAS TOO LAZY TO ALLOW US TO GET DATA IN REVERSE
+                        for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
+                            FirebaseMessageModel firebaseMessageModel = postSnapshot.getValue(FirebaseMessageModel.class);
+                            firebaseMessageModel.setId(postSnapshot.getKey());
+                            dataInReverse.add(firebaseMessageModel);
                         }
-                    }
 
-                    container.setMessages(tempMessages);
-                    container.setInt(dataInReverse.size());
-                    listener.onCompleteTask("createGroupMessageEventListener", CONDITION_1, container);
+                        for (int i = dataInReverse.size() - 1; i >= 0; i--) {
+                            if (tempMessages.size() < loadAmount)
+                                tempMessages.add(0, dataInReverse.get(i));
+                            else if (tempMessages.size() == loadAmount)
+                                break;
+                        }
+                        container.setMessages(tempMessages);
+                        container.setInt(dataInReverse.size());
+                        listener.onCompleteTask("createGroupMessageEventListener", CONDITION_1, container);
+                    } else {
+                        container.setLong( dataSnapshot.getChildrenCount());
+                        listener.onCompleteTask("createGroupMessageEventListener", CONDITION_2, container);
+                    }
                 } else {
-                    listener.onCompleteTask("createGroupMessageEventListener", CONDITION_2, null);
+                    listener.onCompleteTask("createGroupMessageEventListener", CONDITION_3, null);
                 }
             }
+
             @Override
             public void onCancelled(DatabaseError databaseError) {
                 listener.onFailureTask("createGroupMessageEventListener", databaseError);
             }
         };
+    }
+
+    public void getNewMessages(String key, long amountToGet){
+        database.getReference("messages").child("group").child(key).orderByKey()
+                .limitToLast((int) Math.max(Math.min(Integer.MAX_VALUE, amountToGet), Integer.MIN_VALUE))
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        if(dataSnapshot.exists()){
+                            List<FirebaseMessageModel> tempMessages = new ArrayList<>();
+                            for(DataSnapshot postSnapshot : dataSnapshot.getChildren()){
+                                FirebaseMessageModel firebaseMessageModel = postSnapshot.getValue(FirebaseMessageModel.class);
+                                firebaseMessageModel.setId(postSnapshot.getKey());
+                                tempMessages.add(firebaseMessageModel);
+                            }
+                            Container container = new Container();
+                            container.setMessages(tempMessages);
+                            listener.onCompleteTask("getNewMessages", CONDITION_1, container);
+                        } else {
+                            listener.onCompleteTask("getNewMessages", CONDITION_2, null);
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+                        listener.onFailureTask("getNewMessages", databaseError);
+                    }
+                });
     }
 
     public ValueEventListener createMessageEventListener () {

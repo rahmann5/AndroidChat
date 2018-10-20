@@ -23,6 +23,7 @@ public class Container {
     private FirebaseGroupModel groupModel;
     private String simpleString;
     private int simpleInt;
+    private long simpleLong;
     private boolean simpleBoolean;
     private Chat chat;
     private List<String> stringList;
@@ -164,5 +165,13 @@ public class Container {
 
     public void setContacts(List<Contact> contacts) {
         this.contacts = contacts;
+    }
+
+    public long getLong() {
+        return simpleLong;
+    }
+
+    public void setLong(long simpleLong) {
+        this.simpleLong = simpleLong;
     }
 }

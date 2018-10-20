@@ -85,6 +85,7 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
     private boolean isScrolling = false;
     private boolean isPaused = false;
     private boolean isTop = false;
+    private int currentKnownMessageCount = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -214,11 +215,7 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
 
             public void onScrollStateChanged(AbsListView view, int scrollState) {
 
-                if (listView.getCount() != listView.getLastVisiblePosition() + 1) {
-                    sendBottom.setVisibility(View.VISIBLE);
-                } else {
-                    sendBottom.setVisibility(View.GONE);
-                }
+                toggleGoBottomArrow();
                 currentScrollState = scrollState;
                 if (!isScrolling) {
                     if (currentVisibleItemCount > 0 && currentScrollState == SCROLL_STATE_IDLE) {
@@ -231,6 +228,14 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
                 }
             }
         });
+    }
+
+    private void toggleGoBottomArrow(){
+        if (listView.getCount() != listView.getLastVisiblePosition() + 1) {
+            sendBottom.setVisibility(View.VISIBLE);
+        } else {
+            sendBottom.setVisibility(View.GONE);
+        }
     }
 
     private BroadcastReceiver mReceiver = new BroadcastReceiver() {
@@ -256,7 +261,7 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
         super.onResume();
         if (!isPaused) {
             firebaseHelper.toggleListenerFor("groups", "groupKey", groupKey, groupListener, true, false);
-            msgValueEventListener = firebaseHelper.createGroupMessageEventListener(messages, LOAD_AMOUNT);
+            msgValueEventListener = firebaseHelper.createGroupMessageEventListener(messages, LOAD_AMOUNT, currentKnownMessageCount);
             firebaseHelper.toggleGrpMsgEventListeners("group", groupKey, msgValueEventListener, true, false);
         } else
             isPaused = false;
@@ -526,6 +531,7 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
             case "createGroupMessageEventListener":
                 switch (condition) {
                     case FirebaseHelper.CONDITION_1:
+                        currentKnownMessageCount = container.getInt();
                         List<FirebaseMessageModel> tempMessage = container.getMessages();
                         if (!tempMessage.isEmpty()) {
                             for (FirebaseMessageModel fb : tempMessage) {
@@ -545,6 +551,12 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
                         progressBar.toggleDialog(false);
                         break;
                     case FirebaseHelper.CONDITION_2:
+                        long diff = container.getLong()-currentKnownMessageCount;
+                        currentKnownMessageCount = (int) Math.max(Math.min(Integer.MAX_VALUE, (diff+currentKnownMessageCount)), Integer.MIN_VALUE);
+                        if(diff > 0)
+                            firebaseHelper.getNewMessages(groupKey, diff);
+                        break;
+                    case FirebaseHelper.CONDITION_3:
                         Log.i(TAG, "No messages found");
                         break;
                 }
@@ -560,6 +572,7 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
                             if (messages.size() <= LOAD_AMOUNT) {
                                 updateListView(true);
                             } else {
+                                toggleGoBottomArrow();
                                 updateListView(false);
                             }
                             tempMsg = new ArrayList<>();
@@ -607,6 +620,25 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
                     case FirebaseHelper.CONDITION_1:
                         String wishMessage = "New admin is " + container.getString();
                         firebaseHelper.updateMessageNode(this, "group", groupKey, wishMessage, null, Constants.MESSAGE_TYPE_SYSTEM, null, groupModel.getTitle());
+                        break;
+                }
+                break;
+            case "getNewMessages":
+                switch (condition) {
+                    case FirebaseHelper.CONDITION_1:
+                        List<FirebaseMessageModel> tempMessage = container.getMessages();
+                        if (!tempMessage.isEmpty()) {
+                            for (FirebaseMessageModel fb : tempMessage) {
+                                if (!isContainedIn(fb))
+                                    messages.add(fb);
+                            }
+                            updateListView(true);
+                        }
+                        progressBar.toggleDialog(false);
+                        break;
+                    case FirebaseHelper.CONDITION_2:
+                        Log.i(TAG, "No new messages found");
+                        progressBar.toggleDialog(false);
                         break;
                 }
                 break;
