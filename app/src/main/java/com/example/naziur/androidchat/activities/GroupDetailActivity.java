@@ -80,7 +80,7 @@ public class GroupDetailActivity extends AuthenticatedActivity implements Fireba
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         db = new ContactDBHelper(this);
         membersListView = (ListView) findViewById(R.id.members_list_view);
-        membersAdapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, getEveryMember(false)){
+        membersAdapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, getEveryMember(true)){
             @Override
             public View getView(int position, View convertView, ViewGroup parent) {
                 TextView textView = (TextView) super.getView(position, convertView, parent);
@@ -170,8 +170,10 @@ public class GroupDetailActivity extends AuthenticatedActivity implements Fireba
             membersListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                 @Override
                 public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                    String username = (String) adapterView.getItemAtPosition(i);
-                    createDialog(username).show();
+                    if (!groupModel.getMembers().isEmpty()) {
+                        String [] membersIngroup = groupModel.getMembers().split(",");
+                        createDialog(membersIngroup[i]).show();
+                    }
                 }
             });
 
@@ -223,7 +225,7 @@ public class GroupDetailActivity extends AuthenticatedActivity implements Fireba
 
     private void updateGroupListAdapter() {
         membersAdapter.clear();
-        membersAdapter.addAll(getEveryMember(false));
+        membersAdapter.addAll(getEveryMember(true));
         membersAdapter.notifyDataSetChanged();
     }
 

@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.net.Uri;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.FloatingActionButton;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -21,7 +20,6 @@ import android.widget.Toast;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
 import com.example.naziur.androidchat.R;
-import com.example.naziur.androidchat.activities.ProfileActivity;
 import com.example.naziur.androidchat.adapter.AllGroupsAdapter;
 import com.example.naziur.androidchat.database.ContactDBHelper;
 import com.example.naziur.androidchat.database.FirebaseHelper;
@@ -32,15 +30,12 @@ import com.example.naziur.androidchat.utils.Container;
 import com.example.naziur.androidchat.utils.Network;
 import com.example.naziur.androidchat.utils.ProgressDialog;
 import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
-
-import org.json.JSONArray;
-import org.json.JSONException;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import de.hdodenhof.circleimageview.CircleImageView;
 
 
 public class ChatDetailActivity extends AuthenticatedActivity implements FirebaseHelper.FirebaseHelperListener{
@@ -215,7 +210,7 @@ public class ChatDetailActivity extends AuthenticatedActivity implements Firebas
         TextView usernameTv = (TextView) findViewById(R.id.username_tv);
         TextView profileTv = (TextView) findViewById(R.id.profile_tv);
         TextView statusTv = (TextView) findViewById(R.id.status_tv);
-        ImageView profilePicIv = (ImageView) findViewById(R.id.expandedImage);
+        CircleImageView profilePicIv = (CircleImageView) findViewById(R.id.expandedImage);
         LinearLayout spamButton = (LinearLayout) findViewById(R.id.spam_button);
         LinearLayout blockButton = (LinearLayout) findViewById(R.id.block_button);
         usernameTv.setText("Username: " + userBeingViewed.getUsername());
