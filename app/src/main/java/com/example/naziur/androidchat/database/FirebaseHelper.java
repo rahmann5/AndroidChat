@@ -1328,6 +1328,7 @@ public class FirebaseHelper {
     }
 
     public void removeFromGroup(final String groupKey, final String username){
+        System.out.println("Removing "+username + " fro group with id "+groupKey);
         DatabaseReference groupRef = database.getReference("groups").orderByChild("groupKey").equalTo(groupKey).getRef();
         groupRef.runTransaction(new Transaction.Handler() {
             @Override
@@ -1343,6 +1344,7 @@ public class FirebaseHelper {
                         for (String member : members) {
                             if (!member.equals(username)) {
                                 newMembers += (newMembers.equals("")) ? member : "," + member;
+                                System.out.println("Recreating new teams list: "+newMembers);
                             }
                         }
 

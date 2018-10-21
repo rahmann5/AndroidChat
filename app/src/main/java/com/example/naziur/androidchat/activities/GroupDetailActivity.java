@@ -80,7 +80,7 @@ public class GroupDetailActivity extends AuthenticatedActivity implements Fireba
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         db = new ContactDBHelper(this);
         membersListView = (ListView) findViewById(R.id.members_list_view);
-        membersAdapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, getEveryMember(true)){
+        membersAdapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, getEveryMember(false)){
             @Override
             public View getView(int position, View convertView, ViewGroup parent) {
                 TextView textView = (TextView) super.getView(position, convertView, parent);
@@ -223,7 +223,7 @@ public class GroupDetailActivity extends AuthenticatedActivity implements Fireba
 
     private void updateGroupListAdapter() {
         membersAdapter.clear();
-        membersAdapter.addAll(getEveryMember(true));
+        membersAdapter.addAll(getEveryMember(false));
         membersAdapter.notifyDataSetChanged();
     }
 
