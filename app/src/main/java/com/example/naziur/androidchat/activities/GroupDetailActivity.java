@@ -47,6 +47,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import de.hdodenhof.circleimageview.CircleImageView;
 import pl.aprilapps.easyphotopicker.DefaultCallback;
 import pl.aprilapps.easyphotopicker.EasyImage;
 
@@ -61,7 +62,7 @@ public class GroupDetailActivity extends AuthenticatedActivity implements Fireba
     private Toolbar toolbar;
     private ProgressDialog progressBar;
     private File myImageFile;
-    private ImageView groupIv;
+    private CircleImageView groupIv;
     private EditText titleEt;
     private User user = User.getInstance();
     private StorageReference mStorageRef;
@@ -122,7 +123,7 @@ public class GroupDetailActivity extends AuthenticatedActivity implements Fireba
         setUpActionBar (groupModel.getTitle());
         TextView adminTv = (TextView) findViewById(R.id.admin_tv);
         Button beAdmin = (Button) findViewById(R.id.be_admin);
-        groupIv = (ImageView) findViewById(R.id.expandedImage);
+        groupIv = (CircleImageView) findViewById(R.id.expandedImage);
         updateGroupListAdapter();
         TextView emptyTv = (TextView) findViewById(R.id.empty_view);
 
