@@ -227,6 +227,7 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
                 if (!isScrolling) {
                     if (currentVisibleItemCount > 0 && currentScrollState == SCROLL_STATE_IDLE) {
                         if (currentFirstVisibleItem == 0) {
+                            tempMsg = new ArrayList<>();
                             firebaseHelper.getNextNMessages("single", chatKey, messages.get(0).getId(), LOAD_AMOUNT);
                             isScrolling = true;
                         }
@@ -576,7 +577,8 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
         if (tag.equals("createMessageEventListener")) {
             switch (condition) {
                 case FirebaseHelper.CONDITION_1 : //WHEN UNREAD MESSAGES ARE FOUND
-                    if (!messages.isEmpty() && messages.size() < LOAD_AMOUNT) {
+                    if (!messages.isEmpty() && messages.size() < LOAD_AMOUNT) { // not enough unread messages so load older messages
+                        initialLoad = true;
                         tempMsg = new ArrayList<>();
                         firebaseHelper.getNextNMessages("single", chatKey, messages.get(0).getId(), LOAD_AMOUNT-messages.size());
                     } else {
@@ -711,6 +713,11 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
                             toggleGoBottomArrow();
                         }
                         tempMsg = new ArrayList<>();
+                    } else if (!messages.isEmpty() && messages.size() < LOAD_AMOUNT) {
+                        if (initialLoad) {
+                            initialLoad = false;
+                            updateListView(true);
+                        }
                     }
                     progressBar.toggleDialog(false);
                     isScrolling = false;
@@ -760,8 +767,11 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
                 case FirebaseHelper.CONDITION_1 :
                     FirebaseMessageModel firebaseMessageModel = container.getMsgModel();
                     if (friendValueEvent != null) {
-                        if (!isContainedIn(firebaseMessageModel))
+                        if (!isContainedIn(firebaseMessageModel)) {
+                            System.out.println("createMessageEventListener onChange");
                             messages.add(firebaseMessageModel);
+                        }
+
                     }
                     break;
             }
