@@ -20,9 +20,11 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethod;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AbsListView;
@@ -201,7 +203,7 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
                                 c.getMessageText(),
                                 Constants.ACTION_DOWNLOAD,
                                 android.R.drawable.ic_menu_upload);
-                        imageViewDialog.setCancelable(false);
+                        imageViewDialog.setCancelable(true);
                         imageViewDialog.show(getSupportFragmentManager(), "ImageViewDialogFragment");
                     }
                 } else if (c.getMessageType().equals(Constants.MESSAGE_TYPE_TEXT)) {
@@ -267,21 +269,25 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
         btnSend.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
-                hideSoftKeyBoard(ChatActivity.this);
-
-                final String wishMessage = textComment.getText().toString().trim();
-                if (!Network.isInternetAvailable(ChatActivity.this, false) || wishMessage.isEmpty()) {
-                    return;
-                } else {
-                    btnSend.setEnabled(false);
-                    // send text as wish
-                    progressBar.toggleDialog(true);
-                    firebaseHelper.checkKeyListKey("users", FirebaseHelper.CONDITION_3, FirebaseHelper.CONDITION_5 ,chatKey,  friend.getUsername());
-                }
+                sendButtonClick ();
             }
         });
 
+
+    }
+
+    private void sendButtonClick () {
+        hideSoftKeyBoard(ChatActivity.this);
+
+        final String wishMessage = textComment.getText().toString().trim();
+        if (!Network.isInternetAvailable(ChatActivity.this, false) || wishMessage.isEmpty()) {
+            return;
+        } else {
+            btnSend.setEnabled(false);
+            // send text as wish
+            progressBar.toggleDialog(true);
+            firebaseHelper.checkKeyListKey("users", FirebaseHelper.CONDITION_3, FirebaseHelper.CONDITION_5 ,chatKey,  friend.getUsername());
+        }
     }
 
     private void toggleGoBottomArrow() {
@@ -387,7 +393,7 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
                                 imageFiles.get(0),
                                 Constants.ACTION_SEND,
                                 android.R.drawable.ic_menu_send);
-                        imageViewDialog.setCancelable(false);
+                        imageViewDialog.setCancelable(true);
                         imageViewDialog.show(getSupportFragmentManager(), "ImageViewDialogFragment");
                         break;
                 }
@@ -630,8 +636,6 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
                             btnInvite.setVisibility(View.VISIBLE);
                             btnMedia.setEnabled(false);
                             btnSend.setVisibility(View.GONE);
-                        } else{
-                            progressBar.toggleDialog(false);
                         }
                     } else {
                         Log.i(TAG, "ME IS NULL");
@@ -721,6 +725,10 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
                     }
                     progressBar.toggleDialog(false);
                     isScrolling = false;
+                    break;
+
+                case FirebaseHelper.CONDITION_2 :
+                    progressBar.toggleDialog(false);
                     break;
             }
         }

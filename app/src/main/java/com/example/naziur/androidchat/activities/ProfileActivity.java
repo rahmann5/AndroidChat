@@ -142,7 +142,7 @@ public class ProfileActivity extends AuthenticatedActivity implements FirebaseHe
                             Constants.ACTION_SEND,
                             android.R.drawable.ic_menu_upload);
                 }
-                imageViewDialog.setCancelable(false);
+                imageViewDialog.setCancelable(true);
                 imageViewDialog.show(getSupportFragmentManager(), "ImageViewDialogFragment");
             }
         });

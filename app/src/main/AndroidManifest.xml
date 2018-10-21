@@ -48,7 +48,8 @@
         <activity
             android:name=".activities.ChatActivity"
             android:launchMode="singleTop"
-            android:configChanges="orientation|screenSize"/>
+            android:configChanges="orientation|screenSize"
+            android:windowSoftInputMode="stateHidden"/>
         <activity
             android:name=".activities.SessionActivity"
             android:label="@string/title_all_chats"
@@ -87,7 +88,8 @@
             android:theme="@style/AppTheme.Transparent"
             android:windowSoftInputMode="stateHidden"/>
         <activity android:name=".activities.GroupChatActivity"
-            android:configChanges="orientation|screenSize"/>
+            android:configChanges="orientation|screenSize"
+            android:windowSoftInputMode="stateHidden"/>
         <activity
             android:name=".activities.NotificationActivity"
             android:label="@string/title_notifications" />
