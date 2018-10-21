@@ -768,7 +768,6 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
                     FirebaseMessageModel firebaseMessageModel = container.getMsgModel();
                     if (friendValueEvent != null) {
                         if (!isContainedIn(firebaseMessageModel)) {
-                            System.out.println("createMessageEventListener onChange");
                             messages.add(firebaseMessageModel);
                         }
 
