@@ -59,6 +59,7 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
     private ContactDBHelper db;
     private ProgressDialog progressBar;
     private ProgressBar chatProgress;
+    private TextView textEmptyChat;
     private Map<String, ValueEventListener> grpValueEventListeners;
     private Map<String, ValueEventListener> grpMsgValueEventListeners;
     private SimpleDateFormat formatter;
@@ -82,6 +83,7 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
         allGroupKeys = new ArrayList<>();
         emptyChats = (LinearLayout) rootView.findViewById(R.id.no_chats);
         chatProgress = (ProgressBar) rootView.findViewById(R.id.chat_progress);
+        textEmptyChat = (TextView) rootView.findViewById(R.id.no_chats_text);
         recyclerView = rootView.findViewById(R.id.all_chats_list);
         formatter = new SimpleDateFormat(getString(R.string.simple_date));
         progressBar = new ProgressDialog(getActivity(), R.layout.progress_dialog, true);
@@ -251,11 +253,14 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
     private void toggleEmptyView(boolean sort, boolean showProgress){
         if (showProgress) {
             chatProgress.setVisibility(View.VISIBLE);
+            textEmptyChat.setText("");
         } else {
             chatProgress.setVisibility(View.GONE);
+            textEmptyChat.setText("No Chats Found");
         }
         if (myChatsdapter.getItemCount() == 0) {
             emptyChats.setVisibility(View.VISIBLE);
+            textEmptyChat.setText("No Chats Found");
         } else {
             if (sort) myChatsdapter.sortAllChatsByDate(false, formatter);
             emptyChats.setVisibility(View.GONE);

@@ -12,9 +12,11 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.ActionBar;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
@@ -154,16 +156,7 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
         btnSend.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (!Network.isInternetAvailable(GroupChatActivity.this, false) || textComment.getText().toString().trim().isEmpty()) {
-                    return;
-                } else {
-                    if (getMembersThatNeedToReceiveMessage().length > 0) {
-                        hideSoftKeyBoard(GroupChatActivity.this);
-                        btnSend.setEnabled(false);
-                        progressBar.toggleDialog(true);
-                        firebaseHelper.checkGroupsKeys("users", FirebaseHelper.CONDITION_1, FirebaseHelper.CONDITION_2, groupKey, getMembersThatNeedToReceiveMessage());
-                    }
-                }
+                sendButtonClick ();
             }
         });
 
@@ -228,6 +221,19 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
                 }
             }
         });
+    }
+
+    private void sendButtonClick () {
+        if (!Network.isInternetAvailable(GroupChatActivity.this, false) || textComment.getText().toString().trim().isEmpty()) {
+            return;
+        } else {
+            if (getMembersThatNeedToReceiveMessage().length > 0) {
+                hideSoftKeyBoard(GroupChatActivity.this);
+                btnSend.setEnabled(false);
+                progressBar.toggleDialog(true);
+                firebaseHelper.checkGroupsKeys("users", FirebaseHelper.CONDITION_1, FirebaseHelper.CONDITION_2, groupKey, getMembersThatNeedToReceiveMessage());
+            }
+        }
     }
 
     private void toggleGoBottomArrow(){
