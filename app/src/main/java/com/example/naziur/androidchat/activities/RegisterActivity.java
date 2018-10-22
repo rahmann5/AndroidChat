@@ -122,7 +122,7 @@ public class RegisterActivity extends AppCompatActivity implements FirebaseHelpe
                 switch (condition){
                     case FirebaseHelper.CONDITION_1:
                         if (user.login(container.getUserModel())) {
-                            //user.setUserAuthentication(this, mAuth.getCurrentUser().getEmail());
+                            user.setUserAuthentication(this, mAuth.getCurrentUser().getEmail());
                             Intent intent = new Intent(RegisterActivity.this, SessionActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                             startActivity(intent);
                             finish();
