@@ -28,20 +28,20 @@ public abstract class AuthenticatedActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mAuth = FirebaseAuth.getInstance();
-       // database= FirebaseHelper.setOnlineStatusListener(mAuth.getCurrentUser().getUid(), false);
+        database= FirebaseHelper.setOnlineStatusListener(mAuth.getCurrentUser().getUid(), false);
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        //if (controlOffline)
-         //database.child("online").setValue(false);
+        if (controlOffline)
+         database.child("online").setValue(false);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        //checkUserAuthenticated ();
+        checkUserAuthenticated ();
         controlOffline = true;
     }
 

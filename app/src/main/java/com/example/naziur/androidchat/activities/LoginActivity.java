@@ -95,8 +95,7 @@ public class LoginActivity extends AppCompatActivity implements FirebaseHelper.F
                     if (!Network.isInternetAvailable(LoginActivity.this, true)) return;
                     progressDialog.toggleDialog(true);
                     String email = editTextEmail.getText().toString().trim();
-                    firebaseHelper.autoLogin("users", currentDeviceId, user);
-                   /* mAuth.signInWithEmailAndPassword(email, currentDeviceId)
+                    mAuth.signInWithEmailAndPassword(email, currentDeviceId)
                             .addOnCompleteListener(LoginActivity.this, new OnCompleteListener<AuthResult>() {
                         @Override
                         public void onComplete(@NonNull Task<AuthResult> task) {
@@ -108,7 +107,7 @@ public class LoginActivity extends AppCompatActivity implements FirebaseHelper.F
                             }
 
                         }
-                    });*/
+                    });
                 } else {
                     Toast.makeText(LoginActivity.this, "Please enter your email address.", Toast.LENGTH_LONG).show();
                 }
