@@ -122,8 +122,8 @@ public class Network {
         } else {
             if(!loc.equals("profile"))
                 firebaseHelper.cleanDeleteAllMessages(loc, chatKeys);
-            else
-                firebaseHelper.deleteUserFromDatabase(chatKeys[0]);
+            //else
+                //firebaseHelper.deleteUserFromDatabase(chatKeys[0]);
         }
 
     }

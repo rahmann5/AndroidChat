@@ -7,6 +7,7 @@ import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.res.Configuration;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.ActionBar;
@@ -116,6 +117,7 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
         firebaseHelper.setFirebaseHelperListener(this);
 
         textComment.setUseSystemDefault(true);
+        textComment.setImeOptions(EditorInfo.IME_ACTION_DONE | EditorInfo.IME_FLAG_NO_EXTRACT_UI);
         emojIcon = new EmojIconActions(this, findViewById(R.id.root_view), textComment, btnEmoji);
         emojIcon.setIconsIds(hani.momanii.supernova_emoji_library.R.drawable.ic_action_keyboard, R.drawable.ic_emoji);
         emojIcon.setUseSystemEmoji(true);
@@ -337,6 +339,17 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
                         Activity.INPUT_METHOD_SERVICE);
         inputMethodManager.hideSoftInputFromWindow(
                 activity.getCurrentFocus().getWindowToken(), 0);
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+
+        // Checks the orientation of the screen
+        if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE || newConfig.orientation == Configuration.ORIENTATION_PORTRAIT) {
+            emojIcon.closeEmojIcon();
+            hideSoftKeyBoard(this);
+        }
     }
 
     private String[] getMembersThatNeedToReceiveMessage() {

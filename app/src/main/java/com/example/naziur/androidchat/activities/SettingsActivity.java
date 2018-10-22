@@ -337,7 +337,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
                 list.add(firebaseUserModel.getProfilePic());
                 Network.deleteUploadImages(firebaseHelper, list, new String[]{firebaseUserModel.getUsername()}, "profile");
             } else {
-                firebaseHelper.deleteUserFromDatabase(firebaseUserModel.getUsername());
+                //firebaseHelper.deleteUserFromDatabase(firebaseUserModel.getUsername());
             }
         }
 
