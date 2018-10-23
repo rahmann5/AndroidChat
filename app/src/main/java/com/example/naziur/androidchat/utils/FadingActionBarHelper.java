@@ -3,7 +3,7 @@ package com.example.naziur.androidchat.utils;
 import android.app.Activity;
 import android.graphics.drawable.Drawable;
 import android.support.v7.app.ActionBar;
-import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.AppCompatActivity;
 
 /**
  * Created by Hamidur on 03/09/2018.
@@ -21,8 +21,8 @@ public class FadingActionBarHelper extends FadingActionBarHelperBase {
     }
 
     private ActionBar getActionBar(Activity activity) {
-        if (activity instanceof ActionBarActivity) {
-            return ((ActionBarActivity) activity).getSupportActionBar();
+        if (activity instanceof AppCompatActivity) {
+            return ((AppCompatActivity) activity).getSupportActionBar();
         }
         ActionBar actionBar = getActionBarWithReflection(activity, "getSupportActionBar");
         if (actionBar == null) {

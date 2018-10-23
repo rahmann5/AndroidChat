@@ -244,7 +244,16 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 
             return builder.create();
         }
-
+        /*
+        * Legend: (D) = delete, (R) = remove, (SC) = single chat, (GC) = group chat
+        * S1: (R) from groups -> (D) groups -> Collect (GC) message images -> (D) (GC) message images + group pic ->
+        * (D) all (GC) messages -> find all chats to leave -> Collect (SC) message images -> (D) (SC) message images ->
+        * (D) all (SC) messages -> (D) profile pic -> (D) user object -> (D) auth account
+        *
+        * S2: (R) from groups -> (D) groups -> (D) group pic -> D) all (GC) messages ->
+        * find all chats to leave -> Collect (SC) message images -> (D) (SC) message images ->
+        * (D) all (SC) messages -> (D) profile pic -> (D) user object -> (D) auth account
+        * */
         @Override
         public void onCompleteTask(String tag, int condition, Container container) {
             if(tag.equals("getValueEventListener")){ //STEP 1
