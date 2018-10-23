@@ -219,7 +219,7 @@ public class GroupDetailActivity extends AuthenticatedActivity implements Fireba
 
         }
         if(pic.equals(groupModel.getPic()))
-            Glide.with(GroupDetailActivity.this).load(pic).apply(new RequestOptions().placeholder(R.drawable.placeholder).error(R.drawable.ic_group_unknown)).into(groupIv);
+            Glide.with(getApplicationContext()).load(pic).apply(new RequestOptions().placeholder(R.drawable.placeholder).error(R.drawable.ic_group_unknown)).into(groupIv);
 
         progressBar.toggleDialog(false);
     }
@@ -471,6 +471,14 @@ public class GroupDetailActivity extends AuthenticatedActivity implements Fireba
                         groupModel = container.getGroupModel();
                         populateWithGroupData();
                         break;
+
+                    case FirebaseHelper.CONDITION_2:
+                        if (groupModel == null) {
+                            Toast.makeText(this, "this group does not exist", Toast.LENGTH_SHORT).show();
+                            progressBar.toggleDialog(false);
+                            finish();
+                        }
+                        break;
                 }
                 break;
             case "updateGroupInfo":
@@ -533,6 +541,7 @@ public class GroupDetailActivity extends AuthenticatedActivity implements Fireba
                         break;
 
                     case FirebaseHelper.CONDITION_2 :
+                        progressBar.toggleDialog(false);
                         Toast.makeText(this, "Sorry the users selected does not exist", Toast.LENGTH_SHORT).show();
                         break;
                 }
