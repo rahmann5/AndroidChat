@@ -14,7 +14,6 @@ import android.preference.PreferenceManager;
 import android.os.Bundle;
 import android.support.v7.app.AlertDialog;
 import android.util.Log;
-import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
 
@@ -22,7 +21,6 @@ import com.example.naziur.androidchat.R;
 import com.example.naziur.androidchat.database.FirebaseHelper;
 import com.example.naziur.androidchat.models.FirebaseGroupModel;
 import com.example.naziur.androidchat.models.FirebaseUserModel;
-import com.example.naziur.androidchat.database.FirebaseHelper;
 import com.example.naziur.androidchat.models.User;
 import com.example.naziur.androidchat.utils.Container;
 import com.example.naziur.androidchat.utils.Network;
@@ -30,14 +28,8 @@ import com.example.naziur.androidchat.utils.ProgressDialog;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseError;
-import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
 
-import java.sql.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -179,6 +171,8 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
         User user = User.getInstance();
         private static final String TAG = "AccountPreference";
         private ProgressDialog progressDialog;
+        private List<String> tempKeys = new ArrayList<>();
+        private List<String> singleChatKeys;
         @Override
         public void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
@@ -246,25 +240,30 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
         }
         /*
         * Legend: (D) = delete, (R) = remove, (SC) = single chat, (GC) = group chat
-        * S1: (R) from groups -> (D) groups -> Collect (GC) message images -> (D) (GC) message images + group pic ->
-        * (D) all (GC) messages -> find all chats to leave -> Collect (SC) message images -> (D) (SC) message images ->
-        * (D) all (SC) messages -> (D) profile pic -> (D) user object -> (D) auth account
         *
-        * S2: (R) from groups -> (D) groups -> (D) group pic -> D) all (GC) messages ->
+        * Group Chat steps -> if step 2 doesn't occur all subsequent steps are aborted
+        * (R) from groups -> (D) groups -> Collect (GC) message images -> (D) (GC) message images + group pic ->
+        * (D) all (GC) messages
+        *
+        * Single Chat steps
         * find all chats to leave -> Collect (SC) message images -> (D) (SC) message images ->
-        * (D) all (SC) messages -> (D) profile pic -> (D) user object -> (D) auth account
+        * (D) all (SC) messages
+        *
+        * General
+        * (D) profile pic -> (D) user object -> (D) auth account
+        *
         * */
         @Override
         public void onCompleteTask(String tag, int condition, Container container) {
-            if(tag.equals("getValueEventListener")){ //STEP 1
+            if(tag.equals("getValueEventListener")){
                 if(condition == FirebaseHelper.CONDITION_1){
                     Toast.makeText(getActivity(), "User doesn't exist", Toast.LENGTH_SHORT).show();
                 } else if (condition == FirebaseHelper.CONDITION_2){
                     firebaseUserModel = (FirebaseUserModel) container.getObject();
-                    if(!firebaseUserModel.getGroupKeys().isEmpty()) { //Start at step 2
+                    if(!firebaseUserModel.getGroupKeys().isEmpty()) {
                         progressDialog.setInfo("Exiting from associated groups");
                         firebaseHelper.exitGroup(null, firebaseUserModel.getUsername(), false, Arrays.asList(firebaseUserModel.getGroupKeys().split(",")));
-                    }else if(!firebaseUserModel.getChatKeys().isEmpty()){ //Start at step 6
+                    }else if(!firebaseUserModel.getChatKeys().isEmpty()){
                         progressDialog.setInfo("Exiting from associated one-to-one chats");
                         firebaseHelper.accumulateAllChatsForDeletion(getAllUsersInChatWith(firebaseUserModel.getChatKeys().split(",")), user.name);
                     } else {
@@ -272,55 +271,60 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
                         checkIfProfileHasPicToDelete();
                     }
                 }
-            } else if (tag.equals("exitGroup")){ //STEP 2
+            } else if (tag.equals("exitGroup")){
                 if(condition == FirebaseHelper.CONDITION_1){
                     progressDialog.setInfo("Deleting any redundant groups");
                     firebaseUserModel.setGroupKeys("");
+                    Log.i(TAG, "Found " +container.getGroups().size() + " that need deleting");
                     firebaseHelper.deleteGroups(container.getGroups());
                 } else if(condition == FirebaseHelper.CONDITION_2) {
                     toggleProgressDialog(false);
                     Toast.makeText(getActivity(), "Failed to exit groups please try again", Toast.LENGTH_SHORT).show();
                 }
-            } else if (tag.equals("deleteGroups")){ //STEP 3
+            } else if (tag.equals("deleteGroups")){
                 if(condition == FirebaseHelper.CONDITION_1){
                     progressDialog.setInfo("Collecting any related images from groups for deletion");
-                    firebaseHelper.collectAllImagesForDeletionThenDeleteAllRelatedMessages("group", Arrays.asList(getChatKeysFor(container.getGroups())), picUrlsFor(container.getGroups()));
+                    List<String> test = Arrays.asList(getChatKeysFor(container.getGroups()));
+                    List<String> test2 = new ArrayList<>();
+                    for(String s : test){
+                        test2.add(s);
+                    };
+                    firebaseHelper.collectImagesForDeletion("group", test2, picUrlsFor(container.getGroups()));
                 } else if(condition == FirebaseHelper.CONDITION_2) {
                     progressDialog.setInfo("Deleting any associated one-to-one chats");
+                    Log.i(TAG, "No groups to delete deleting chats with keys: " + firebaseUserModel.getChatKeys());
                     firebaseHelper.accumulateAllChatsForDeletion(getAllUsersInChatWith(firebaseUserModel.getChatKeys().split(",")), user.name);
                 }
-            } else if(tag.equals("collectAllImagesForDeletionThenDeleteAllRelatedMessages")){ //STEP 4
-                String[] stockArr = new String[container.getContainer().getStringList().size()];
-                stockArr = container.getContainer().getStringList().toArray(stockArr);
-                if(condition == FirebaseHelper.CONDITION_1) {
-                    progressDialog.setInfo("Deleting all collected images");
-                    Network.deleteUploadImages(firebaseHelper, container.getStringList(), stockArr, container.getString());
-                }else if(condition == FirebaseHelper.CONDITION_2) { //GO TO STEP 5
-                    progressDialog.setInfo("Deleting all messages");
-                    firebaseHelper.cleanDeleteAllMessages(container.getString(), stockArr);
-                }
-            } else if (tag.equals("cleanDeleteAllMessages")){ //STEP 5
+            } else if (tag.equals("cleanDeleteAllMessages")){
                 if(condition == FirebaseHelper.CONDITION_1){
-                    if(!firebaseUserModel.getChatKeys().isEmpty()){
-                        progressDialog.setInfo("Deleting any associated one-to-one chats");
-                        firebaseHelper.accumulateAllChatsForDeletion(getAllUsersInChatWith(firebaseUserModel.getChatKeys().split(",")), user.name);
-                    } else {
-                        checkIfProfileHasPicToDelete();
+                    if(container.getBoolean()) {
+                        Log.i(TAG, "current chat keys are " + firebaseUserModel.getChatKeys() + " after deletion of messages");
+                        if (!firebaseUserModel.getChatKeys().isEmpty()) {
+                            progressDialog.setInfo("Deleting any associated one-to-one chats");
+                            firebaseHelper.accumulateAllChatsForDeletion(getAllUsersInChatWith(firebaseUserModel.getChatKeys().split(",")), user.name);
+                        } else {
+                            checkIfProfileHasPicToDelete();
+                        }
                     }
                 }else if(condition == FirebaseHelper.CONDITION_2) {
                     toggleProgressDialog(false);
                     Toast.makeText(getActivity(), "Failed to deleted all images and messages, please try again.", Toast.LENGTH_SHORT).show();
                 }
-            } else if (tag.equals("accumulateAllChatsForDeletion")){//STEP 6
+            } else if (tag.equals("accumulateAllChatsForDeletion")){
                 if(condition == FirebaseHelper.CONDITION_1) {
-                    List<String> list = getAllChatsWithUsers(container.getStringList());
-                    firebaseUserModel.setChatKeys("");
-                    firebaseHelper.collectAllImagesForDeletionThenDeleteAllRelatedMessages("single", list, null);
+                    singleChatKeys = getAllChatsWithUsers(container.getStringList());
+                    Log.i(TAG, "About to collectImagesForDeletion");
+                    firebaseHelper.collectImagesForDeletion("single", singleChatKeys, new ArrayList<String>());
                 }else if(condition == FirebaseHelper.CONDITION_2){
                     progressDialog.setInfo("Proceeding to delete user account");
                     checkIfProfileHasPicToDelete();
                 }
-            } else if(tag.equals("deleteUserFromDatabase")){
+            } else if(tag.equals("collectImagesForDeletion")){
+                if(condition == FirebaseHelper.CONDITION_1) {
+                    Log.i(TAG, "found "+container.getStringList()+" uris and "+tempKeys.size() +" keys, now deleting images");
+                    Network.deleteUploadImages(firebaseHelper, container.getStringList(), getArrayForList(tempKeys), container.getString());
+                }
+            }else if(tag.equals("deleteUserFromDatabase")){
                 progressDialog.setInfo("User account deleted");
                 toggleProgressDialog(false);
                 if(condition == FirebaseHelper.CONDITION_1) {
@@ -339,14 +343,20 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
             progressDialog.toggleInfoDisplay(show);
         }
 
+        private String[] getArrayForList(List<String> list){
+            String[] stockArr = new String[list.size()];
+            stockArr = list.toArray(stockArr);
+            return stockArr;
+        }
+
         private void checkIfProfileHasPicToDelete(){
             toggleProgressDialog(false);
             if(!firebaseUserModel.getProfilePic().isEmpty()) {
                 List<String> list = new ArrayList<String>();
                 list.add(firebaseUserModel.getProfilePic());
-                Network.deleteUploadImages(firebaseHelper, list, new String[]{firebaseUserModel.getUsername()}, "profile");
+               Network.deleteUploadImages(firebaseHelper, list, new String[]{firebaseUserModel.getUsername()}, "profile");
             } else {
-                //firebaseHelper.deleteUserFromDatabase(firebaseUserModel.getUsername());
+                firebaseHelper.deleteUserFromDatabase(firebaseUserModel.getUsername());
             }
         }
 
@@ -364,6 +374,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
                     picUrls.add(fbg.getPic());
                 }
             }
+            Log.i(TAG, "Getting "+picUrls.size()+" group profile images");
             return picUrls;
         }
 
@@ -373,30 +384,30 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
                 String p1 = key.split("-")[0];
                 String p2 = key.split("-")[1];
                 if(!user.name.equals(p1)) {
-                    System.out.println("Adding name: "+p1);
                     users.add(p1);
                 } else if(!user.name.equals(p2)) {
-                    System.out.println("Adding name: "+p2);
                     users.add(p2);
                 }
+                Log.i(TAG, "Adding user: " +users.get(users.size()-1));
             }
             return users;
         }
 
         private List<String> getAllChatsWithUsers(List<String> users){
             String [] chatKeys = firebaseUserModel.getChatKeys().split(",");
+            Log.i(TAG, "now matching users to keys: " + firebaseUserModel.getChatKeys());
             List<String> keys = new ArrayList<>();
             for(String key: chatKeys){
                 String p1 = key.split("-")[0];
                 String p2 = key.split("-")[1];
                 if(users.contains(p1)){
-                    System.out.println("Adding key: "+key);
                     keys.add(key);
                 } else if(users.contains(p2)){
-                    System.out.println("Adding key: "+key);
                     keys.add(key);
                 }
+                Log.i(TAG, "Adding key: " +keys.get(keys.size()-1));
             }
+            firebaseUserModel.setChatKeys("");
             return keys;
         }
 
@@ -409,7 +420,12 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 
         @Override
         public void onChange(String tag, int condition, Container container) {
-
+            if(tag.equals("collectImagesForDeletion")){
+                if(condition == FirebaseHelper.CONDITION_1){
+                    tempKeys.add(container.getString());
+                    firebaseHelper.collectImagesForDeletion(container.getContainer().getString(), container.getContainer().getStringList(), container.getStringList());
+                }
+            }
         }
     }
 
