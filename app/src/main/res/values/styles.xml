@@ -1,4 +1,4 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
 
     <style name="AppTheme.Launcher" parent="AppTheme.NoActionBar">
         <item name="android:windowBackground">@drawable/splash_screen</item>
@@ -25,5 +25,23 @@
     <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
 
     <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
+
+    <style name="AppTheme.Main">
+        <item name="android:windowExitTransition" tools:targetApi="lollipop">@transition/main_exit</item>
+        <item name="android:windowReenterTransition" tools:targetApi="lollipop">@transition/main_reenter</item>
+    </style>
+
+    <style name="AppTheme.Contacts">
+        <item name="android:windowExitTransition" tools:targetApi="lollipop">@transition/contacts_exit</item>
+        <item name="android:windowReenterTransition" tools:targetApi="lollipop">@transition/main_reenter</item>
+    </style>
+
+    <style name="AppTheme.Detail">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+        <item name="android:windowTranslucentStatus" tools:targetApi="kitkat">true</item>
+        <item name="android:windowAllowEnterTransitionOverlap" tools:targetApi="lollipop">true</item>
+        <item name="android:windowEnterTransition" tools:targetApi="lollipop">@transition/detail_enter</item>
+    </style>
 
 </resources>

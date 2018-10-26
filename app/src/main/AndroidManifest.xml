@@ -50,6 +50,7 @@
         <activity
             android:name=".activities.ChatActivity"
             android:launchMode="singleTop"
+            android:theme="@style/AppTheme.Main"
             android:configChanges="orientation|screenSize"
             android:windowSoftInputMode="stateUnchanged|adjustResize"/>
         <activity
@@ -60,6 +61,7 @@
             android:theme="@style/AppTheme.NoActionBar" />
         <activity
             android:name=".activities.MyContactsActivity"
+            android:theme="@style/AppTheme.Contacts"
             android:label="@string/title_contacts" />
         <activity
             android:name=".activities.ProfileActivity"
@@ -67,7 +69,7 @@
             android:windowSoftInputMode="stateHidden"/>
         <activity
             android:name=".activities.ChatDetailActivity"
-            android:theme="@style/AppTheme.NoActionBar" />
+            android:theme="@style/AppTheme.Detail" />
         <activity
             android:name=".activities.LoginActivity"
             android:label="@string/title_login"
@@ -92,13 +94,14 @@
             android:windowSoftInputMode="stateHidden"/>
         <activity android:name=".activities.GroupChatActivity"
             android:configChanges="orientation|screenSize"
-            android:windowSoftInputMode="stateHidden"/>
+            android:windowSoftInputMode="stateHidden"
+            android:theme="@style/AppTheme.Main"/>
         <activity
             android:name=".activities.NotificationActivity"
             android:label="@string/title_notifications" />
         <activity
             android:name=".activities.GroupDetailActivity"
-            android:theme="@style/AppTheme.NoActionBar"
+            android:theme="@style/AppTheme.Detail"
             android:windowSoftInputMode="stateHidden"/>
         <activity
             android:name=".activities.SettingsActivity"

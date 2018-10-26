@@ -785,52 +785,56 @@ public class FirebaseHelper {
         });
     }
 
-    public void collectAllImagesForDeletionThenDeleteAllRelatedMessages(final String node, final List<String> keys, final List<String> picUrls){
-        final DatabaseReference reference = database.getReference("messages");
-        Query pendingQuery = reference.child(node).orderByKey().startAt(keys.get(0)).endAt(keys.get(keys.size()-1));
-
-        pendingQuery.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                final List<String> imageUri = new ArrayList<>();
-                for (DataSnapshot data : dataSnapshot.getChildren()) {
-                    for(DataSnapshot snapshot : data.getChildren()) {
-                        FirebaseMessageModel model = snapshot.getValue(FirebaseMessageModel.class);
-                        if(model.getMediaType().equals(Constants.MESSAGE_TYPE_PIC))
-                            imageUri.add(model.getText());
+    public void collectImagesForDeletion(final String node, final List<String> keys, final List<String> imageUri){
+        if(!keys.isEmpty()){
+            final String key = keys.remove(0);
+            final DatabaseReference reference = database.getReference("messages");
+           reference.child(node).child(key).orderByChild("mediaType").addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    if(dataSnapshot.exists()) {
+                        for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                            FirebaseMessageModel model = snapshot.getValue(FirebaseMessageModel.class);
+                            if (model.getMediaType().equals(Constants.MESSAGE_TYPE_PIC)) {
+                               imageUri.add(model.getText());
+                            }
+                        }
+                    } else {
+                        System.out.println("No images for key: " + key);
                     }
-                }
-                if(picUrls != null) {
-                    for (String url : picUrls) {
-                        imageUri.add(url);
-                    }
-                }
-                Container c = new Container();
-                Container innerContainer = new Container();
-                innerContainer.setStringList(keys);
-                c.setStringList(imageUri);
-                c.setContainer(innerContainer);
-                c.setString(node);
-                listener.onCompleteTask("collectAllImagesForDeletionThenDeleteAllRelatedMessages", CONDITION_1, c);
-            }
 
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-                Container container = new Container();
-                container.setStringList(keys);
-                container.setString(databaseError.getMessage());
-                listener.onCompleteTask("collectAllImagesForDeletionThenDeleteAlleRelatedMessages", CONDITION_2, container);
-            }
-        });
+                    Container container = new Container();
+                    Container innerContainer = new Container();
+                    innerContainer.setStringList(keys);
+                    innerContainer.setString(node);
+                    container.setString(key);
+                    container.setStringList(imageUri);
+                    container.setContainer(innerContainer);
+                    listener.onChange("collectImagesForDeletion", CONDITION_1, container);
+                }
+
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
+                    listener.onFailureTask("collectImagesForDeletion on key"+ key, databaseError);
+                }
+            });
+        }else {
+            Container container = new Container();
+            container.setStringList(imageUri);
+            container.setString(node);
+            listener.onCompleteTask("collectImagesForDeletion", CONDITION_1, container);
+        }
     }
 
-    public void cleanDeleteAllMessages(String node, String[] keys){
-        for(String key: keys){
+    public void cleanDeleteAllMessages(String node, final String[] keys){
+        for(final String key: keys){
             DatabaseReference reference = database.getReference("messages").child(node).child(key);
             reference.setValue(null).addOnSuccessListener(new OnSuccessListener<Void>() {
                 @Override
                 public void onSuccess(Void aVoid) {
-                listener.onCompleteTask("cleanDeleteAllMessages", CONDITION_1, null);
+                    Container container = new Container();
+                    container.setBoolean(key.equals(keys[keys.length-1]));
+                listener.onCompleteTask("cleanDeleteAllMessages", CONDITION_1, container);
                 }
             }).addOnFailureListener(new OnFailureListener() {
                 @Override

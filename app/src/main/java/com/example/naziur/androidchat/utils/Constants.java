@@ -1,6 +1,11 @@
 package com.example.naziur.androidchat.utils;
 
+import android.app.Activity;
+import android.app.ActivityOptions;
 import android.content.Context;
+import android.content.Intent;
+import android.view.View;
+import android.widget.ImageView;
 
 import com.example.naziur.androidchat.R;
 
@@ -34,5 +39,14 @@ public class Constants {
 
             default: return Constants.MESSAGE_TYPE_TEXT;
         }
+    }
+
+    public static void animateTransition(Activity c, Intent intent, View viewToAnimate, String targetName){
+        ActivityOptions options = null;
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+            options = ActivityOptions.makeSceneTransitionAnimation(c, viewToAnimate, targetName);
+            c.startActivity(intent, options.toBundle());
+        } else
+            c.startActivity(intent);
     }
 }

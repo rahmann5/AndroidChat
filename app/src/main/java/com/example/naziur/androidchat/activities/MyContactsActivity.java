@@ -2,12 +2,9 @@ package com.example.naziur.androidchat.activities;
 
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.database.Cursor;
-import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.DialogFragment;
 import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
@@ -16,14 +13,12 @@ import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.LinearLayout;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.naziur.androidchat.database.ContactDBHelper;
 import com.example.naziur.androidchat.R;
 import com.example.naziur.androidchat.adapter.MyContactsAdapter;
 import com.example.naziur.androidchat.database.FirebaseHelper;
-import com.example.naziur.androidchat.database.MyContactsContract;
 import com.example.naziur.androidchat.models.Contact;
 
 import com.example.naziur.androidchat.fragment.AddContactDialogFragment;
@@ -33,25 +28,12 @@ import com.example.naziur.androidchat.utils.Constants;
 import com.example.naziur.androidchat.utils.Container;
 import com.example.naziur.androidchat.utils.Network;
 import com.example.naziur.androidchat.utils.ProgressDialog;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.MutableData;
-import com.google.firebase.database.Query;
-import com.google.firebase.database.Transaction;
 import com.google.firebase.database.ValueEventListener;
-import com.google.firebase.iid.FirebaseInstanceId;
 import com.loopj.android.http.RequestParams;
 import com.loopj.android.http.TextHttpResponseHandler;
 
 import org.json.JSONObject;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import cz.msebera.android.httpclient.Header;
 import cz.msebera.android.httpclient.entity.StringEntity;
@@ -118,19 +100,19 @@ public class MyContactsActivity extends AuthenticatedActivity implements AddCont
         return new MyContactsAdapter.OnItemClickListener() {
             @Override
             public void onItemClick(Contact contact, int position, View itemView) {
-                createDialog(contact, position).show();
+                createDialog(contact, position, itemView).show();
             }
         };
 
     }
 
-    private AlertDialog createDialog (final Contact contact, final int position) {
+    private AlertDialog createDialog (final Contact contact, final int position, final View v) {
         final AlertDialog.Builder builder = new AlertDialog.Builder(MyContactsActivity.this);
         builder.setTitle(R.string.dialog_friend_select_action)
                 .setItems(R.array.contact_dialog_actions, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
                        // String[] actions = getResources().getStringArray(R.array.contact_dialog_actions);
-                        onActionSelected(which, contact, position);
+                        onActionSelected(which, contact, position, v);
                         dialog.dismiss();
                     }
                 });
@@ -175,13 +157,13 @@ public class MyContactsActivity extends AuthenticatedActivity implements AddCont
         dialog.dismiss();
     }
 
-    private void onActionSelected (int pos, Contact c, int itemLoc) {
+    private void onActionSelected (int pos, Contact c, int itemLoc, View v) {
         switch (pos) {
             case 0 : // see profile info
                 Intent chatDetailActivity = new Intent(this, ChatDetailActivity.class);
                 chatDetailActivity.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                 chatDetailActivity.putExtra("username", c.getContact().getUsername());
-                startActivity(chatDetailActivity);
+                Constants.animateTransition(this, chatDetailActivity, v.findViewById(R.id.prof_pic), getResources().getString(R.string.picture_transition_name));
                 break;
 
             case 1 : // chat with contact

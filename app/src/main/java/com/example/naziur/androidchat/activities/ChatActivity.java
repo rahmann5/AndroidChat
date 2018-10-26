@@ -411,7 +411,8 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
             case R.id.view_details :
                 Intent chatDetailActivity = new Intent(this, ChatDetailActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                 chatDetailActivity.putExtra("username", friend.getUsername());
-                startActivity(chatDetailActivity);
+                Constants.animateTransition(this, chatDetailActivity,actionBar.getCustomView().findViewById(R.id.profile_icon), getResources().getString(R.string.picture_transition_name));
+
                 return true;
 
             default: return super.onOptionsItemSelected(item);

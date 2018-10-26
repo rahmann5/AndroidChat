@@ -29,6 +29,7 @@ import com.bumptech.glide.request.RequestOptions;
 import com.example.naziur.androidchat.R;
 import com.example.naziur.androidchat.database.ContactDBHelper;
 import com.example.naziur.androidchat.database.FirebaseHelper;
+import com.example.naziur.androidchat.fragment.ImageViewDialogFragment;
 import com.example.naziur.androidchat.models.FirebaseGroupModel;
 import com.example.naziur.androidchat.models.User;
 import com.example.naziur.androidchat.utils.Constants;
@@ -51,7 +52,7 @@ import de.hdodenhof.circleimageview.CircleImageView;
 import pl.aprilapps.easyphotopicker.DefaultCallback;
 import pl.aprilapps.easyphotopicker.EasyImage;
 
-public class GroupDetailActivity extends AuthenticatedActivity implements FirebaseHelper.FirebaseHelperListener{
+public class GroupDetailActivity extends AuthenticatedActivity implements FirebaseHelper.FirebaseHelperListener, ImageViewDialogFragment.ImageViewDialogListener{
     private static final String TAG = GroupDetailActivity.class.getSimpleName();
     private static final int REQUEST_CODE_GALLERY_CAMERA = 0;
     public static final int MEMBER_REQUEST_CODE = 1;
@@ -70,6 +71,7 @@ public class GroupDetailActivity extends AuthenticatedActivity implements Fireba
     private ArrayAdapter membersAdapter;
     private ListView membersListView;
     private ContactDBHelper db;
+    private ImageViewDialogFragment imageViewDialog;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -195,9 +197,7 @@ public class GroupDetailActivity extends AuthenticatedActivity implements Fireba
                 }
             });
 
-            FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
             FloatingActionButton fabDelete = (FloatingActionButton) findViewById(R.id.fab_delete);
-            fab.setVisibility(View.VISIBLE);
             fabDelete.setVisibility(View.VISIBLE);
             fabDelete.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -209,11 +209,23 @@ public class GroupDetailActivity extends AuthenticatedActivity implements Fireba
                             .into(groupIv);
                 }
             });
-            fab.setOnClickListener(new View.OnClickListener() {
+            groupIv.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    controlOffline = false;
-                    EasyImage.openChooserWithGallery(GroupDetailActivity.this, getResources().getString(R.string.group_gallery_chooser), REQUEST_CODE_GALLERY_CAMERA);
+
+                    if (myImageFile != null) {
+                        imageViewDialog = ImageViewDialogFragment.newInstance(
+                                myImageFile,
+                                Constants.ACTION_SEND,
+                                android.R.drawable.ic_menu_upload);
+                    } else {
+                        imageViewDialog = ImageViewDialogFragment.newInstance(
+                                (pic != NO_IMAGE_CODE) ? groupModel.getPic() : "",
+                                Constants.ACTION_SEND,
+                                android.R.drawable.ic_menu_upload);
+                    }
+                    imageViewDialog.setCancelable(true);
+                    imageViewDialog.show(getSupportFragmentManager(), "ImageViewDialogFragment");
                 }
             });
 
@@ -559,5 +571,12 @@ public class GroupDetailActivity extends AuthenticatedActivity implements Fireba
     @Override
     public void onChange(String tag, int condition, Container container) {
 
+    }
+
+    @Override
+    public void onActionPressed() {
+        controlOffline = false;
+        imageViewDialog.getDialog().dismiss();
+        EasyImage.openChooserWithGallery(GroupDetailActivity.this, getResources().getString(R.string.group_gallery_chooser), REQUEST_CODE_GALLERY_CAMERA);
     }
 }

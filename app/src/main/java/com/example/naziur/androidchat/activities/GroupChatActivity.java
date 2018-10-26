@@ -1,6 +1,7 @@
 package com.example.naziur.androidchat.activities;
 
 import android.app.Activity;
+import android.app.ActivityOptions;
 import android.content.BroadcastReceiver;
 import android.content.ClipData;
 import android.content.ClipboardManager;
@@ -325,7 +326,7 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
                 Intent intent = new Intent(GroupChatActivity.this, GroupDetailActivity.class);
                 intent.putExtra("g_uid", groupKey);
                 intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                startActivity(intent);
+                Constants.animateTransition(this, intent,actionBar.getCustomView().findViewById(R.id.profile_icon), getResources().getString(R.string.picture_transition_name));
                 break;
             case R.id.admin:
                 firebaseHelper.updateGroupMembers(user.name, null, groupKey, true);
