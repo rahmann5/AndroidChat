@@ -1,17 +1,12 @@
 package com.example.naziur.androidchat.activities;
 
 import android.app.Activity;
-import android.app.Dialog;
-import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.pm.PackageManager;
-import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.NonNull;
@@ -436,7 +431,8 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
             case R.id.view_details :
                 Intent chatDetailActivity = new Intent(this, ChatDetailActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                 chatDetailActivity.putExtra("username", friend.getUsername());
-                startActivity(chatDetailActivity);
+                Constants.animateTransition(this, chatDetailActivity,actionBar.getCustomView().findViewById(R.id.profile_icon), getResources().getString(R.string.picture_transition_name));
+
                 return true;
 
             default: return super.onOptionsItemSelected(item);

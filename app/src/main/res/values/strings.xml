@@ -4,6 +4,7 @@
 
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="picture_transition_name">pic_transition</string>
 
     <!-- Profile Info -->
     <string name="status_available">Available</string>
@@ -122,7 +123,7 @@
     <string name="pref_desc_block_list">Manage all block listed users.</string>
     <string name="pref_title_block_list">Block List</string>
     <string name="key_delete_acc">delete_acc</string>
-    <string name="pref_desc_delete_acc">Warning: this action cannot be undone.</string>
+    <string name="pref_desc_delete_acc">Warning: this action cannot be undone. Please do not exit the app during this process</string>
     <string name="pref_title_delete_acc">Delete Account</string>
     <string name="key_logout">logout</string>
     <string name="pref_desc_logout">Logout of the current session.</string>
