@@ -8,8 +8,7 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.ImageView;
+import android.widget.ImageButton;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
@@ -66,11 +65,6 @@ public class AllChatsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         return allMyChats;
     }
 
-    public void setAllMyChats(List<Chat> allMyChats){
-        this.allMyChats = allMyChats;
-        notifyDataSetChanged();
-    }
-
     public void addOrRemoveChat(Chat chat, boolean add) {
         for (int i = 0; i < allMyChats.size(); i++) {
             if (allMyChats.get(i).getChatKey().equals(chat.getChatKey()))
@@ -125,13 +119,11 @@ public class AllChatsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     public interface OnItemClickListener {
         void onItemClick (Chat chat, int pos);
         void onItemLongClicked(Chat chat, int pos);
-        void onButtonClicked(Chat chat, int pos);
     }
 
     private static class MyChatsViewHolder extends RecyclerView.ViewHolder {
-        private TextView dateTimeTv, profileTv, lastMsgTv, grpSender;
+        private TextView dateTimeTv, profileTv, lastMsgTv, grpSender, unreadCounterTv;
         private CircleImageView profPicIv;
-        private Button addContactBtn;
 
         public MyChatsViewHolder(View itemView) {
             super(itemView);
@@ -140,36 +132,21 @@ public class AllChatsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
             grpSender = (TextView) itemView.findViewById(R.id.grp_sender_name);
             profPicIv = (CircleImageView) itemView.findViewById(R.id.prof_pic);
             dateTimeTv = (TextView) itemView.findViewById(R.id.dateTime);
-            addContactBtn = (Button) itemView.findViewById(R.id.add_contact_btn);
+            unreadCounterTv = (TextView) itemView.findViewById(R.id.unread_counter);
         }
 
         public void bind (final Chat chat, final int position, final OnItemClickListener listener, Context context) {
 
             if (chat.isGroup()) {
-                addContactBtn.setVisibility(View.GONE);
                 profileTv.setText(chat.getTitle());
                 grpSender.setText(chat.getSenderName() + ":");
                 grpSender.setVisibility(View.VISIBLE);
             } else {
-                if(chat.getUsernameOfTheOneBeingSpokenTo().equals(chat.getSpeakingTo())) {
-                    addContactBtn.setVisibility(View.VISIBLE);
-                    addContactBtn.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View view) {
-                            listener.onButtonClicked(chat, position);
-                        }
-                    });
-                } else {
-                    addContactBtn.setVisibility(View.GONE);
-                }
                 profileTv.setText(chat.getSpeakingTo());
                 User user = User.getInstance();
-                if (!chat.getSenderName().equals(user.name)) {
-                    if (chat.getIsSeen() == Constants.MESSAGE_SENT){
-                        lastMsgTv.setTextColor(ContextCompat.getColor(context, R.color.red));
-                    } else {
-                        lastMsgTv.setTextColor(ContextCompat.getColor(context, R.color.black));
-                    }
+                if (chat.getUnreadCount() > 0) {
+                    unreadCounterTv.setText(String.valueOf(chat.getUnreadCount()));
+                    unreadCounterTv.setVisibility(View.VISIBLE);
                 }
 
             }
@@ -188,7 +165,6 @@ public class AllChatsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                     return true;
                 }
             });
-
 
             dateTimeTv.setText(chat.getTimeOfMsg());
             lastMsgTv.setText(Constants.generateMediaText(context, chat.getMsgType(), chat.getLastMsgInThisChat()));

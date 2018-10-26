@@ -454,7 +454,7 @@ public class FirebaseHelper {
 
     }
 
-    public void toggleMsgEventListeners (String node, String chatKey, ValueEventListener commentValueEventListener, int amount ,boolean add, boolean single) {
+    public void toggleUnreadMsgEventListeners(String node, String chatKey, ValueEventListener commentValueEventListener, boolean add, boolean single) {
         Query messagesRef = database.getReference("messages")
                 .child(node)
                 .child(chatKey)
@@ -579,22 +579,33 @@ public class FirebaseHelper {
         });
     }
 
-    public ValueEventListener getMessageEventListener(final String chatKey){
-        ValueEventListener valueEventListener = new ValueEventListener() {
+    public ValueEventListener getMessageEventListener(final String chatKey, final int loc, final String message, final String username){
+        return new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
+                Container container = new Container();
+                container.setInt(loc);
+                int unreadCounter = 0;
                 if (dataSnapshot.exists()) {
-                    listener.onCompleteTask("getMessageEventListener", CONDITION_3, null);
                     for (com.google.firebase.database.DataSnapshot msgSnapshot : dataSnapshot.getChildren()) {
                         FirebaseMessageModel firebaseMessageModel = msgSnapshot.getValue(FirebaseMessageModel.class);
-                        Container container = new Container();
                         container.setMsgModel(firebaseMessageModel);
                         container.setString(chatKey);
+                        if (firebaseMessageModel.getIsReceived() == Constants.MESSAGE_SENT
+                                && !firebaseMessageModel.getSenderName().equals(username)) {
+                            unreadCounter++;
+                        }
                         listener.onChange("getMessageEventListener", CONDITION_1, container);
                     }
-                    listener.onCompleteTask("getMessageEventListener", CONDITION_1, null);
+                    if (container.getMsgModel().getIsReceived() == Constants.MESSAGE_SENT && unreadCounter > 0) {
+                        container.setInt(unreadCounter);
+                    }
+                    listener.onCompleteTask("getMessageEventListener", CONDITION_1, container);
+                } else {
+                    container.setString(message);
+                    listener.onCompleteTask("getMessageEventListener", CONDITION_2, container);
                 }
-                listener.onCompleteTask("getMessageEventListener", CONDITION_2, null);
+
             }
 
             @Override
@@ -602,11 +613,18 @@ public class FirebaseHelper {
                 listener.onFailureTask("getMessageEventListener", databaseError);
             }
         };
-
-        return valueEventListener;
     }
 
-    public void attachOrRemoveMessageEventListener(String node, String chatKey, ValueEventListener valueEventListener, boolean add){
+    public void toggleLastMsgSingleEventListener(String node, String chatKey, ValueEventListener valueEventListener){
+        DatabaseReference messagesRef = database.getReference("messages");
+        Query pendingQuery = messagesRef.child(node).child(chatKey).limitToLast(1);
+        if(valueEventListener != null) {
+            pendingQuery.addListenerForSingleValueEvent(valueEventListener);
+        }
+
+    }
+
+    public void toggleLastMsgEventListener(String node, String chatKey, ValueEventListener valueEventListener, boolean add){
         DatabaseReference messagesRef = database.getReference("messages");
         Query pendingQuery = messagesRef.child(node).child(chatKey).limitToLast(1);
         if(valueEventListener != null) {

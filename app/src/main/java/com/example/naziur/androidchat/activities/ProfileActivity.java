@@ -69,7 +69,7 @@ public class ProfileActivity extends AuthenticatedActivity implements FirebaseHe
     User user = User.getInstance();
     private RecyclerView myGroups, myContacts;
     private List<String> groupKeys;
-    private TextView emptyGroupsList, emptyContactsList, myUsername, resetPic, revertPic, profileInfoName, profileInfoStatus;
+    private TextView emptyGroupsList, emptyContactsList, myUsername, resetPic, revertPic, profileInfoStatus;
     private AppCompatButton saveButton;
     private ImageView editToggle;
     private CircleImageView updatePic;
@@ -104,7 +104,6 @@ public class ProfileActivity extends AuthenticatedActivity implements FirebaseHe
         Glide.with(ProfileActivity.this).load(user.profilePic)
                 .apply(new RequestOptions().placeholder(R.drawable.placeholder).error(R.drawable.unknown))
                 .into(updatePic);
-        profileInfoName = (TextView)  findViewById(R.id.prof_info_name);
         profileInfoStatus = (TextView)  findViewById(R.id.prof_info_status);
         revertPic = (TextView) findViewById(R.id.undo_profile_pic);
         revertPic.setOnClickListener(new View.OnClickListener() {
@@ -158,7 +157,6 @@ public class ProfileActivity extends AuthenticatedActivity implements FirebaseHe
 
         myUsername.setText("Username : " + user.name);
 
-        profileInfoName.setText(user.profileName);
         profileInfoStatus.setText("Status: " + user.status);
 
         saveButton = (AppCompatButton) findViewById(R.id.save_profile_btn);
@@ -215,7 +213,6 @@ public class ProfileActivity extends AuthenticatedActivity implements FirebaseHe
         }
 
     }
-
 
     private void showContacts() {
         emptyContactsList = (TextView) findViewById(R.id.no_contacts);

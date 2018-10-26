@@ -3,8 +3,8 @@
 
     <string-array name="contact_dialog_actions">
         <item>@string/dialog_op1</item>
-        <item>@string/dialog_op2</item>
         <item>@string/dialog_op3</item>
+        <item>@string/dialog_op8</item>
     </string-array>
 
     <string-array name="profile_status">
@@ -17,7 +17,14 @@
 
     <string-array name="chat_dialog_actions">
         <item>@string/dialog_op1</item>
+        <item>@string/dialog_op3</item>
+        <item>@string/dialog_op4</item>
+    </string-array>
+
+    <string-array name="chat_dialog_actions_not_contact">
+        <item>@string/dialog_op1</item>
         <item>@string/dialog_op2</item>
+        <item>@string/dialog_op3</item>
         <item>@string/dialog_op4</item>
     </string-array>
 

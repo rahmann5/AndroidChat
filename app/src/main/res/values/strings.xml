@@ -17,6 +17,8 @@
     <string name="save_btn">Save &amp; Exit</string>
     <string name="profile_hint">Enter profile Name...</string>
     <string name="profile_group_admin">Admin</string>
+    <string name="undo_profile">Undo</string>
+    <string name="reset_profile">Reset</string>
 
 
     <!-- Chat Activity -->
@@ -31,8 +33,9 @@
     <string name="dialog_chat_select_action">Chat Actions</string>
     <string name="dialog_group_chat_select_action">Group Chat Actions</string>
     <string name="dialog_op1">See Profile</string>
-    <string name="dialog_op2">Chat</string>
-    <string name="dialog_op3">Delete Contact</string>
+    <string name="dialog_op2">Add to contacts</string>
+    <string name="dialog_op3">Chat</string>
+    <string name="dialog_op8">Delete Contact</string>
 
 
     <string name="contact_active">Active</string>
@@ -88,6 +91,7 @@
     <string name="title_all_chats">All Chats</string>
     <string name="title_contacts">Contacts</string>
     <string name="title_login">Login</string>
+    <string name="title_register">Register</string>
     <string name="title_settings">Settings</string>
     <string name="title_activity_settings">Settings</string>
     <string name="title_select_member">Select Members</string>
@@ -125,8 +129,11 @@
     <string name="pref_desc_delete_acc">Warning: this action cannot be undone.</string>
     <string name="pref_title_delete_acc">Delete Account</string>
     <string name="key_logout">logout</string>
-    <string name="pref_desc_logout">Logout of the current session.</string>
+    <string name="pref_desc_logout">Logout of the current session (Stop receiving push notifications).</string>
     <string name="pref_title_logout">Logout</string>
+    <string name="key_online_presence">online_status</string>
+    <string name="pref_desc_online_presence">Control whether other users can see your online presence (Restart application to take effect).</string>
+    <string name="pref_title_online_presence">Show online presence</string>
 
     <string name="key_email">user_auth</string>
     <string name="pref_title_auth">Account Email</string>

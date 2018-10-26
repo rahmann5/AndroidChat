@@ -1,13 +1,9 @@
 package com.example.naziur.androidchat.fragment;
 
 
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.database.Cursor;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
-import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.LinearLayoutManager;
@@ -25,17 +21,15 @@ import android.widget.Toast;
 import com.example.naziur.androidchat.R;
 import com.example.naziur.androidchat.activities.ChatActivity;
 import com.example.naziur.androidchat.activities.ChatDetailActivity;
-import com.example.naziur.androidchat.activities.MyContactsActivity;
-import com.example.naziur.androidchat.activities.SessionActivity;
 import com.example.naziur.androidchat.adapter.AllChatsAdapter;
 import com.example.naziur.androidchat.database.ContactDBHelper;
 import com.example.naziur.androidchat.database.FirebaseHelper;
-import com.example.naziur.androidchat.database.MyContactsContract;
 import com.example.naziur.androidchat.models.Chat;
 import com.example.naziur.androidchat.models.FirebaseGroupModel;
 import com.example.naziur.androidchat.models.FirebaseMessageModel;
 import com.example.naziur.androidchat.models.FirebaseUserModel;
 import com.example.naziur.androidchat.models.User;
+import com.example.naziur.androidchat.utils.Constants;
 import com.example.naziur.androidchat.utils.Container;
 import com.example.naziur.androidchat.utils.Network;
 import com.example.naziur.androidchat.utils.ProgressDialog;
@@ -75,8 +69,6 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        getActivity().setTitle("All Chats");
-
         View rootView = inflater.inflate(R.layout.fragment_session_all_chats, container, false);
         firebaseHelper = FirebaseHelper.getInstance();
         firebaseHelper.setFirebaseHelperListener(this);
@@ -115,8 +107,9 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
         progressBar.toggleDialog(true);
             for (int i = 0; i < allChatKeys.size(); i++) {
                 final String chatKey = allChatKeys.get(i);
-                valueEventListeners.add(firebaseHelper.getMessageEventListener(chatKey));
-                firebaseHelper.attachOrRemoveMessageEventListener("single", allChatKeys.get(i), valueEventListeners.get(i), true);
+                valueEventListeners.add(firebaseHelper.getMessageEventListener(chatKey, i, "unread", user.name));
+                //firebaseHelper.toggleLastMsgEventListener("single", allChatKeys.get(i), valueEventListeners.get(i), true);
+                firebaseHelper.toggleUnreadMsgEventListeners("single", allChatKeys.get(i), valueEventListeners.get(i), true, false);
             }
         progressBar.toggleDialog(false);
         toggleEmptyView(false, false);
@@ -128,15 +121,15 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
             textEmptyChat.setText("");
         } else {
             chatProgress.setVisibility(View.GONE);
-            textEmptyChat.setText("No Chats Found");
+            if (myChatsdapter.getItemCount() == 0) {
+                textEmptyChat.setText("No Chats Found");
+                emptyChats.setVisibility(View.VISIBLE);
+            } else {
+                if (sort) myChatsdapter.sortAllChatsByDate(false, formatter);
+                emptyChats.setVisibility(View.GONE);
+            }
         }
-        if (myChatsdapter.getItemCount() == 0) {
-            if (!showProgress)emptyChats.setVisibility(View.VISIBLE);
-            textEmptyChat.setText("No Chats Found");
-        } else {
-            if (sort) myChatsdapter.sortAllChatsByDate(false, formatter);
-            emptyChats.setVisibility(View.GONE);
-        }
+
     }
 
     private void setUpRecyclerView(){
@@ -155,10 +148,6 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
                 createDialog(chat,pos).show();
             }
 
-            @Override
-            public void onButtonClicked(Chat chat, int position) {
-                addUserToContacts(chat, position);
-            }
         });
         LinearLayoutManager mLayoutManager = new LinearLayoutManager(getContext());
         mLayoutManager.setOrientation(OrientationHelper.VERTICAL);
@@ -169,35 +158,33 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
 
     private AlertDialog createDialog (final Chat chat, final int position) {
         final AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        int dialogId = (db.isUserAlreadyInContacts(chat.getUsernameOfTheOneBeingSpokenTo())) ? R.array.chat_dialog_actions : R.array.chat_dialog_actions_not_contact;
+        final String [] commands = getResources().getStringArray(dialogId);
         builder.setTitle(R.string.dialog_chat_select_action)
-                .setItems(R.array.chat_dialog_actions, new DialogInterface.OnClickListener() {
+                .setItems(commands, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
                         // String[] actions = getResources().getStringArray(R.array.contact_dialog_actions);
-                        onActionSelected(which, chat, position);
+                        onActionSelected(commands[which], chat, position);
                         dialog.dismiss();
                     }
 
-                    private void onActionSelected(int which, Chat chat, int position) {
-                        switch (which) {
-                            case 0 : // see profile info
-                                Intent chatDetailActivity = new Intent(getContext(), ChatDetailActivity.class);
-                                chatDetailActivity.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                                chatDetailActivity.putExtra("username", chat.getUsernameOfTheOneBeingSpokenTo());
-                                startActivity(chatDetailActivity);
-                                break;
-
-                            case 1 : // chat with contact
-                                Intent chatActivity = new Intent(getActivity(), ChatActivity.class);
-                                chatActivity.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                                String chatKey = chat.getChatKey();
-                                chatActivity.putExtra("chatKey", chatKey);
-                                startActivity(chatActivity);
-                                break;
-
-                            case 2 : // delete Chat
-                                if (Network.isInternetAvailable(getActivity(), true));
-                                    deleteChat(chat);
-                                break;
+                    private void onActionSelected(String which, Chat chat, int position) {
+                        if (getResources().getString(R.string.dialog_op1).equals(which)) { // see profile
+                            Intent chatDetailActivity = new Intent(getContext(), ChatDetailActivity.class);
+                            chatDetailActivity.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                            chatDetailActivity.putExtra("username", chat.getUsernameOfTheOneBeingSpokenTo());
+                            startActivity(chatDetailActivity);
+                        } else if (getResources().getString(R.string.dialog_op2).equals(which)) { // add to contacts
+                            addUserToContacts(chat, position);
+                        } else if (getResources().getString(R.string.dialog_op3).equals(which)) { // see chat
+                            Intent chatActivity = new Intent(getActivity(), ChatActivity.class);
+                            chatActivity.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                            String chatKey = chat.getChatKey();
+                            chatActivity.putExtra("chatKey", chatKey);
+                            startActivity(chatActivity);
+                        } else if (getResources().getString(R.string.dialog_op4).equals(which)){ // delete chat
+                            if (Network.isInternetAvailable(getActivity(), true));
+                            deleteChat(chat);
                         }
                     }
                 });
@@ -228,7 +215,7 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
             firebaseHelper.toggleListenerFor("users", "username", user.name , userListener, false, false);
         }
         for(int i = 0; i < valueEventListeners.size(); i++){
-            firebaseHelper.attachOrRemoveMessageEventListener("single", allChatKeys.get(i), valueEventListeners.get(i), false);
+            firebaseHelper.toggleUnreadMsgEventListeners("single", allChatKeys.get(i), valueEventListeners.get(i), false, false);
         }
         super.onStop();
 
@@ -244,7 +231,30 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
     public void onCompleteTask(String tag, int condition, Container container) {
         switch(tag){
             case "getMessageEventListener":
-                toggleEmptyView(true, false);
+                switch (condition) {
+                    case FirebaseHelper.CONDITION_1 :
+                        FirebaseMessageModel firebaseMessageModel = container.getMsgModel();
+                        String isChattingTo = (firebaseMessageModel.getSenderName().equals(user.name)) ? db.getProfileNameAndPic(firebaseMessageModel.getReceiverName())[0] : db.getProfileNameAndPic(firebaseMessageModel.getSenderName())[0];
+                        String username = (firebaseMessageModel.getSenderName().equals(user.name)) ? firebaseMessageModel.getReceiverName() : firebaseMessageModel.getSenderName();
+                        String dateString = formatter.format(new Date(firebaseMessageModel.getCreatedDateLong()));
+                        Chat chat = new Chat(firebaseMessageModel.getSenderName(), isChattingTo, username, firebaseMessageModel.getText(), db.getProfileNameAndPic(username)[1], dateString, container.getString(), firebaseMessageModel.getIsReceived(), firebaseMessageModel.getMediaType());
+                        if (firebaseMessageModel.getIsReceived() == Constants.MESSAGE_SENT
+                                && !firebaseMessageModel.getSenderName().equals(user.name)) {
+                            chat.setUnreadCount(container.getInt());
+                        }
+                        myChatsdapter.addOrRemoveChat(chat, true);
+                        toggleEmptyView(true, false);
+                        break;
+                    case FirebaseHelper.CONDITION_2:
+                        int loc = container.getInt();
+                        if (container.getString().equals("unread") && allChatKeys.size() > 0) {
+                            firebaseHelper.toggleLastMsgSingleEventListener("single", allChatKeys.get(loc)
+                                    , firebaseHelper.getMessageEventListener(allChatKeys.get(loc), loc, "last", user.name));
+                        } else {
+                            toggleEmptyView(true, false);
+                        }
+                        break;
+                }
                 break;
             case "checkKeyListKey":
                 switch(condition){
@@ -333,12 +343,7 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
             case "getMessageEventListener":
                 switch (condition) {
                     case FirebaseHelper.CONDITION_1:
-                        FirebaseMessageModel firebaseMessageModel = container.getMsgModel();
-                        String isChattingTo = (firebaseMessageModel.getSenderName().equals(user.name)) ? db.getProfileNameAndPic(firebaseMessageModel.getReceiverName())[0] : db.getProfileNameAndPic(firebaseMessageModel.getSenderName())[0];
-                        String username = (firebaseMessageModel.getSenderName().equals(user.name)) ? firebaseMessageModel.getReceiverName() : firebaseMessageModel.getSenderName();
-                        String dateString = formatter.format(new Date(firebaseMessageModel.getCreatedDateLong()));
-                        Chat chat = new Chat(firebaseMessageModel.getSenderName(), isChattingTo, username, firebaseMessageModel.getText(), db.getProfileNameAndPic(username)[1], dateString, container.getString(), firebaseMessageModel.getIsReceived(), firebaseMessageModel.getMediaType());
-                        myChatsdapter.addOrRemoveChat(chat, true);
+
                         break;
                 }
                 break;
@@ -354,7 +359,7 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
                                 if(!key.equals(""))
                                     allChatKeys.add(key);
                             }
-                            setUpMsgEventListeners();
+                            //setUpMsgEventListeners();
                         }
                         break;
                 }

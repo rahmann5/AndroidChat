@@ -120,10 +120,10 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
     }
 
     private void setUpGrpMSgEventListeners(String groupKey){
-        ValueEventListener valueEventListener = firebaseHelper.getMessageEventListener(groupKey);
+        ValueEventListener valueEventListener = firebaseHelper.getMessageEventListener(groupKey, 0,"unread", user.name);
         grpMsgValueEventListeners.put(groupKey,valueEventListener);
         //System.out.println("Messages: " + grpMsgValueEventListeners.size());=
-        firebaseHelper.attachOrRemoveMessageEventListener("group", groupKey, valueEventListener, true);
+        firebaseHelper.toggleLastMsgEventListener("group", groupKey, valueEventListener, true);
     }
 
     private int findIndexForGroup (String groupKey) {
@@ -157,8 +157,6 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
                 createDialog(chat, pos).show();
             }
 
-            @Override
-            public void onButtonClicked(Chat chat, int position) {}
         });
 
         LinearLayoutManager mLayoutManager = new LinearLayoutManager(getContext());
@@ -228,7 +226,7 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
         for(int i = 0; i < allGroupKeys.size(); i++){
             String key = allGroupKeys.get(i);
             firebaseHelper.toggleListenerFor("groups", "groupKey", key , grpValueEventListeners.get(key), false, false);
-            firebaseHelper.attachOrRemoveMessageEventListener("group", key, grpMsgValueEventListeners.get(key), false);
+            firebaseHelper.toggleLastMsgEventListener("group", key, grpMsgValueEventListeners.get(key), false);
         }
         super.onStop();
     }
@@ -256,26 +254,22 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
             textEmptyChat.setText("");
         } else {
             chatProgress.setVisibility(View.GONE);
-            textEmptyChat.setText("No Chats Found");
+            if (myChatsdapter.getItemCount() == 0) {
+                textEmptyChat.setText("No Chats Found");
+                emptyChats.setVisibility(View.VISIBLE);
+            } else {
+                if (sort) myChatsdapter.sortAllChatsByDate(false, formatter);
+                emptyChats.setVisibility(View.GONE);
+            }
         }
-        if (myChatsdapter.getItemCount() == 0) {
-            emptyChats.setVisibility(View.VISIBLE);
-            textEmptyChat.setText("No Chats Found");
-        } else {
-            if (sort) myChatsdapter.sortAllChatsByDate(false, formatter);
-            emptyChats.setVisibility(View.GONE);
-        }
+
     }
 
 
     @Override
     public void onCompleteTask(String tag, int condition, Container container) {
         if (tag.equals("getMessageEventListener")) {
-            switch (condition) {
-                case FirebaseHelper.CONDITION_2:
-                    toggleEmptyView(true, false);
-                    break;
-            }
+            toggleEmptyView(true, false);
         } else if (tag.equals("getValueEventListener")) {
             switch (condition) {
 

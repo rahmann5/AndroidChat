@@ -27,6 +27,8 @@ public class Chat {
 
     private boolean emptyChat = false;
 
+    private int unreadCount = 0;
+
     public Chat(String senderName, String speakingTo, String username, String lastMsg, String pic, String time, String chatKey, int received, String msgType){
         this.speakingTo = speakingTo;
         this.senderName = senderName;
@@ -115,5 +117,13 @@ public class Chat {
 
     public boolean isEmptyChat() {
         return emptyChat;
+    }
+
+    public int getUnreadCount() {
+        return unreadCount;
+    }
+
+    public void setUnreadCount(int unreadCount) {
+        this.unreadCount = unreadCount;
     }
 }

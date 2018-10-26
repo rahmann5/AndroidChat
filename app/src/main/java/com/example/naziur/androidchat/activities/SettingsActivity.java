@@ -2,9 +2,12 @@ package com.example.naziur.androidchat.activities;
 
 import android.annotation.TargetApi;
 import android.app.Dialog;
+import android.app.LoaderManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.Loader;
+import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Build;
@@ -25,6 +28,7 @@ import com.example.naziur.androidchat.models.FirebaseUserModel;
 import com.example.naziur.androidchat.database.FirebaseHelper;
 import com.example.naziur.androidchat.models.User;
 import com.example.naziur.androidchat.utils.Container;
+import com.example.naziur.androidchat.utils.LogoutLoader;
 import com.example.naziur.androidchat.utils.Network;
 import com.example.naziur.androidchat.utils.ProgressDialog;
 import com.google.firebase.auth.FirebaseAuth;
@@ -36,6 +40,7 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.iid.FirebaseInstanceId;
 
 import java.sql.Array;
 import java.util.ArrayList;
@@ -44,6 +49,7 @@ import java.util.List;
 
 public class SettingsActivity extends AppCompatPreferenceActivity {
     public static final int UNBLOCK_REQUEST_CODE = 1;
+    private static final int LOGOUT_LOADER_ID = 0;
     protected DatabaseReference database;
     protected FirebaseAuth mAuth;
     private static boolean controlOffline = false;
@@ -53,14 +59,17 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
         getSupportActionBar().setDisplayShowHomeEnabled(true);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         mAuth = FirebaseAuth.getInstance();
-        database= FirebaseHelper.setOnlineStatusListener(mAuth.getCurrentUser().getUid(), false);
+        SharedPreferences sharedpreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        if (sharedpreferences.getBoolean(getResources().getString(R.string.key_online_presence), true)) {
+            database= FirebaseHelper.setOnlineStatusListener(mAuth.getCurrentUser().getUid(), false);
+        }
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        if (controlOffline)
-        database.child("online").setValue(false);
+        if (controlOffline && database != null)
+            database.child("online").setValue(false);
 
     }
 
@@ -78,7 +87,8 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
             startActivity(new Intent(this, LoginActivity.class).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK));
             finish();
         } else {
-            database.child("online").setValue(true);
+            if (database != null)
+                database.child("online").setValue(true);
         }
     }
 
@@ -172,7 +182,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
      * activity is showing a two-pane settings UI.
      */
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
-    public static class AccountPreferenceFragment extends PreferenceFragment implements FirebaseHelper.FirebaseHelperListener{
+    public static class AccountPreferenceFragment extends PreferenceFragment implements FirebaseHelper.FirebaseHelperListener, LoaderManager.LoaderCallbacks<Void>{
         FirebaseHelper firebaseHelper;
         FirebaseUserModel firebaseUserModel;
         FirebaseAuth mAuth;
@@ -214,10 +224,8 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
             Preference logoutPref = findPreference(getString(R.string.key_logout));
             logoutPref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
                 public boolean onPreferenceClick(Preference preference) {
-                    FirebaseAuth mAuth = FirebaseAuth.getInstance();
-                    FirebaseHelper.setOnlineStatusListener(mAuth.getCurrentUser().getUid(), true);
-                    mAuth.signOut();
-                    startActivity(new Intent(getActivity(), LoginActivity.class).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK));
+                    LoaderManager loaderManager = getLoaderManager();
+                    loaderManager.initLoader(LOGOUT_LOADER_ID, null, AccountPreferenceFragment.this);
                     return true;
                 }
             });
@@ -409,6 +417,26 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 
         @Override
         public void onChange(String tag, int condition, Container container) {
+
+        }
+
+        @Override
+        public Loader<Void> onCreateLoader(int i, Bundle bundle) {
+            progressDialog.toggleDialog(true);
+            return new LogoutLoader(getActivity());
+        }
+
+        @Override
+        public void onLoadFinished(Loader<Void> loader, Void Obj) {
+            progressDialog.toggleDialog(false);
+            FirebaseAuth mAuth = FirebaseAuth.getInstance();
+            FirebaseHelper.setOnlineStatusListener(mAuth.getCurrentUser().getUid(), true);
+            mAuth.signOut();
+            startActivity(new Intent(getActivity(), LoginActivity.class).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK));
+        }
+
+        @Override
+        public void onLoaderReset(Loader<Void> loader) {
 
         }
     }

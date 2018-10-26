@@ -1,37 +1,25 @@
 package com.example.naziur.androidchat.activities;
 
 import android.app.Activity;
-import android.app.Dialog;
-import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.pm.PackageManager;
-import android.net.Uri;
-import android.os.Build;
+import android.content.res.Configuration;
 import android.os.Bundle;
-import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
-import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.ActionBar;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.inputmethod.EditorInfo;
-import android.view.inputmethod.InputMethod;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
-import android.widget.EditText;
 import android.widget.ListView;
-import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -46,43 +34,21 @@ import com.example.naziur.androidchat.fragment.ImageViewDialogFragment;
 import com.example.naziur.androidchat.models.FirebaseMessageModel;
 import com.example.naziur.androidchat.models.FirebaseUserModel;
 import com.example.naziur.androidchat.models.MessageCell;
-import com.example.naziur.androidchat.models.Notification;
 import com.example.naziur.androidchat.models.User;
-import com.example.naziur.androidchat.services.MyFirebaseMessagingService;
 import com.example.naziur.androidchat.utils.Constants;
 import com.example.naziur.androidchat.utils.Container;
 import com.example.naziur.androidchat.utils.Network;
 import com.example.naziur.androidchat.utils.ProgressDialog;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
-import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.OnProgressListener;
-import com.google.firebase.storage.StorageReference;
-import com.google.firebase.storage.UploadTask;
-import com.loopj.android.http.RequestParams;
-import com.loopj.android.http.TextHttpResponseHandler;
-
-import org.json.JSONObject;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 
-import cz.msebera.android.httpclient.Header;
-import cz.msebera.android.httpclient.entity.StringEntity;
 import de.hdodenhof.circleimageview.CircleImageView;
 import hani.momanii.supernova_emoji_library.Actions.EmojIconActions;
 import hani.momanii.supernova_emoji_library.Helper.EmojiconEditText;
@@ -156,7 +122,8 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
 
         final RelativeLayout rootView = (RelativeLayout)findViewById(R.id.root_view);
         emojIcon = new EmojIconActions(ChatActivity.this,rootView , textComment, btnEmoji);
-        emojIcon.setIconsIds(hani.momanii.supernova_emoji_library.R.drawable.ic_action_keyboard, R.drawable.ic_emoji);
+        emojIcon.setIconsIds(hani.momanii.supernova_emoji_library.R.drawable.ic_action_keyboard,
+                R.drawable.ic_emoji);
         emojIcon.setUseSystemEmoji(true);
         emojIcon.setKeyboardListener(new EmojIconActions.KeyboardListener() {
             @Override
@@ -276,6 +243,14 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
 
     }
 
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+
+        hideSoftKeyBoard(ChatActivity.this);
+        emojIcon.ShowEmojIcon();
+    }
+
     private void sendButtonClick () {
         hideSoftKeyBoard(ChatActivity.this);
 
@@ -344,7 +319,7 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        firebaseHelper.toggleMsgEventListeners("single", chatKey, commentValueEventListener,1 , false, false);
+        firebaseHelper.toggleUnreadMsgEventListeners("single", chatKey, commentValueEventListener,false, false);
         firebaseHelper.toggleListenerFor("users", "username" ,friend.getUsername(), friendValueEvent , false, false);
     }
 
@@ -626,7 +601,7 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
                 case FirebaseHelper.CONDITION_2:
                     me = (FirebaseUserModel) container.getObject();
                     if (me != null) {
-                        firebaseHelper.toggleMsgEventListeners("single", chatKey, commentValueEventListener, 1, true, false);
+                        firebaseHelper.toggleUnreadMsgEventListeners("single", chatKey, commentValueEventListener, true, false);
                         String friendKey = findChatKey(friend, me);
                         btnInvite.setVisibility(View.GONE);
                         btnSend.setVisibility(View.VISIBLE);

@@ -1,11 +1,14 @@
 package com.example.naziur.androidchat.activities;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.PersistableBundle;
+import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 
+import com.example.naziur.androidchat.R;
 import com.example.naziur.androidchat.database.FirebaseHelper;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -21,21 +24,24 @@ import com.google.firebase.database.ValueEventListener;
 
 public abstract class AuthenticatedActivity extends AppCompatActivity {
     protected FirebaseAuth mAuth;
-    protected DatabaseReference  database;
+    protected DatabaseReference database;
     protected boolean controlOffline;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mAuth = FirebaseAuth.getInstance();
-        database= FirebaseHelper.setOnlineStatusListener(mAuth.getCurrentUser().getUid(), false);
+        SharedPreferences sharedpreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        if (sharedpreferences.getBoolean(getResources().getString(R.string.key_online_presence), true)) {
+            database= FirebaseHelper.setOnlineStatusListener(mAuth.getCurrentUser().getUid(), false);
+        }
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        if (controlOffline)
-         database.child("online").setValue(false);
+        if (controlOffline && database != null)
+            database.child("online").setValue(false);
     }
 
     @Override
@@ -52,7 +58,8 @@ public abstract class AuthenticatedActivity extends AppCompatActivity {
             startActivity(new Intent(this, LoginActivity.class).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK));
             finish();
         } else {
-            database.child("online").setValue(true);
+            if (database != null)
+                database.child("online").setValue(true);
         }
     }
 }

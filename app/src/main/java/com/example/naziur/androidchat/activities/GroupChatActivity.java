@@ -225,6 +225,14 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
         });
     }
 
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+
+        hideSoftKeyBoard(GroupChatActivity.this);
+        emojIcon.ShowEmojIcon();
+    }
+
     private void sendButtonClick () {
         if (!Network.isInternetAvailable(GroupChatActivity.this, false) || textComment.getText().toString().trim().isEmpty()) {
             return;
@@ -339,17 +347,6 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
                         Activity.INPUT_METHOD_SERVICE);
         inputMethodManager.hideSoftInputFromWindow(
                 activity.getCurrentFocus().getWindowToken(), 0);
-    }
-
-    @Override
-    public void onConfigurationChanged(Configuration newConfig) {
-        super.onConfigurationChanged(newConfig);
-
-        // Checks the orientation of the screen
-        if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE || newConfig.orientation == Configuration.ORIENTATION_PORTRAIT) {
-            emojIcon.closeEmojIcon();
-            hideSoftKeyBoard(this);
-        }
     }
 
     private String[] getMembersThatNeedToReceiveMessage() {

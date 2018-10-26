@@ -7,6 +7,12 @@
         android:summary="@string/pref_desc_auto_login"
         android:title="@string/pref_title_auto_login" />
 
+    <SwitchPreference
+        android:defaultValue="true"
+        android:key="@string/key_online_presence"
+        android:summary="@string/pref_desc_online_presence"
+        android:title="@string/pref_title_online_presence" />
+
     <EditTextPreference
         android:key="@string/key_email"
         android:title="@string/pref_title_auth" />

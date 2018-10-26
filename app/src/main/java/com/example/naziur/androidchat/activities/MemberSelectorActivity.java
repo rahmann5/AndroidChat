@@ -155,8 +155,12 @@ public class MemberSelectorActivity extends AuthenticatedActivity implements Fir
                         setResult(RESULT_OK,data);
                         finish();
                     } else {
-                        progressBar.toggleDialog(true);
-                        firebaseHelper.updateBlockList(selectedContacts.toArray(new String[selectedContacts.size()]), false);
+                        if (!selectedContacts.isEmpty()) {
+                            progressBar.toggleDialog(true);
+                            firebaseHelper.updateBlockList(selectedContacts.toArray(new String[selectedContacts.size()]), false);
+                        } else {
+                            finish();
+                        }
                     }
                 }
 
