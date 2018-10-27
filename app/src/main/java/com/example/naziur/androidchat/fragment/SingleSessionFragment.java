@@ -248,8 +248,9 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
                     case FirebaseHelper.CONDITION_2:
                         int loc = container.getInt();
                         if (container.getString().equals("unread") && allChatKeys.size() > 0) {
-                            firebaseHelper.toggleLastMsgSingleEventListener("single", allChatKeys.get(loc)
-                                    , firebaseHelper.getMessageEventListener(allChatKeys.get(loc), loc, "last", user.name));
+                            firebaseHelper.toggleLastMsgEventListener("single", allChatKeys.get(loc)
+                                    , firebaseHelper.getMessageEventListener(allChatKeys.get(loc), loc, "last", user.name),
+                                    1, true, true, false);
                         } else {
                             toggleEmptyView(true, false);
                         }

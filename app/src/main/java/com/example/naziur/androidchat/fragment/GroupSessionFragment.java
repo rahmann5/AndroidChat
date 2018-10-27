@@ -123,7 +123,7 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
         ValueEventListener valueEventListener = firebaseHelper.getMessageEventListener(groupKey, 0,"unread", user.name);
         grpMsgValueEventListeners.put(groupKey,valueEventListener);
         //System.out.println("Messages: " + grpMsgValueEventListeners.size());=
-        firebaseHelper.toggleLastMsgEventListener("group", groupKey, valueEventListener, true);
+        firebaseHelper.toggleLastMsgEventListener("group", groupKey, valueEventListener, 1, true, false, false);
     }
 
     private int findIndexForGroup (String groupKey) {
@@ -226,7 +226,7 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
         for(int i = 0; i < allGroupKeys.size(); i++){
             String key = allGroupKeys.get(i);
             firebaseHelper.toggleListenerFor("groups", "groupKey", key , grpValueEventListeners.get(key), false, false);
-            firebaseHelper.toggleLastMsgEventListener("group", key, grpMsgValueEventListeners.get(key), false);
+            firebaseHelper.toggleLastMsgEventListener("group", key, grpMsgValueEventListeners.get(key), 1,false, false, false);
         }
         super.onStop();
     }

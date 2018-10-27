@@ -212,17 +212,18 @@ public class GroupDetailActivity extends AuthenticatedActivity implements Fireba
             groupIv.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-
                     if (myImageFile != null) {
                         imageViewDialog = ImageViewDialogFragment.newInstance(
                                 myImageFile,
                                 Constants.ACTION_SEND,
-                                android.R.drawable.ic_menu_upload);
+                                android.R.drawable.ic_menu_upload,
+                                R.drawable.ic_group_unknown);
                     } else {
                         imageViewDialog = ImageViewDialogFragment.newInstance(
-                                (pic != NO_IMAGE_CODE) ? groupModel.getPic() : "",
+                                (!pic.equals(NO_IMAGE_CODE) ) ? groupModel.getPic() : "",
                                 Constants.ACTION_SEND,
-                                android.R.drawable.ic_menu_upload);
+                                android.R.drawable.ic_menu_upload,
+                                R.drawable.ic_group_unknown);
                     }
                     imageViewDialog.setCancelable(true);
                     imageViewDialog.show(getSupportFragmentManager(), "ImageViewDialogFragment");
@@ -321,7 +322,9 @@ public class GroupDetailActivity extends AuthenticatedActivity implements Fireba
 
                     private void onActionSelected(String username) {
                         progressBar.toggleDialog(true);
-                        firebaseHelper.removeFromGroup(groupModel.getGroupKey(), username);
+                        List<String> groupToExit = new ArrayList<>();
+                        groupToExit.add(groupModel.getGroupKey());
+                        firebaseHelper.exitGroup(null, username, false ,groupToExit);
                     }
                 });
         return builder.create();
@@ -502,10 +505,10 @@ public class GroupDetailActivity extends AuthenticatedActivity implements Fireba
                         break;
                 }
                 break;
-            case "removeFromGroup":
+            case "exitGroup":
                 switch(condition){
                     case FirebaseHelper.CONDITION_1:
-                        String msg = "Admin has removed "+ container.getStringList().get(1) + " from the group";
+                        String msg = "Admin has removed "+ container.getString() + " from the group";
                         firebaseHelper.updateMessageNode(this, "group", groupModel.getGroupKey(), msg, null, Constants.MESSAGE_TYPE_SYSTEM, null, groupModel.getTitle());
                         break;
                 }

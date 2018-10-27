@@ -57,7 +57,16 @@ public class RegisterActivity extends AppCompatActivity implements FirebaseHelpe
                     return;
                 }
                 progressDialog.toggleDialog(true);
-                firebaseHelper.isDeviceAlreadyRegistered(Settings.Secure.getString(getApplicationContext().getContentResolver(), Settings.Secure.ANDROID_ID));
+                //firebaseHelper.isDeviceAlreadyRegistered(Settings.Secure.getString(getApplicationContext().getContentResolver(), Settings.Secure.ANDROID_ID));
+                String deviceId = Settings.Secure.getString(getApplicationContext().getContentResolver(), Settings.Secure.ANDROID_ID);
+                firebaseHelper.toggleListenerFor(
+                        "users",
+                        "deviceId",
+                        deviceId,
+                        firebaseHelper.getValueEventListener(deviceId, FirebaseHelper.NON_CONDITION, FirebaseHelper.CONDITION_2, FirebaseHelper.CONDITION_1, FirebaseUserModel.class),
+                        true,
+                        true
+                        );
             }
         });
 
@@ -131,10 +140,11 @@ public class RegisterActivity extends AppCompatActivity implements FirebaseHelpe
                         break;
                 }
                 break;
-            case "isDeviceAlreadyRegistered":
+            case "getValueEventListener":
                 switch (condition) {
                     case FirebaseHelper.CONDITION_1:
-                        registerUser(emailEt.getText().toString().trim(), usernameEt.getText().toString().trim(), profileEt.getText().toString().trim(), container.getString());
+                        if (container.getObject() != null && container.getObject() instanceof FirebaseUserModel)
+                            registerUser(emailEt.getText().toString().trim(), usernameEt.getText().toString().trim(), profileEt.getText().toString().trim(), container.getString());
                         break;
                     case FirebaseHelper.CONDITION_2:
                         Toast.makeText(RegisterActivity.this, "A user is already registered to this device", Toast.LENGTH_LONG).show();

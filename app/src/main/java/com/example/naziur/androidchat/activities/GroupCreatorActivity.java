@@ -345,7 +345,7 @@ public class GroupCreatorActivity extends AuthenticatedActivity implements Fireb
         firebaseGroupModel.setPic(imgUrl);
         firebaseGroupModel.setGroupKey(uniqueID);
         firebaseGroupModel.setMembers(getAllMembersAsString(getAllMembersTogether()));
-        firebaseHelper.getDeviceTokensFor(getAllMembersTogether(), title, uniqueID, false);
+        firebaseHelper.getDeviceTokensFor(getAllMembersTogether(), false);
         return firebaseGroupModel;
         //firebaseHelper.createGroup(firebaseGroupModel);
     }

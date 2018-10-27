@@ -115,6 +115,7 @@ public class Network {
                 @Override
                 public void onFailure(@NonNull Exception e) {
                     Log.i(LOG_TAG, "onFailure: did not delete file in storage");
+                    deleteUploadImages(firebaseHelper , allUris, chatKeys, loc);
                     // store that image uri in a log to remove manually
                     e.printStackTrace();
                 }

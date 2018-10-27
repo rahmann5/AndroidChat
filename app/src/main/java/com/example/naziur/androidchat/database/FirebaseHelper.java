@@ -58,7 +58,6 @@ public class FirebaseHelper {
         void onChange(String tag, int condition, Container container);
     }
 
-
     public static final int NON_CONDITION = -1;
     public static final int CONDITION_1 = 0;
     public static final int CONDITION_2 = 1;
@@ -79,7 +78,9 @@ public class FirebaseHelper {
     public void setFirebaseHelperListener (FirebaseHelperListener fbListener) {
         listener = fbListener;
     }
-
+    /*
+     * sets online presence to offline (can be toggled for one time use or ongoing usage)
+     */
     public static DatabaseReference setOnlineStatusListener (String uid, final boolean single) {
         final DatabaseReference databaseRef = database.getReference().child("users").child(uid);
         ValueEventListener v =new ValueEventListener() {
@@ -95,9 +96,7 @@ public class FirebaseHelper {
             }
 
             @Override
-            public void onCancelled(DatabaseError databaseError) {
-
-            }
+            public void onCancelled(DatabaseError databaseError) { }
         };
         if (single) {
             databaseRef.addListenerForSingleValueEvent(v);
@@ -107,6 +106,9 @@ public class FirebaseHelper {
         return databaseRef;
     }
 
+    /*
+     * Update device token on database if device token has changed (device token important for push notifications)
+     */
     public void updateUserDeviceToken (final String strToken) {
         final User user = User.getInstance();
         final DatabaseReference usersRef = database.getReference("users").orderByChild("username").equalTo(user.name).getRef();
@@ -125,9 +127,7 @@ public class FirebaseHelper {
                         data.setValue(userModel);
                         break;
                     }
-
                 }
-
                 return Transaction.success(mutableData);
             }
 
@@ -142,6 +142,9 @@ public class FirebaseHelper {
         });
     }
 
+    /*
+     * quick login with support for device token update if it has changed (no email/username required uses deviceID)
+     */
     public void autoLogin(String node, final String currentDeviceId, final User user) {
         database.getReference(node).orderByChild("deviceId").equalTo(currentDeviceId)
                 .addListenerForSingleValueEvent(new com.google.firebase.database.ValueEventListener() {
@@ -177,6 +180,9 @@ public class FirebaseHelper {
         });
     }
 
+    /*
+     * login requires username to verify user also supports auto device token update if any change found
+     */
     public void manualLogin(final String username,final String currentDeviceId){
         final User user = User.getInstance();
         DatabaseReference reference = database.getReference("users");
@@ -214,28 +220,9 @@ public class FirebaseHelper {
         });
     }
 
-    public void isDeviceAlreadyRegistered(final String deviceId){
-        DatabaseReference reference = database.getReference("users");
-        reference.orderByChild("deviceId").equalTo(deviceId).addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                if(!dataSnapshot.exists()){
-                    Container container = new Container();
-                    container.setString(deviceId);
-                    listener.onCompleteTask("isDeviceAlreadyRegistered", CONDITION_1, container);
-                } else {
-                    System.out.println(deviceId+" VS "+dataSnapshot.getValue());
-                    listener.onCompleteTask("isDeviceAlreadyRegistered", CONDITION_2, null);
-                }
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-                listener.onFailureTask("isDeviceAlreadyRegistered", databaseError);
-            }
-        });
-    }
-
+    /**
+     * Register new user
+     */
     public void registerNewUser(final FirebaseUserModel firebaseUserModel, String uid){
         DatabaseReference reference = database.getReference("users").child(uid);
         reference.setValue(firebaseUserModel, new DatabaseReference.CompletionListener() {
@@ -252,6 +239,10 @@ public class FirebaseHelper {
         });
     }
 
+    /*
+     * Update local database of saved contacts with latest user information from the database in the background.
+     * Once completed returns either empty, latest up to date users or old stored data
+     */
     public void updateAllLocalContactsFromFirebase (Context context, final ContactDBHelper db) {
         Cursor cursor = db.getAllMyContacts(MyContactsContract.MyContactsContractEntry.COLUMN_USERNAME);
         final List<Contact> allContactsUpToDate = new ArrayList<>();
@@ -308,14 +299,17 @@ public class FirebaseHelper {
 
     }
 
-    public ValueEventListener createGroupMessageEventListener(final List<FirebaseMessageModel> currentMessages, final int loadAmount, final int currentKnownMessageCount) {
+    /*
+     * Group message event listener
+     */
+    public ValueEventListener createGroupMessageEventListener(final List<FirebaseMessageModel> currentMessages, final int loadAmount) {
         return new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if (dataSnapshot.exists()) {
                     Container container = new Container();
                     List<FirebaseMessageModel> dataInReverse = new ArrayList<>();
-                    if (currentMessages.size() == 0) {
+                    if (currentMessages.size() == 0) { // entering activity for first time (to get latest messages)
                         List<FirebaseMessageModel> tempMessages = new ArrayList<>();
                         //ITERATING ALL DATA BECAUSE GOOGLE WAS TOO LAZY TO ALLOW US TO GET DATA IN REVERSE
                         for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
@@ -324,7 +318,7 @@ public class FirebaseHelper {
                             dataInReverse.add(firebaseMessageModel);
                         }
 
-                        for (int i = dataInReverse.size() - 1; i >= 0; i--) {
+                        for (int i = dataInReverse.size() - 1; i >= 0; i--) { // get loadamount messages from the latest (bottom of the list)
                             if (tempMessages.size() < loadAmount)
                                 tempMessages.add(0, dataInReverse.get(i));
                             else if (tempMessages.size() == loadAmount)
@@ -333,7 +327,7 @@ public class FirebaseHelper {
                         container.setMessages(tempMessages);
                         container.setInt(dataInReverse.size());
                         listener.onCompleteTask("createGroupMessageEventListener", CONDITION_1, container);
-                    } else {
+                    } else { // get pending messages if they for some reason could not be retrived first time
                         container.setLong( dataSnapshot.getChildrenCount());
                         listener.onCompleteTask("createGroupMessageEventListener", CONDITION_2, container);
                     }
@@ -349,47 +343,27 @@ public class FirebaseHelper {
         };
     }
 
-    public void getNewMessages(String key, long amountToGet){
-        database.getReference("messages").child("group").child(key).orderByKey()
-                .limitToLast((int) Math.max(Math.min(Integer.MAX_VALUE, amountToGet), Integer.MIN_VALUE))
-                .addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(DataSnapshot dataSnapshot) {
-                        if(dataSnapshot.exists()){
-                            List<FirebaseMessageModel> tempMessages = new ArrayList<>();
-                            for(DataSnapshot postSnapshot : dataSnapshot.getChildren()){
-                                FirebaseMessageModel firebaseMessageModel = postSnapshot.getValue(FirebaseMessageModel.class);
-                                firebaseMessageModel.setId(postSnapshot.getKey());
-                                tempMessages.add(firebaseMessageModel);
-                            }
-                            Container container = new Container();
-                            container.setMessages(tempMessages);
-                            listener.onCompleteTask("getNewMessages", CONDITION_1, container);
-                        } else {
-                            listener.onCompleteTask("getNewMessages", CONDITION_2, null);
-                        }
-                    }
-
-                    @Override
-                    public void onCancelled(DatabaseError databaseError) {
-                        listener.onFailureTask("getNewMessages", databaseError);
-                    }
-                });
-    }
-
-    public ValueEventListener createMessageEventListener () {
+    /**
+     * returns specified queried message node (used with toggleMessageEvent)
+     * group value specifies whether to get data as list (true) or each individually onChange (false)
+     */
+    public ValueEventListener createMessageEventListener (final boolean group) {
         return new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if (dataSnapshot.exists()) {
+                    List<FirebaseMessageModel> tempMessages = (group) ? new ArrayList<FirebaseMessageModel>() : null;
                     for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
                         FirebaseMessageModel firebaseMessageModel = postSnapshot.getValue(FirebaseMessageModel.class);
                         Container container = new Container();
                         firebaseMessageModel.setId(postSnapshot.getKey());
                         container.setMsgModel(firebaseMessageModel);
+                        if (tempMessages != null) tempMessages.add(firebaseMessageModel);
                         listener.onChange("createMessageEventListener", CONDITION_1, container);
                     }
-                    listener.onCompleteTask("createMessageEventListener", CONDITION_1, null);
+                    Container container = new Container();
+                    container.setMessages(tempMessages);
+                    listener.onCompleteTask("createMessageEventListener", CONDITION_1, container);
                 } else {
                     listener.onCompleteTask("createMessageEventListener", CONDITION_2, null);
                 }
@@ -401,6 +375,10 @@ public class FirebaseHelper {
         };
     }
 
+    /*
+     * return n number of specified message nodes starting from the last specified node and going upwards
+     * not including the specified node key
+     */
     public void getNextNMessages (String child, String key, final String start, int amount) {
         Query query;
         if (!start.equals("")) {
@@ -437,6 +415,10 @@ public class FirebaseHelper {
         });
     }
 
+    /**
+     * toggles createGroupMessageEventListener value event listeners
+     * @see #createGroupMessageEventListener(List, int)
+     */
     public void toggleGrpMsgEventListeners(String node, String chatKey, ValueEventListener commentValueEventListener, boolean add, boolean single){
         Query messagesRef = database.getReference("messages")
                 .child(node)
@@ -454,12 +436,15 @@ public class FirebaseHelper {
 
     }
 
+    /**
+     * returns all unread messages (currently works with single chat)
+     */
     public void toggleUnreadMsgEventListeners(String node, String chatKey, ValueEventListener commentValueEventListener, boolean add, boolean single) {
         Query messagesRef = database.getReference("messages")
                 .child(node)
                 .child(chatKey)
                 .orderByChild("isReceived")
-                .equalTo(Constants.MESSAGE_SENT);
+                .equalTo(Constants.MESSAGE_SENT); // value 0 (not read/seen)
 
         if (!single) {
             if (add) {
@@ -472,6 +457,9 @@ public class FirebaseHelper {
         }
     }
 
+    /*
+     * for a specified user check if they contain a specific chatkey (single chat)
+     */
     public void checkKeyListKey (String node, final int myCondition1, final int myCondition2 , final String msgId, final String username) {
         database.getReference(node).orderByChild("username").equalTo(username).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
@@ -504,6 +492,10 @@ public class FirebaseHelper {
         });
     }
 
+    /*
+     * given a list of group members check whether each of them still has the key (i.e. still hold reference to key)
+     * returns each of their device token
+     */
     public void checkGroupsKeys(String node, final int myCondition1, final int myCondition2 , final String msgId, final String... usernames){
         final List<String> allMembers = Arrays.asList(usernames);
         Collections.sort(allMembers);
@@ -537,48 +529,12 @@ public class FirebaseHelper {
 
     }
 
-    public void createImageUploadMessageNode (String node, final String chatKey, final Context context, final String downloadUrl, FirebaseMessageModel messageModel, final StringEntity entity) {
-        DatabaseReference messagesRef = FirebaseDatabase.getInstance().getReference("messages")
-                .child(node)
-                .child(chatKey);
-        DatabaseReference newRef = messagesRef.push();
-        newRef.setValue(messageModel, new DatabaseReference.CompletionListener() {
-
-            @Override
-            public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
-                if (databaseError != null) {
-                    // remove image from storage
-                    Network.removeFailedImageUpload(downloadUrl.toString(), context);
-                    Toast.makeText(context, "Failed to upload image", Toast.LENGTH_SHORT).show();
-                    // show message failed to send (icon)
-                    listener.onFailureTask("createImageUploadMessageNode", databaseError);
-                } else {
-                    if (entity == null){
-                        Toast.makeText(context, "Failed to make notification", Toast.LENGTH_SHORT).show();
-                        return;
-                    }
-                    Network.createAsyncClient().post(context, Constants.NOTIFICATION_URL, entity, RequestParams.APPLICATION_JSON, new TextHttpResponseHandler() {
-                        @Override
-                        public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
-                            Container container = new Container();
-                            container.setString(responseString);
-                            listener.onCompleteTask("createImageUploadMessageNode", CONDITION_1, container);
-                        }
-
-                        @Override
-                        public void onSuccess(int statusCode, Header[] headers, String responseString) {
-                            Container container = new Container();
-                            container.setString(responseString);
-                            listener.onCompleteTask("createImageUploadMessageNode", CONDITION_2, container);
-                        }
-                    });
-                }
-            }
-
-
-        });
-    }
-
+    /**
+     * event listener for firebase message nodes
+     * unread counter returned instead of loc if the message happens to be unread
+     *
+     * @param loc - location of the chat key and event listener inside an array from outside class
+     */
     public ValueEventListener getMessageEventListener(final String chatKey, final int loc, final String message, final String username){
         return new ValueEventListener() {
             @Override
@@ -615,27 +571,34 @@ public class FirebaseHelper {
         };
     }
 
-    public void toggleLastMsgSingleEventListener(String node, String chatKey, ValueEventListener valueEventListener){
+    /*
+     * toggles event listener for x amount of messages starting from the very last node and upwards
+     */
+    public void toggleLastMsgEventListener(String node, String chatKey, ValueEventListener valueEventListener, int amount , boolean add, boolean single, boolean orderBy){
         DatabaseReference messagesRef = database.getReference("messages");
-        Query pendingQuery = messagesRef.child(node).child(chatKey).limitToLast(1);
-        if(valueEventListener != null) {
-            pendingQuery.addListenerForSingleValueEvent(valueEventListener);
+        Query pendingQuery = null;
+        if (orderBy) {
+            pendingQuery = messagesRef.child(node).child(chatKey).orderByKey().limitToLast(amount);
+        } else {
+            pendingQuery = messagesRef.child(node).child(chatKey).limitToLast(amount);
+        }
+        if (valueEventListener != null) {
+           if (!single) {
+               if (add)
+                   pendingQuery.addValueEventListener(valueEventListener);
+               else
+                   pendingQuery.removeEventListener(valueEventListener);
+           } else {
+               pendingQuery.addListenerForSingleValueEvent(valueEventListener);
+           }
         }
 
     }
 
-    public void toggleLastMsgEventListener(String node, String chatKey, ValueEventListener valueEventListener, boolean add){
-        DatabaseReference messagesRef = database.getReference("messages");
-        Query pendingQuery = messagesRef.child(node).child(chatKey).limitToLast(1);
-        if(valueEventListener != null) {
-            if (add)
-                pendingQuery.addValueEventListener(valueEventListener);
-            else
-                pendingQuery.removeEventListener(valueEventListener);
-        }
-
-    }
-
+    /**
+     * toggles listeners for event from function below
+     * @see #getValueEventListener(String, int, int, int, Class)
+     */
     public void toggleListenerFor(String reference, String child, String target, ValueEventListener valueEventListener, boolean add, boolean single){
         DatabaseReference databaseReference = database.getReference(reference);
         if(valueEventListener != null) {
@@ -651,6 +614,16 @@ public class FirebaseHelper {
         }
     }
 
+    /**
+     * returns returns reference to specific object specified according to matched target and query specified in linked function below
+     * @param target - value to be matched to
+     * @param loopCond - return each obtained obj at a time
+     * @param notExistCond - if query yields not result
+     * @param completeCond - once all objects have been processed
+     * @param obj - can be either FirebaseGroupModel or FirebaseUserModel
+     * @see #toggleListenerFor(String, String, String, ValueEventListener, boolean, boolean) )
+     * @return the event value listener
+     */
     public ValueEventListener getValueEventListener(final String target, final int loopCond, final int notExistCond, final int completeCond ,final Class obj){
         return new ValueEventListener() {
             @Override
@@ -675,6 +648,9 @@ public class FirebaseHelper {
         };
     }
 
+    /*
+     * removes a specified keyToRemove from the list of group or chat key (single)
+     */
     public void updateChatKeys(final User user, final String keyToRemove, final Chat chat, final boolean isGroup){
         DatabaseReference pendingTasks = database.getReference("users").orderByChild("username").equalTo(user.name).getRef();
         pendingTasks.runTransaction(new Transaction.Handler() {
@@ -721,6 +697,9 @@ public class FirebaseHelper {
         });
     }
 
+    /*
+     * Obtains latest information of the specific user from the server (Firebase Realtime Database) before storing locally into SQLite database
+     */
     public void addUserToContacts(final String contactsUsername, final ContactDBHelper db, final int positionInAdapter){
         Query query = database.getReference("users").orderByChild("username").equalTo(contactsUsername);
         query.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -758,6 +737,9 @@ public class FirebaseHelper {
         });
     }
 
+    /*
+     * gather all image url from messages related to that chat (both group/single) including group url avatar
+     */
     public void collectAllImagesForDeletionThenDeleteRelatedMessages(final String node, final FirebaseGroupModel firebaseGroupModel){
         final DatabaseReference reference = database.getReference("messages").child(node).child(firebaseGroupModel.getGroupKey());
         reference.orderByChild("mediaType").addListenerForSingleValueEvent(new ValueEventListener() {
@@ -785,6 +767,9 @@ public class FirebaseHelper {
         });
     }
 
+    /*
+     * gathering all image url for deletion (account delete) based on the number of keys provided
+     */
     public void collectImagesForDeletion(final String node, final List<String> keys, final List<String> imageUri){
         if(!keys.isEmpty()){
             final String key = keys.remove(0);
@@ -799,8 +784,6 @@ public class FirebaseHelper {
                                imageUri.add(model.getText());
                             }
                         }
-                    } else {
-                        System.out.println("No images for key: " + key);
                     }
 
                     Container container = new Container();
@@ -826,6 +809,9 @@ public class FirebaseHelper {
         }
     }
 
+    /*
+     * delete all messages for provided list of keys
+     */
     public void cleanDeleteAllMessages(String node, final String[] keys){
         for(final String key: keys){
             DatabaseReference reference = database.getReference("messages").child(node).child(key);
@@ -847,7 +833,9 @@ public class FirebaseHelper {
         }
     }
 
-
+    /*
+     * creates new invite notification if none exists for the target
+     */
     public void updateNotificationNode (String node, final FirebaseUserModel target, final String chatKey) {
         final User user = User.getInstance();
         final DatabaseReference notificationRef = database.getReference("notifications").child(target.getUsername());
@@ -883,6 +871,10 @@ public class FirebaseHelper {
         });
     }
 
+    /**
+     * deletes a notification node for current user that matches the selected target username
+     * @param action - specifies whether further action is required once process has been complete
+     */
     public void removeNotificationNode (final String target, final String chatKey, final boolean action) {
         User user = User.getInstance();
         DatabaseReference notificationRef = FirebaseDatabase.getInstance().getReference("notifications").child(user.name);
@@ -919,21 +911,32 @@ public class FirebaseHelper {
         });
     }
 
-    public void notificationNodeExists(final String target, final String chatKey, ValueEventListener eventListener) {
+    /**
+     * toggle listen for when new notification are created for the specified target
+     * @see #getNotificationChecker(String, String)
+     */
+    public void toggleNotificationListener(final String target, ValueEventListener eventListener, boolean add, boolean single) {
         User user = User.getInstance();
         DatabaseReference notificationRef = FirebaseDatabase.getInstance().getReference("notifications").child(user.name);
-        if (eventListener == null)
-            notificationRef.orderByChild("sender").equalTo(target).addListenerForSingleValueEvent(getNotificationChecker(target, chatKey));
-        else
-            notificationRef.addValueEventListener(eventListener);
+        if (eventListener != null) {
+            if (single) {
+                notificationRef.orderByChild("sender").equalTo(target).addListenerForSingleValueEvent(eventListener);
+            } else {
+                if (add) {
+                    notificationRef.addValueEventListener(eventListener);
+                } else {
+                    notificationRef.removeEventListener(eventListener);
+                }
+            }
+        }
+
     }
 
-    public static void removeNotificationListener (ValueEventListener eventListener) {
-        User user = User.getInstance();
-        DatabaseReference notificationRef = FirebaseDatabase.getInstance().getReference("notifications").child(user.name);
-        notificationRef.removeEventListener(eventListener);
-    }
-
+    /**
+     * checks whether a notification node exists with that specific target username
+     * this can be used to verify existence of any notification node if either CONDITION 1 or 2 return with exists = true
+     * invite - know whether the specified target already has pending notification (so take them there to accept/reject)
+     */
     public ValueEventListener getNotificationChecker (final String target, final String chatKey) {
         return new ValueEventListener() {
             @Override
@@ -958,20 +961,23 @@ public class FirebaseHelper {
                 container.setBoolean(exists);
                 container.setNotifications(notifications);
                 if (invite) {
-                    listener.onCompleteTask("notificationNodeExists", CONDITION_1, container);
+                    listener.onCompleteTask("getNotificationChecker", CONDITION_1, container);
                 } else {
-                    listener.onCompleteTask("notificationNodeExists", CONDITION_2, container);
+                    listener.onCompleteTask("getNotificationChecker", CONDITION_2, container);
                 }
 
             }
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
-                listener.onFailureTask("notificationNodeExists", databaseError);
+                listener.onFailureTask("getNotificationChecker", databaseError);
             }
         };
     }
 
+    /*
+     * change message status 0 (unread) to 1 (seen) starting at 1st message id to last id
+     */
     public void updateFirebaseMessageStatus (final String chatKey, final List<String> messages) {
         final Query messagesRef = database.getReference("messages").child("single").child(chatKey).orderByKey().startAt(messages.get(0)).endAt(messages.get(messages.size()-1));
         messagesRef.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -992,6 +998,9 @@ public class FirebaseHelper {
         });
     }
 
+    /*
+     * creates a new message node (of various types SYSTEM, TEXT, PIC) as well as create push notification to either single user to a group of users
+     */
     public void updateMessageNode (final Context context, final String node, final String chatKey, final String wishMessage, final FirebaseUserModel friend, final String msgType, final JSONArray membersDeviceTokens, final String grpTitle) {
         final DatabaseReference messagesRef = database.getReference("messages").child(node).child(chatKey);
         DatabaseReference newRef = messagesRef.push();
@@ -1060,6 +1069,9 @@ public class FirebaseHelper {
         });
     }
 
+    /*
+     * adding new chat key also remove any duplicate/ same key but opposite version. e.g. john-bob and bob-john
+     */
     public void updateChatKeyFromContact (final Contact c, final String chatKey, final boolean invite, final boolean duplicationCheck) {
         final User user = User.getInstance();
         database.getReference("users").orderByChild("username").equalTo(user.name).getRef().runTransaction(new Transaction.Handler() {
@@ -1120,6 +1132,9 @@ public class FirebaseHelper {
         return newKeys;
     }
 
+    /*
+     * creates a new group node
+     */
     public void createGroup(final FirebaseGroupModel firebaseGroupModel, final JSONArray allMembersDeviceToken){
         DatabaseReference newRef = database.getReference("groups").push();
         newRef.setValue(firebaseGroupModel, new DatabaseReference.CompletionListener() {
@@ -1137,7 +1152,11 @@ public class FirebaseHelper {
         });
     }
 
-    public void getDeviceTokensFor(final List<String> allMembers, final String title, final String uniqueId, final boolean noBlockList){
+    /*
+     * returns list of device tokens form all members array
+     * Will not return device token for any members that may have been block listed by that member
+     */
+    public void getDeviceTokensFor(final List<String> allMembers, final boolean noBlockList){
         Collections.sort(allMembers);
         DatabaseReference reference = database.getReference("users");
         final List<String> addedMembers = new ArrayList<>();
@@ -1159,7 +1178,6 @@ public class FirebaseHelper {
                     }
                     Container container = new Container();
                     container.setJsonArray(membersDeviceTokens);
-                    container.setString(title+","+uniqueId);
                     container.setStringList(addedMembers);
                     listener.onCompleteTask("getDeviceTokensFor", CONDITION_1, container);
 
@@ -1173,6 +1191,11 @@ public class FirebaseHelper {
         });
     }
 
+    /**
+     * adds group key to each members from allMembers list
+     * @param  allMembers - list of members belong to the group with the unique id
+     * @param uniqueID - group key
+     */
     public void updateGroupKeyForMembers(final List<String> allMembers, final String uniqueID, final int condition){
         Collections.sort(allMembers);
         DatabaseReference reference = database.getReference("users");
@@ -1219,6 +1242,9 @@ public class FirebaseHelper {
         });
     }
 
+    /*
+     * update current users profile information in the cloud
+     */
     public void updateUserInfo (String target, final Uri uploadedImgUri, final String status, final String profileName, final boolean reset) {
         DatabaseReference userRef = database.getReference("users");
         userRef.orderByChild("username").equalTo(target).addListenerForSingleValueEvent(new ValueEventListener() {
@@ -1233,8 +1259,6 @@ public class FirebaseHelper {
                         updatedUser.setProfilePic(uploadedImgUri.toString());
                     } else if (uploadedImgUri == null && reset) { // reset image back to unknown
                         updatedUser.setProfilePic("");
-                    } else if (uploadedImgUri == null && !reset){ // keep current image but change other information
-                        // do nothing
                     }
 
                     snapshot.getRef().setValue(updatedUser).addOnSuccessListener(new OnSuccessListener<Void>() {
@@ -1262,6 +1286,9 @@ public class FirebaseHelper {
         });
     }
 
+    /*
+     * update group information in the cloud
+     */
     public void updateGroupInfo(final FirebaseGroupModel group){
         DatabaseReference groupsRef = database.getReference("groups");
         groupsRef.orderByChild("groupKey").equalTo(group.getGroupKey()).getRef().runTransaction(new Transaction.Handler() {
@@ -1290,10 +1317,19 @@ public class FirebaseHelper {
         });
     }
 
+    /*
+     * given a list of groups the selected user is able to leave it be removing them from the members/admin field
+     * but their personal group key yet to be removed
+     */
     public void exitGroup (final Chat chat, final String leavingUser, final boolean admin, final List<String> groupsToExit) {
         DatabaseReference reference = database.getReference("groups");
         Collections.sort(groupsToExit);
-        reference.orderByChild("groupKey").startAt(groupsToExit.get(0)).endAt(groupsToExit.get(groupsToExit.size()-1)).getRef().runTransaction(new Transaction.Handler() {
+        if (groupsToExit.size() > 1) {
+            reference.orderByChild("groupKey").startAt(groupsToExit.get(0)).endAt(groupsToExit.get(groupsToExit.size()-1)).getRef();
+        } else {
+            reference.orderByChild("groupKey").equalTo(groupsToExit.get(0));
+        }
+        reference.getRef().runTransaction(new Transaction.Handler() {
             List<FirebaseGroupModel> groupsToDelete = new ArrayList<FirebaseGroupModel>();
             @Override
             public Transaction.Result doTransaction(MutableData mutableData) {
@@ -1310,7 +1346,6 @@ public class FirebaseHelper {
                                 if(groupModel.getAdmin().equals(leavingUser))
                                     groupModel.setAdmin("");
                             }
-
 
                             String[] members = groupModel.getMembers().split(",");
                             newMembers = "";
@@ -1335,6 +1370,7 @@ public class FirebaseHelper {
             @Override
             public void onComplete(DatabaseError databaseError, boolean b, DataSnapshot dataSnapshot) {
                 Container container = new Container();
+                container.setString(leavingUser);
                 if(chat != null)
                     container.setChat(chat); // key to remove
                 else {
@@ -1349,50 +1385,9 @@ public class FirebaseHelper {
         });
     }
 
-    public void removeFromGroup(final String groupKey, final String username){
-        DatabaseReference groupRef = database.getReference("groups").orderByChild("groupKey").equalTo(groupKey).getRef();
-        groupRef.runTransaction(new Transaction.Handler() {
-            @Override
-            public Transaction.Result doTransaction(MutableData mutableData) {
-                for (MutableData data : mutableData.getChildren()) {
-                    FirebaseGroupModel groupModel = data.getValue(FirebaseGroupModel.class);
-
-                    if (groupModel == null) return Transaction.success(mutableData);
-
-                    if (groupModel.getGroupKey().equals(groupKey)) {
-                        String[] members = groupModel.getMembers().split(",");
-                        String newMembers = "";
-                        for (String member : members) {
-                            if (!member.equals(username)) {
-                                newMembers += (newMembers.equals("")) ? member : "," + member;
-                            }
-                        }
-
-                        groupModel.setMembers(newMembers);
-                        data.setValue(groupModel);
-                    }
-
-                }
-
-                return Transaction.success(mutableData);
-            }
-
-            @Override
-            public void onComplete(DatabaseError databaseError, boolean b, DataSnapshot dataSnapshot) {
-                Container container = new Container();
-                List<String> data = new ArrayList<String>();
-                data.add(groupKey);
-                data.add(username);
-                container.setStringList(data);
-                if (databaseError == null) {
-                    listener.onCompleteTask("removeFromGroup", CONDITION_1, container);
-                } else {
-                    listener.onFailureTask("removeFromGroup", databaseError);
-                }
-            }
-        });
-    }
-
+    /*
+     * delete group beloging to a specific chat
+     */
     public void deleteGroup (final Chat chat) {
         DatabaseReference groupRef = database.getReference("groups").orderByChild("groupKey").equalTo(chat.getChatKey()).getRef();
         groupRef.runTransaction(new Transaction.Handler() {
@@ -1442,6 +1437,9 @@ public class FirebaseHelper {
         });
     }
 
+    /*
+     * delete a list of groups
+     */
     public void deleteGroups(final List<FirebaseGroupModel> groups){
         if(groups.size() > 0) {
             Collections.sort(groups, FirebaseGroupModel.groupKeyComparator);
@@ -1486,6 +1484,12 @@ public class FirebaseHelper {
         }
     }
 
+    /*
+     * given a list of users that user is in chat with, loop through each user checking their chat keys to see if they
+     * are still in a chat with that user.
+     * if not then that chat is going to become empty once user deletes their account so it must be deleted
+     * else it can stay alive
+     */
     public void accumulateAllChatsForDeletion(final List<String> allUsersInChatWith, final String username){
         if(allUsersInChatWith.size() > 0) {
             Collections.sort(allUsersInChatWith);
@@ -1546,6 +1550,9 @@ public class FirebaseHelper {
         return -1;
     }
 
+    /*
+     * list to any change in group information for that specific group key
+     */
     public ValueEventListener getGroupInfo(final String groupKey){
         return new ValueEventListener() {
             @Override
@@ -1572,6 +1579,10 @@ public class FirebaseHelper {
         };
     }
 
+    /*
+     * adding new users to existing group
+     * or if a current member becomes a admin (so remove them from members list and add them to admin field)
+     */
     public void updateGroupMembers (final String singleUser, final List<String> usernames, final String chatKey, final boolean admin) {
         DatabaseReference groupRef = database.getReference("groups").orderByChild("groupKey").equalTo(chatKey).getRef();
         groupRef.runTransaction(new Transaction.Handler() {
@@ -1624,6 +1635,10 @@ public class FirebaseHelper {
         });
     }
 
+    /*
+     * given a list of members to add to group, check whether the current user is within their
+     * block list if so then remove them from that membersToAdd list
+     */
     public void allUnblockedMembers (final List<String> membersToAdd) {
         final User user = User.getInstance();
         Collections.sort(membersToAdd);
@@ -1661,6 +1676,9 @@ public class FirebaseHelper {
         });
     }
 
+    /*
+     * adding or removing a list of users from block list
+     */
     public void updateBlockList (final String [] users, final boolean add) {
         final User user = User.getInstance();
         DatabaseReference userRef = database.getReference("users").orderByChild("username").equalTo(user.name).getRef();
@@ -1734,6 +1752,9 @@ public class FirebaseHelper {
         });
     }
 
+    /*
+     * remove the current user from firebase database as their account is now deleted
+     */
     public void deleteUserFromDatabase(final String username){
         DatabaseReference databaseReference = database.getReference("users").orderByChild("username").equalTo(username).getRef();
         databaseReference.runTransaction(new Transaction.Handler() {

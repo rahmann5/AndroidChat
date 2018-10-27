@@ -189,7 +189,8 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
                         imageViewDialog = ImageViewDialogFragment.newInstance(
                                 c.getMessageText(),
                                 Constants.ACTION_DOWNLOAD,
-                                android.R.drawable.ic_menu_upload);
+                                android.R.drawable.ic_menu_upload,
+                                R.drawable.placeholder);
                         imageViewDialog.setCancelable(false);
                         imageViewDialog.show(getSupportFragmentManager(), "ImageViewDialogFragment");
                     }
@@ -278,7 +279,7 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
         super.onResume();
         if (!isPaused) {
             firebaseHelper.toggleListenerFor("groups", "groupKey", groupKey, groupListener, true, false);
-            msgValueEventListener = firebaseHelper.createGroupMessageEventListener(messages, LOAD_AMOUNT, currentKnownMessageCount);
+            msgValueEventListener = firebaseHelper.createGroupMessageEventListener(messages, LOAD_AMOUNT);
             firebaseHelper.toggleGrpMsgEventListeners("group", groupKey, msgValueEventListener, true, false);
         } else
             isPaused = false;
@@ -490,7 +491,8 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
                         imageViewDialog = ImageViewDialogFragment.newInstance(
                                 imageFiles.get(0),
                                 Constants.ACTION_SEND,
-                                android.R.drawable.ic_menu_send);
+                                android.R.drawable.ic_menu_send,
+                                R.drawable.unknown);
                         imageViewDialog.setCancelable(false);
                         imageViewDialog.show(getSupportFragmentManager(), "ImageViewDialogFragment");
                         break;
@@ -570,8 +572,13 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
                     case FirebaseHelper.CONDITION_2:
                         long diff = container.getLong()-currentKnownMessageCount;
                         currentKnownMessageCount = (int) Math.max(Math.min(Integer.MAX_VALUE, (diff+currentKnownMessageCount)), Integer.MIN_VALUE);
-                        if(diff > 0)
-                            firebaseHelper.getNewMessages(groupKey, diff);
+                        if(diff > 0){
+                            int amount = (int) Math.max(Math.min(Integer.MAX_VALUE, diff), Integer.MIN_VALUE);
+                            //firebaseHelper.getNewMessages(groupKey, diff);
+                            firebaseHelper.toggleLastMsgEventListener("group", groupKey, firebaseHelper.createMessageEventListener(true),
+                                    amount , true, true, true );
+                        }
+
                         break;
                     case FirebaseHelper.CONDITION_3:
                         Log.i(TAG, "No messages found");
@@ -640,7 +647,7 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
                         break;
                 }
                 break;
-            case "getNewMessages":
+            case "createMessageEventListener":
                 switch (condition) {
                     case FirebaseHelper.CONDITION_1:
                         List<FirebaseMessageModel> tempMessage = container.getMessages();

@@ -2,13 +2,11 @@ package com.example.naziur.androidchat.activities;
 
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.res.Configuration;
 import android.net.ConnectivityManager;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
 import android.support.v4.view.ViewPager;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -21,15 +19,10 @@ import com.example.naziur.androidchat.R;
 import com.example.naziur.androidchat.adapter.SessionFragmentPagerAdapter;
 import com.example.naziur.androidchat.database.FirebaseHelper;
 import com.example.naziur.androidchat.fragment.GroupSessionFragment;
-import com.example.naziur.androidchat.fragment.SingleSessionFragment;
-import com.example.naziur.androidchat.models.User;
 import com.example.naziur.androidchat.utils.Container;
 import com.example.naziur.androidchat.utils.NetworkChangeReceiver;
-import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.ValueEventListener;
-
-import static android.R.attr.fragment;
 
 public class SessionActivity extends AuthenticatedActivity implements NetworkChangeReceiver.OnNetworkStateChangeListener, FirebaseHelper.FirebaseHelperListener{
     private static final String TAG = "SessionActivity";
@@ -153,7 +146,7 @@ public class SessionActivity extends AuthenticatedActivity implements NetworkCha
     @Override
     protected void onResume() {
         super.onResume();
-        firebaseHelper.notificationNodeExists(null, null, notificationListener);
+        firebaseHelper.toggleNotificationListener(null, notificationListener, true, false);
 
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
@@ -163,7 +156,7 @@ public class SessionActivity extends AuthenticatedActivity implements NetworkCha
     @Override
     protected void onStop() {
         super.onStop();
-        FirebaseHelper.removeNotificationListener(notificationListener);
+        firebaseHelper.toggleNotificationListener(null, notificationListener, false, false);
     }
 
     @Override
@@ -177,7 +170,7 @@ public class SessionActivity extends AuthenticatedActivity implements NetworkCha
 
     @Override
     public void onCompleteTask(String tag, int condition, Container container) {
-        if (tag.equals("notificationNodeExists")) {
+        if (tag.equals("getNotificationChecker")) {
             switch (condition) {
                 case FirebaseHelper.CONDITION_1 :
                 case FirebaseHelper.CONDITION_2 :
@@ -198,7 +191,7 @@ public class SessionActivity extends AuthenticatedActivity implements NetworkCha
     @Override
     public void onFailureTask(String tag, DatabaseError databaseError) {
         switch (tag) {
-            case "notificationNodeExists" :
+            case "getNotificationChecker" :
                 Log.i(TAG, databaseError.getMessage());
                 break;
         }

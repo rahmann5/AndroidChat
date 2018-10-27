@@ -321,7 +321,8 @@ public class MyContactsActivity extends AuthenticatedActivity implements AddCont
                             if (contactChatKey.equals("") && currentUserChatKey.equals("")) {
                                 createKeyAndSendInvitation(contact);
                             } else {
-                                firebaseHelper.notificationNodeExists(contact.getContact().getUsername(), currentUserChatKey, null);
+                                ValueEventListener notificationChecker = firebaseHelper.getNotificationChecker(contact.getContact().getUsername(), currentUserChatKey);
+                                firebaseHelper.toggleNotificationListener(contact.getContact().getUsername(), notificationChecker, true, true);
                             }
                         } else {
                             Toast.makeText(this, getResources().getString(R.string.block_list_msg_blocked_by_them), Toast.LENGTH_SHORT).show();
@@ -363,7 +364,7 @@ public class MyContactsActivity extends AuthenticatedActivity implements AddCont
                     startChatActivity(container.getString());
                     break;
             }
-        } else if (tag.equals("notificationNodeExists")) {
+        } else if (tag.equals("getNotificationChecker")) {
             switch (condition) {
                 case FirebaseHelper.CONDITION_1 :
                     startActivity(new Intent(MyContactsActivity.this, NotificationActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));

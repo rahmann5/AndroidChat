@@ -1,19 +1,14 @@
 package com.example.naziur.androidchat.activities;
 
 import android.content.Intent;
-import android.support.constraint.solver.widgets.Snapshot;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.LinearLayout;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.naziur.androidchat.R;
@@ -25,12 +20,7 @@ import com.example.naziur.androidchat.models.Notification;
 import com.example.naziur.androidchat.models.User;
 import com.example.naziur.androidchat.utils.Container;
 import com.example.naziur.androidchat.utils.Network;
-import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.MutableData;
-import com.google.firebase.database.Transaction;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
@@ -74,7 +64,7 @@ public class NotificationActivity extends AuthenticatedActivity implements Notif
     protected void onResume() {
         super.onResume();
         if (Network.isInternetAvailable(this, true)) {
-            firebaseHelper.notificationNodeExists(null, null, notificationEvent);
+            firebaseHelper.toggleNotificationListener(null, notificationEvent, true, false);
         } else {
             toggleEmpty(null);
         }
@@ -107,7 +97,7 @@ public class NotificationActivity extends AuthenticatedActivity implements Notif
     @Override
     protected void onStop() {
         super.onStop();
-        FirebaseHelper.removeNotificationListener(notificationEvent);
+        firebaseHelper.toggleNotificationListener(null, notificationEvent, false, false);
     }
 
     @Override
@@ -126,7 +116,7 @@ public class NotificationActivity extends AuthenticatedActivity implements Notif
 
     @Override
     public void onCompleteTask(String tag, int condition, Container container) {
-        if (tag.equals("notificationNodeExists")) {
+        if (tag.equals("getNotificationChecker")) {
             switch (condition) {
                 case FirebaseHelper.CONDITION_1 :
                 case FirebaseHelper.CONDITION_2 :
@@ -156,7 +146,7 @@ public class NotificationActivity extends AuthenticatedActivity implements Notif
     @Override
     public void onFailureTask(String tag, DatabaseError databaseError) {
         switch (tag) {
-            case "notificationNodeExists" :
+            case "getNotificationChecker" :
                 toggleEmpty(null);
                 Toast.makeText(NotificationActivity.this, "Failed to retrieve notifications", Toast.LENGTH_SHORT).show();
                 break;

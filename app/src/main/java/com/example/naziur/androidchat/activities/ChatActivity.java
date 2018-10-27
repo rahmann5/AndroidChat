@@ -169,7 +169,8 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
                         imageViewDialog = ImageViewDialogFragment.newInstance(
                                 c.getMessageText(),
                                 Constants.ACTION_DOWNLOAD,
-                                android.R.drawable.ic_menu_upload);
+                                android.R.drawable.ic_menu_upload,
+                                R.drawable.unknown);
                         imageViewDialog.setCancelable(true);
                         imageViewDialog.show(getSupportFragmentManager(), "ImageViewDialogFragment");
                     }
@@ -207,7 +208,7 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
 
         progressBar = new ProgressDialog(this, R.layout.progress_dialog, true);
 
-        commentValueEventListener = firebaseHelper.createMessageEventListener();
+        commentValueEventListener = firebaseHelper.createMessageEventListener(false);
 
 
         btnInvite.setOnClickListener(new View.OnClickListener() {
@@ -367,7 +368,8 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
                         imageViewDialog = ImageViewDialogFragment.newInstance(
                                 imageFiles.get(0),
                                 Constants.ACTION_SEND,
-                                android.R.drawable.ic_menu_send);
+                                android.R.drawable.ic_menu_send,
+                                R.drawable.unknown);
                         imageViewDialog.setCancelable(true);
                         imageViewDialog.show(getSupportFragmentManager(), "ImageViewDialogFragment");
                         break;

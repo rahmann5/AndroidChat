@@ -67,21 +67,25 @@ public class ImageViewDialogFragment extends DialogFragment implements FirebaseH
     public static String imageFileString;
     private static String action;
     private static int actionIcon;
+    private static int errorIcon;
     ProgressBar progressBar;
 
-    public static ImageViewDialogFragment newInstance (File f, String a, int icon) {
+    public static ImageViewDialogFragment newInstance (File f, String a, int icon, int errIcon) {
         imageFile = f;
         imageFileString = null;
-        action = a;
-        actionIcon = icon;
-        return new ImageViewDialogFragment();
+        return initaliseCommonVariables (a, icon, errIcon);
     }
 
-    public static ImageViewDialogFragment newInstance (String f, String a, int icon) {
+    public static ImageViewDialogFragment newInstance (String f, String a, int icon, int errIcon) {
         imageFileString = f;
         imageFile = null;
+        return initaliseCommonVariables (a, icon, errIcon);
+    }
+
+    private static ImageViewDialogFragment initaliseCommonVariables (String a, int icon, int errIcon) {
         action = a;
         actionIcon = icon;
+        errorIcon = errIcon;
         return new ImageViewDialogFragment();
     }
 
@@ -100,11 +104,11 @@ public class ImageViewDialogFragment extends DialogFragment implements FirebaseH
         firebaseHelper.setFirebaseHelperListener(this);
         if (imageFile != null) {
             Glide.with(getActivity()).load(imageFile)
-                    .apply(new RequestOptions().placeholder(R.drawable.placeholder).error(R.drawable.unknown))
+                    .apply(new RequestOptions().placeholder(R.drawable.placeholder).error(errorIcon))
                     .into(display);
         } else if (imageFileString != null) {
             Glide.with(getActivity()).load(imageFileString)
-                    .apply(new RequestOptions().placeholder(R.drawable.placeholder).error(R.drawable.unknown))
+                    .apply(new RequestOptions().placeholder(R.drawable.placeholder).error(errorIcon))
                     .into(display);
         }
 
@@ -179,16 +183,18 @@ public class ImageViewDialogFragment extends DialogFragment implements FirebaseH
                     @SuppressWarnings("VisibleForTests")
                     final Uri downloadUrl = taskSnapshot.getDownloadUrl();
                     getDialog().dismiss();
-                    FirebaseMessageModel messageModel;
-                    StringEntity entity;
                     if(friend != null) {
-                        entity = Network.generateSingleMsgEntity(context, Constants.MESSAGE_TYPE_PIC, downloadUrl.toString(), friend, chatKey);
+                       /* entity = Network.generateSingleMsgEntity(context, Constants.MESSAGE_TYPE_PIC, downloadUrl.toString(), friend, chatKey);
                         messageModel = Network.makeNewMessageNode(Constants.MESSAGE_TYPE_PIC, downloadUrl.toString(),friend);
-                        firebaseHelper.createImageUploadMessageNode("single", chatKey, context, downloadUrl.toString(), messageModel, entity);
+                        firebaseHelper.createImageUploadMessageNode("single", chatKey, context, downloadUrl.toString(), messageModel, entity);*/
+
+                        firebaseHelper.updateMessageNode(context, "single", chatKey, downloadUrl.toString(), friend, Constants.MESSAGE_TYPE_PIC, null, "");
                     }else {
-                        entity = Network.generateGroupMsgEntity(context, Constants.MESSAGE_TYPE_PIC, members, group.getTitle(), group.getGroupKey(), downloadUrl.toString());
+                        /*entity = Network.generateGroupMsgEntity(context, Constants.MESSAGE_TYPE_PIC, members, group.getTitle(), group.getGroupKey(), downloadUrl.toString());
                         messageModel = Network.makeNewGroupMessageModel(group.getGroupKey(), downloadUrl.toString(), Constants.MESSAGE_TYPE_PIC);
-                        firebaseHelper.createImageUploadMessageNode("group", chatKey, context, downloadUrl.toString(),messageModel, entity);
+                        firebaseHelper.createImageUploadMessageNode("group", chatKey, context, downloadUrl.toString(),messageModel, entity);*/
+
+                        firebaseHelper.updateMessageNode(context, "group", chatKey, downloadUrl.toString(), friend, Constants.MESSAGE_TYPE_PIC, members, group.getTitle());
                     }
                 }
             }).addOnFailureListener(new OnFailureListener() {
