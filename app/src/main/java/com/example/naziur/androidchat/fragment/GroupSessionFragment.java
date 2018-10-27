@@ -43,13 +43,14 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * A simple {@link Fragment} subclass.
+ * A fragment that allows users to view all their group chats and any empty chats (chats that user was a part of but no longer exists)
+ * Runs three key listeners (threads): (1) to listen to users group keys, (2) to keep each groups info up to date, (3) gets last message in each group chats
  */
 public class GroupSessionFragment extends Fragment implements FirebaseHelper.FirebaseHelperListener{
 
     private static final String TAG = GroupSessionFragment.class.getSimpleName();
 
-    private ValueEventListener userListener;
+    private ValueEventListener userListener; //Listener 1
     private AllChatsAdapter myChatsdapter;
     private RecyclerView recyclerView;
     private LinearLayout emptyChats;
@@ -60,8 +61,8 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
     private ProgressDialog progressBar;
     private ProgressBar chatProgress;
     private TextView textEmptyChat;
-    private Map<String, ValueEventListener> grpValueEventListeners;
-    private Map<String, ValueEventListener> grpMsgValueEventListeners;
+    private Map<String, ValueEventListener> grpValueEventListeners;  //Listeners 2
+    private Map<String, ValueEventListener> grpMsgValueEventListeners;  //Listeners 3
     private SimpleDateFormat formatter;
     FirebaseHelper firebaseHelper;
 
@@ -92,6 +93,9 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
         return rootView;
     }
 
+    /**
+     * All execution starts here with the user listener that first fetches the keys then proceeds to get group info's and then the last messages for each.
+     */
     @Override
     public void onResume() {
         super.onResume();
@@ -102,14 +106,13 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
             }
         }
         toggleEmptyView(false, true);
+        //Below just makes the listener but doesn't run it yet
         userListener = firebaseHelper.getValueEventListener(user.name, FirebaseHelper.CONDITION_1, FirebaseHelper.CONDITION_2, FirebaseHelper.CONDITION_3 ,FirebaseUserModel.class);
+        //Below runs the listener above
         firebaseHelper.toggleListenerFor("users", "username" , user.name, userListener, true, false);
     }
 
     private void setUpGrpEventListeners(int index, boolean single, int loop, int exit ,int complete) {
-        /*grpValueEventListeners.clear();
-        grpMsgValueEventListeners.clear();
-        myChatsdapter.clearAllChats ();*/
         if (index < allGroupKeys.size()) {
             final String currentGroupKey = allGroupKeys.get(index);
             ValueEventListener valueEventListener = firebaseHelper.getValueEventListener(currentGroupKey, loop, exit, complete, FirebaseGroupModel.class);
@@ -265,20 +268,28 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
 
     }
 
-
+    /*
+     * Code that is executed when the thread detects a change in the node that it is listening to.
+     * First it will do processing the thread and then send its result to onComplete() for further
+     * bespoke processing by the requesting class. Also any result of firebase helper code are sent here.
+     * @param tag - the name of the firebase code that was executed
+     * @param condition - a specific condition was satisfied and a result was produced at this point that needs to be returned
+     *                  to calling class
+     * @param container - the result of the firebase code
+     * */
     @Override
     public void onCompleteTask(String tag, int condition, Container container) {
-        if (tag.equals("getMessageEventListener")) {
+        if (tag.equals("getMessageEventListener")) { //Listeners 3
             toggleEmptyView(true, false);
-        } else if (tag.equals("getValueEventListener")) {
+        } else if (tag.equals("getValueEventListener")) { //Listener 1 and listeners 2
             switch (condition) {
 
-                case FirebaseHelper.CONDITION_2 :
+                case FirebaseHelper.CONDITION_2 : //Listener 1
                     toggleEmptyView(true, false);
                     Log.i(TAG, container.getString() + " does not exist");
                     break;
 
-                case FirebaseHelper.CONDITION_3 :
+                case FirebaseHelper.CONDITION_3 : //Listener 1 - retrieved group keys now get the group information
                     if (!allGroupKeys.isEmpty()) {
                         myChatsdapter.clearAllChats();
                         setUpGrpEventListeners(0, true, FirebaseHelper.CONDITION_4, FirebaseHelper.CONDITION_7 , FirebaseHelper.CONDITION_5);
@@ -287,14 +298,14 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
                     }
                     break;
 
-                case FirebaseHelper.CONDITION_5 :
+                case FirebaseHelper.CONDITION_5 : //Listeners 2
                     if (allGroups.size() == allGroupKeys.size()) {
                         for (int i = 0; i< allGroups.size(); i++) {
                             setUpGrpEventListeners(i, false, FirebaseHelper.CONDITION_6, FirebaseHelper.NON_CONDITION ,FirebaseHelper.NON_CONDITION);
                         }
                     }
                     break;
-                case FirebaseHelper.CONDITION_7:
+                case FirebaseHelper.CONDITION_7: //Listeners 2
                     if(allGroupKeys.contains(container.getString())) {
                         FirebaseGroupModel emptyGroup = new FirebaseGroupModel();
                         emptyGroup.setTitle("Empty Group");
@@ -302,11 +313,9 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
                         emptyGroup.setPic("");
                         emptyGroup.setAdmin("");
                         emptyGroup.setMembers("");
-                        //allGroups.add(emptyGroup);
                         Chat chat = new Chat(emptyGroup.getTitle(), "System", "This is a deleted group.", emptyGroup.getPic(), "", container.getString(), Constants.MESSAGE_TYPE_SYSTEM, "");
                         chat.setEmptyChat(true);
                         myChatsdapter.addOrRemoveChat(chat, true);
-                        //myChatsdapter.notifyDataSetChanged();
                         allGroupKeys.remove(container.getString()); // remove redundent keys
                         // never reaches condition 4 need to find way to continue recursive function
                         if (allGroups.size() != allGroupKeys.size()) {
@@ -325,18 +334,18 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
                     break;
 
             }
-        } else if (tag.equals("exitGroup")) {
+        } else if (tag.equals("exitGroup")) { //When leaving a group we need to delete groups that may be empty to save space
             switch (condition) {
                 case FirebaseHelper.CONDITION_1 :
                     Chat chat = container.getChat();
-                    updateUserChatKeys(chat);
+                    updateUserChatKeys(chat); // deleting users group key (of the group that they are leaving)
                     break;
 
                 case FirebaseHelper.CONDITION_2 : // failure reattach listener for that previously removed group listener
                     firebaseHelper.toggleListenerFor("groups", "groupKey" , container.getChat().getChatKey(), grpValueEventListeners.get(container.getString()), true, false);
                     break;
             }
-        } else if (tag.equals("updateChatKeys")) {
+        } else if (tag.equals("updateChatKeys")) { //group keys were updated (deleted)
             switch (condition) {
                 case FirebaseHelper.CONDITION_1 :
                     Chat chat = container.getChat();
@@ -350,13 +359,13 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
                     myChatsdapter.notifyDataSetChanged();
                     if (!chat.isEmptyChat()) {
                         toggleEmptyView(true, true);
-                        firebaseHelper.deleteGroup(chat);
+                        firebaseHelper.deleteGroup(chat); // identify if the group has no more members, if so delete it
                     } else {
                         toggleEmptyView(true, false);
                     }
                     break;
             }
-        } else if (tag.equals("deleteGroup")) {
+        } else if (tag.equals("deleteGroup")) { // find any messages that sent images for the group that is being deleted
             switch (condition) {
                 case FirebaseHelper.CONDITION_1 :
                     // clean delete all messages + images
@@ -371,13 +380,13 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
                     Toast.makeText(getActivity(), "Successfully left the group", Toast.LENGTH_SHORT).show();
                     break;
             }
-        } else if (tag.equals("collectAllImagesForDeletionThenDeleteRelatedMessages")) {
+        } else if (tag.equals("collectAllImagesForDeletionThenDeleteRelatedMessages")) { // now delete all identified images + messages
             switch (condition) {
                 case FirebaseHelper.CONDITION_1:
                     Network.deleteUploadImages(firebaseHelper, container.getStringList(), new String[]{container.getString()}, "group");
                     break;
             }
-        } else if (tag.equals("cleanDeleteAllMessages")) {
+        } else if (tag.equals("cleanDeleteAllMessages")) { // completed deletion of group
             switch (condition){
                 case FirebaseHelper.CONDITION_1:
                     progressBar.toggleDialog(false);
@@ -391,15 +400,21 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
         }
     }
 
+    /*How to handle if the firebase helper code fails to execute its requested job*/
+
     @Override
     public void onFailureTask(String tag, DatabaseError databaseError) {
         toggleEmptyView(false, false);
         Log.i(TAG, tag + ": " + databaseError.getMessage());
     }
 
+    /*
+    * During the execution of a firebase code some bespoke processing might need to occure for the listener.
+    * The firebase code can send specific data here for processing before it is terminated to the onComplete().
+    * */
     @Override
     public void onChange(String tag, int condition, Container container) {
-        if (tag.equals("getMessageEventListener")) {
+        if (tag.equals("getMessageEventListener")) { //Listeners 3
             switch (condition) {
                 case FirebaseHelper.CONDITION_1 :
                     String groupKey = container.getString();
@@ -418,9 +433,9 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
                     }
                     break;
             }
-        } if (tag.equals("getValueEventListener")) {
+        } if (tag.equals("getValueEventListener")) { //Listener 1 and listeners 2
             switch (condition) {
-                case FirebaseHelper.CONDITION_1 :
+                case FirebaseHelper.CONDITION_1 : //Listener 1
                     FirebaseUserModel userModel = (FirebaseUserModel) container.getObject();
                     if (userModel.getUsername().equals(container.getString())) {
                         String[] allKeys = userModel.getGroupKeys().split(",");
@@ -433,7 +448,7 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
                     }
                     break;
 
-                case FirebaseHelper.CONDITION_4:
+                case FirebaseHelper.CONDITION_4: //Listeners 2
                     FirebaseGroupModel firebaseGroupModel = (FirebaseGroupModel) container.getObject();
                     if(firebaseGroupModel.getGroupKey().equals(container.getString())) {
                         //addToGroupIfNew(firebaseGroupModel);
@@ -443,8 +458,8 @@ public class GroupSessionFragment extends Fragment implements FirebaseHelper.Fir
                         setUpGrpEventListeners(allGroups.size(), true, FirebaseHelper.CONDITION_4, FirebaseHelper.CONDITION_7 ,FirebaseHelper.CONDITION_5);
                     }
                     break;
-
-                case FirebaseHelper.CONDITION_6: // setUpGrpEventListeners comes here once per group if that group has changed
+                // setUpGrpEventListeners comes here once per group if that group has changed,
+                case FirebaseHelper.CONDITION_6: // Listeners 2 - now get the last messages for each group
                     FirebaseGroupModel firebaseModel = (FirebaseGroupModel) container.getObject();
                     if(firebaseModel.getGroupKey().equals(container.getString())) {
                         updateGroupModel(firebaseModel);
