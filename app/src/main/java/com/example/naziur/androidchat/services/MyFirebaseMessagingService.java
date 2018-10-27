@@ -1,34 +1,20 @@
 package com.example.naziur.androidchat.services;
 
-import android.app.Activity;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
-import android.content.Context;
 import android.content.Intent;
-import android.graphics.BitmapFactory;
-import android.media.RingtoneManager;
-import android.net.Uri;
-import android.support.v4.app.NotificationCompat;
-import android.util.Log;
-
-import com.example.naziur.androidchat.activities.ChatActivity;
-import com.example.naziur.androidchat.activities.MainActivity;
-import com.example.naziur.androidchat.R;
-import com.example.naziur.androidchat.utils.Network;
-import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import java.io.Serializable;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
  * Created by Naziur on 27/08/2018.
+ *
+ * Firebase service that listens for broadcast sent from firebase and then fires an ordered broadcast:
+ * this will either fire a push notification or cancel the push notification due to user being in the
+ * chat page already hence not requiring to receive a notification.
+ *
  */
 
 public class MyFirebaseMessagingService extends FirebaseMessagingService {
@@ -38,6 +24,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
 
         //Calling method to show notification
         Intent intent = new Intent();
+        //If the below action is caught by the chat activities the push notification is aborted else it is fired
         intent.setAction("my.custom.action");
         intent.putExtra("body",  remoteMessage.getNotification().getBody());
         intent.putExtra("tag",  remoteMessage.getNotification().getTag());

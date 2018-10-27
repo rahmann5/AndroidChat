@@ -1,6 +1,5 @@
 package com.example.naziur.androidchat.utils;
 
-import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
@@ -9,22 +8,17 @@ import android.content.Intent;
 import android.graphics.BitmapFactory;
 import android.media.RingtoneManager;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
-import android.text.Html;
-import android.text.Spanned;
-import android.widget.Toast;
 
 import com.example.naziur.androidchat.R;
 import com.example.naziur.androidchat.activities.MainActivity;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
-import java.util.HashMap;
 
 /**
  * Created by Naziur on 08/10/2018.
+ *
+ * if the ordered intent (MyFirebaseMessagingService) isn't aborted it will reach here and fire a push notification
  */
 
 public class MyReceiver extends BroadcastReceiver {
@@ -63,7 +57,7 @@ public class MyReceiver extends BroadcastReceiver {
                 .setContentIntent(pendingIntent);
 
 
-
+        //dToken to ensure same chat doesn't create different notification each time
         mNotificationManager.notify(dToken, NOTIFICATION_ID, notificationBuilder.build());
     }
 

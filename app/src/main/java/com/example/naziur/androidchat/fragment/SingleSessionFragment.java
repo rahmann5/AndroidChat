@@ -42,7 +42,8 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * A simple {@link Fragment} subclass.
+ * A fragment that allows users to manage all one to one chats.
+ * Has two key thread(s): (1) to listen to any change in the users chat keys, (2) to get last message in each chat
  */
 public class SingleSessionFragment extends Fragment implements FirebaseHelper.FirebaseHelperListener{
 
@@ -85,7 +86,9 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
         setUpRecyclerView();
         return rootView;
     }
-
+    /*
+    * All main execution starts here with first getting the users chat keys
+    * */
     @Override
     public void onResume() {
         super.onResume();
@@ -227,6 +230,15 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
         super.onDestroy();
     }
 
+    /**
+     * Code that is executed when the thread detects a change in the node that it is listening to.
+     * First it will do processing the thread and then send its result to onComplete() for further
+     * bespoke processing by the requesting class. Also any result of firebase helper code are sent here.
+     * @param tag - the name of the firebase code that was executed
+     * @param condition - a specific condition was satisfied and a result was produced at this point that needs to be returned
+     *                  to calling class
+     * @param container - the result of the firebase code
+     */
     @Override
     public void onCompleteTask(String tag, int condition, Container container) {
         switch(tag){
@@ -258,7 +270,7 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
                 break;
             case "checkKeyListKey":
                 switch(condition){
-                    case FirebaseHelper.CONDITION_2:
+                    case FirebaseHelper.CONDITION_2: // the other member did not have the chat key so collect any images for this chat for deletion
                         FirebaseGroupModel grp = new FirebaseGroupModel();
                         grp.setGroupKey(container.getString());
                         grp.setPic(null);
@@ -270,14 +282,13 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
             case "getValueEventListener" :
                 switch (condition) {
                     case FirebaseHelper.CONDITION_2:
-                        //Toast.makeText(getContext(), "No chats found for this user, as the account may no longer exist", Toast.LENGTH_SHORT).show();
                         toggleEmptyView(false, false);
                         break;
-                    case FirebaseHelper.CONDITION_3:
+                    case FirebaseHelper.CONDITION_3: //Obtained chat keys now get the last message
                         setUpMsgEventListeners();
                         break;
                 }
-            case "updateChatKeys":
+            case "updateChatKeys": // Initiating process of leaving chat (check if other member of chat has still got the chat key)
                 switch(condition){
                     case FirebaseHelper.CONDITION_1:
                         //verifying if all messages are deleteable
@@ -296,14 +307,14 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
                         break;
                 }
                 break;
-            case "collectAllImagesForDeletionThenDeleteRelatedMessages":
+            case "collectAllImagesForDeletionThenDeleteRelatedMessages": // now delete all identified images + messages
                 switch (condition){
                     case FirebaseHelper.CONDITION_1:
                         Network.deleteUploadImages(firebaseHelper, container.getStringList(), new String[]{container.getString()}, "single");
                         break;
                 }
                 break;
-            case "cleanDeleteAllMessages":
+            case "cleanDeleteAllMessages": // completed process of leaving a chat
                 switch (condition){
                     case FirebaseHelper.CONDITION_1:
                         progressBar.toggleDialog(false);
@@ -340,14 +351,6 @@ public class SingleSessionFragment extends Fragment implements FirebaseHelper.Fi
     @Override
     public void onChange(String tag, int condition, Container container) {
         switch(tag) {
-            case "getMessageEventListener":
-                switch (condition) {
-                    case FirebaseHelper.CONDITION_1:
-
-                        break;
-                }
-                break;
-
             case "getValueEventListener":
                 switch(condition){
                     case FirebaseHelper.CONDITION_1:

@@ -1,7 +1,6 @@
 package com.example.naziur.androidchat.activities;
 
 import android.app.Activity;
-import android.app.ActivityOptions;
 import android.content.BroadcastReceiver;
 import android.content.ClipData;
 import android.content.ClipboardManager;
@@ -14,7 +13,6 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.ActionBar;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -60,10 +58,15 @@ import hani.momanii.supernova_emoji_library.Helper.EmojiconEditText;
 import pl.aprilapps.easyphotopicker.DefaultCallback;
 import pl.aprilapps.easyphotopicker.EasyImage;
 
+/*
+* A class that manages chat between a group of users.
+* It runs two critical listeners (threads) these are used to listen to change in the group information and any messages sent
+* */
+
 public class GroupChatActivity extends AuthenticatedActivity implements ImageViewDialogFragment.ImageViewDialogListener, FirebaseHelper.FirebaseHelperListener {
     private static final String TAG = "GroupChatActivity";
     private static final int REQUEST_CODE_GALLERY_CAMERA = 0;
-    private static final int LOAD_AMOUNT = 4;
+    private static final int LOAD_AMOUNT = 4;/*Amount of messages to load at a time*/
     User user = User.getInstance();
 
     EmojiconEditText textComment;
@@ -73,7 +76,7 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
     ListView listView;
     List<FirebaseMessageModel> messages = new ArrayList<FirebaseMessageModel>();
     FirebaseGroupModel groupModel;
-    JSONArray registeredIds;
+    JSONArray registeredIds;/*Device tokens of users in the group that need to receive message*/
     private ActionBar actionBar;
     private ProgressDialog progressBar;
     private String groupKey = "";
@@ -83,12 +86,13 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
     FirebaseHelper firebaseHelper;
     private ImageViewDialogFragment imageViewDialog;
     private ContactDBHelper db;
+    /*Filter to intercept notification so that if we are in a chat with someone who sends a message not to show it*/
     private IntentFilter mFilter = new IntentFilter("my.custom.action");
     public int currentFirstVisibleItem, currentVisibleItemCount, totalItem, currentScrollState;
     private List<FirebaseMessageModel> tempMsg;
     private boolean isScrolling = false;
     private boolean isPaused = false;
-    private boolean isTop = false;
+    private boolean isTop = false; /*boolean used to detect when we have all messages from server for this chat, so stop trying to look for more*/
     private int currentKnownMessageCount = 0;
 
     @Override
@@ -261,7 +265,7 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
             Bundle extra = intent.getExtras();
             if (extra != null) {
                 if (groupKey.equals(extra.getString("tag"))) {
-                    abortBroadcast();
+                    abortBroadcast();//user who send me a message is in the group im talking to currently so abort any notification
                 }
             }
         }
@@ -349,7 +353,10 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
         inputMethodManager.hideSoftInputFromWindow(
                 activity.getCurrentFocus().getWindowToken(), 0);
     }
-
+    /*
+    * Members in a string of usernames that include me in it potentially, so find only those that need to
+    * receive message not including me
+    * */
     private String[] getMembersThatNeedToReceiveMessage() {
         List<String> members = new ArrayList<>();
         if (groupModel != null) {
@@ -528,10 +535,20 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
         listView.requestFocus();
     }
 
+    /*
+    * Code that is executed when the thread detects a change in the node that it is listening to.
+    * First it will do processing the thread and then send its result to onComplete() for further
+    * bespoke processing by the requesting class. Also any result of firebase helper code are sent here.
+    * @param tag - the name of the firebase code that was executed
+    * @param condition - a specific condition was satisfied and a result was produced at this point that needs to be returned
+    *                  to calling class
+    * @param container - the result of the firebase code
+    * */
+
     @Override
     public void onCompleteTask(String tag, int condition, Container container) {
         switch (tag) {
-            case "getGroupInfo":
+            case "getGroupInfo": /*Thread/Listener 1 - called each time there is a change when in group object in firebase*/
                 switch (condition) {
                     case FirebaseHelper.CONDITION_1:
                         groupModel = container.getGroupModel();
@@ -545,9 +562,9 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
                         break;
                 }
                 break;
-            case "createGroupMessageEventListener":
+            case "createGroupMessageEventListener": /*Thread/Listener 2 - called when new messages are added to that groups message node*/
                 switch (condition) {
-                    case FirebaseHelper.CONDITION_1:
+                    case FirebaseHelper.CONDITION_1:/* When entering activity gets latest messages, won't reach here anymore unless re-entering activity */
                         currentKnownMessageCount = container.getInt();
                         List<FirebaseMessageModel> tempMessage = container.getMessages();
                         if (!tempMessage.isEmpty()) {
@@ -567,7 +584,7 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
                         }
                         progressBar.toggleDialog(false);
                         break;
-                    case FirebaseHelper.CONDITION_2:
+                    case FirebaseHelper.CONDITION_2: /* While in activity all subsequent messages received come here */
                         long diff = container.getLong()-currentKnownMessageCount;
                         currentKnownMessageCount = (int) Math.max(Math.min(Integer.MAX_VALUE, (diff+currentKnownMessageCount)), Integer.MIN_VALUE);
                         if(diff > 0)
@@ -608,7 +625,7 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
                         break;
                 }
                 break;
-            case "checkGroupsKeys":
+            case "checkGroupsKeys": /*Verified which users are still in this group, so who can receive messages still*/
                 switch (condition) {
                     case FirebaseHelper.CONDITION_1:
                         registeredIds = new JSONArray();
@@ -681,6 +698,10 @@ public class GroupChatActivity extends AuthenticatedActivity implements ImageVie
         Log.i(TAG, tag + " " + databaseError.getMessage());
     }
 
+    /*
+     * During the execution of a firebase code some bespoke processing might need to occure for the listener.
+     * The firebase code can send specific data here for processing before it is terminated to the onComplete().
+     * */
     @Override
     public void onChange(String tag, int condition, Container container) {
         switch (tag) {

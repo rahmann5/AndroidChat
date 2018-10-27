@@ -143,6 +143,15 @@
     <string name="delete_dialog_op_1">Yes</string>
     <string name="delete_dialog_op_2">No</string>
 
+    <string name="progress_info_1">Retrieving user information</string>
+    <string name="progress_info_2">Exiting from associated groups</string>
+    <string name="progress_info_3">Exiting from associated one-to-one chats</string>
+    <string name="progress_info_4">Proceeding to delete user account</string>
+    <string name="progress_info_5">Deleting any redundant groups</string>
+    <string name="progress_info_6">Collecting any related images from groups for deletion</string>
+    <string name="progress_info_7">Deleting any associated one-to-one chats</string>
+    <string name="progress_info_8">User account deleted</string>
+
     <!-- About Settings Keys -->
     <string name="about_category_title">About</string>
     <string name="app_info_category_title">App Info</string>

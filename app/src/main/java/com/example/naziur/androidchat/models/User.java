@@ -68,11 +68,12 @@ public class User {
         firebaseKey = "";
         name = "";
         deviceId = "";
-
+        profileName = "";
         SharedPreferences.Editor editor = sharedpreferences.edit();
         editor.putString(Key, firebaseKey);
         editor.putString(Name, name);
         editor.putString(DeviceId, deviceId);
+        editor.putString(ProfileName, profileName);
 
         editor.apply();
     }

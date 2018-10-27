@@ -55,7 +55,10 @@ import hani.momanii.supernova_emoji_library.Helper.EmojiconEditText;
 import pl.aprilapps.easyphotopicker.DefaultCallback;
 import pl.aprilapps.easyphotopicker.EasyImage;
 
-
+/**
+ * A class that manages chat between two users
+ * It runs two critical listeners (thread) these are used to listen change in recipients information (chat keys) and any message sent
+ */
 public class ChatActivity extends AuthenticatedActivity implements ImageViewDialogFragment.ImageViewDialogListener,
         FirebaseHelper.FirebaseHelperListener{
     private static final String TAG = "ChatActivity";
@@ -146,9 +149,9 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
         btnEmoji.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                hideSoftKeyBoard(ChatActivity.this);
-                emojIcon.ShowEmojIcon();
-                showSoftKeyBoard();
+                hideSoftKeyBoard(ChatActivity.this);//hide existing keyboard if open
+                emojIcon.ShowEmojIcon(); //this enables the emoji keyboard, but needs to be activated again to take effect
+                showSoftKeyBoard(); // this forces the keyboard to open to make above statement take effect
             }
         });
 
@@ -209,7 +212,7 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
 
         commentValueEventListener = firebaseHelper.createMessageEventListener();
 
-
+        /*Sends a notification to recipient if they have left the chat to invite them back into the chat*/
         btnInvite.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -280,13 +283,17 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
             if (extra != null) {
                 if(friend != null) {
                     if(friend.getDeviceId().equals(extra.getString("tag"))) {
-                        abortBroadcast();
+                        abortBroadcast(); // user who sent me a notification is talking to me in this chat, os abort the notification
                     }
                 }
             }
         }
     };
 
+    /**
+     * Execution starts here by first getting the recipient and senders info then obtains all unrecieved message (if not then the last
+     * messages in accordance to the LOAD_MOUNT)
+     */
     @Override
     protected void onResume() {
         super.onResume();
@@ -469,7 +476,7 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
             final FirebaseMessageModel firebaseMessageModel = messages.get(counter);
             if(!firebaseMessageModel.getSenderName().equals(me.getUsername()) && firebaseMessageModel.getIsReceived() == Constants.MESSAGE_SENT) {
                 firebaseMessageModel.setIsReceived(Constants.MESSAGE_RECEIVED);
-                messegesThatNeedUpdating.add(firebaseMessageModel.getId());
+                messegesThatNeedUpdating.add(firebaseMessageModel.getId()); //Gather messages that are not read yet
             }
             MessageCell messageCell = new MessageCell(firebaseMessageModel.getSenderName() , firebaseMessageModel.getText(),
                     getDate(firebaseMessageModel.getCreatedDateLong()), firebaseMessageModel.getSenderDeviceId().equals(user.deviceId),
@@ -480,7 +487,7 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
 
         MessagesListAdapter adapter = new MessagesListAdapter(this, messageCells);
         if(messegesThatNeedUpdating.size() > 0 && Network.isForeground(getApplicationContext()))
-            firebaseHelper.updateFirebaseMessageStatus(chatKey, messegesThatNeedUpdating);
+            firebaseHelper.updateFirebaseMessageStatus(chatKey, messegesThatNeedUpdating);// set the messages as read
         // Assign adapter to ListView
         listView.setAdapter(adapter);
 
@@ -581,7 +588,7 @@ public class ChatActivity extends AuthenticatedActivity implements ImageViewDial
                     }
                     break;
             }
-        } else if (tag.equals("getValueEventListener")) {
+        } else if (tag.equals("getValueEventListener")) { /*Listener 1 - called whenever their is a change in recipients user object*/
             switch (condition) {
                 case FirebaseHelper.CONDITION_1:
                     FirebaseUserModel returnedFriend = (FirebaseUserModel) container.getObject();
